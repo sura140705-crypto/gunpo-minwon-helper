@@ -114,6 +114,8 @@
   .fb{font-size:12.5px;border-radius:6px;padding:2px 8px;font-weight:700;vertical-align:middle;white-space:nowrap;}
   .fb-req{color:#c0392b;background:#fdecec;border:1px solid #f3b4b4;}
   .fb-opt{color:#5b626c;background:#eef1f5;border:1px solid #d5d9df;}
+  .fb-auto{color:#1b5fc0;background:#eaf1fd;border:1px solid #b9d2f5;}
+  .text-input.ro{background:#f2f4f7;color:#495059;cursor:not-allowed;}
 
   .field{margin-bottom:20px;}
   .field-label{display:block;font-size:17px;font-weight:700;margin-bottom:9px;}
@@ -658,45 +660,56 @@ const STEP_DEFS = [
         {v:"대리인", desc:"가족·법정대리인 등 대리 (위임장·증빙 필요)"}
       ] }
     ],
+    // 입력 순서 = 서식 순서. 위임장(대리)일 때: 수임인 성명→생년월일→주소→전화→위임인과의 관계→위임인 정보(자동)
     condInputs:[
-      { field:"agentName", label:"대리인(위임받는/법정대리인) 성명", req:true, type:"text", ph:"예) 대리인 이름",
+      { field:"agentName", label:"수임인(위임받는/법정대리인) 성명", req:true, type:"text", ph:"예) 대리인 이름",
         cond:function(d){ return d.applyBy==="대리인"; },
         hint:"서명란에 이 이름이 들어갑니다. 신청인 본인 이름은 위쪽 한글성명 칸에 그대로 유지됩니다." },
       { field:"guardianName", label:"법정대리인(부모 등) 성명", req:true, type:"text", ph:"예) 부모님 성함",
         cond:function(d){ return needsConsent(d) && d.applyBy==="본인"; },
         hint:"미성년자 신청은 「법정대리인 동의서」가 필요합니다. 동의서에 들어갈 법정대리인(부모 등) 성함입니다." },
-      { field:"guardianRel", label:"신청인과의 관계", req:true, type:"text", ph:"예) 부, 모, 조부모",
-        cond:function(d){ return needsConsent(d) || needsProxy(d); },
-        hint:"대리인(법정대리인)이 신청인과 어떤 관계인지 — 동의서·위임장에 들어갑니다." },
-      { field:"guardianJumin", label:"법정대리인 주민등록번호 (선택)", req:false, type:"text",
-        mask:"jumin", inputmode:"numeric", maxlength:14, ph:"앞 6자리 - 뒤 7자리",
-        cond:needsConsent,
-        hint:"비워 두어도 됩니다. 창구에서 신분증을 보고 직접 적으셔도 됩니다." },
-      { field:"applicantAddr", label:"신청인(본인) 주소", req:true, type:"text",
-        ph:"예) 경기도 군포시 산본로 000, 000동 000호",
-        cond:function(d){ return needsConsent(d) || needsProxy(d); },
-        hint:"동의서는 신청인·법정대리인 주소로, 위임장은 위임인(신청인) 주소로 채워집니다." },
-      { field:"guardianAddr", label:"법정대리인 주소 (신청인과 다를 때만 · 선택)", req:false, type:"text",
-        ph:"신청인과 주소가 같으면 비워 두세요",
-        cond:needsConsent,
-        hint:"입력하면 법정대리인 주소만 이 값으로 바뀝니다. 신청인 주소는 위 값 그대로입니다." },
       { field:"agentBirth", label:"수임인(대리인) 생년월일 (선택)", req:false, type:"text",
         ph:"예) 1990.01.01",
         cond:needsProxy,
         hint:"비워 두면 인쇄 후 위임장에 손으로 적으셔도 됩니다." },
-      { field:"agentAddr", label:"수임인(대리인) 주소 (선택)", req:false, type:"text",
+      { field:"agentAddr", label:"수임인(위임받는 자) 주소", req:true, type:"text",
         ph:"예) 경기도 군포시 산본로 000",
         cond:needsProxy,
-        hint:"비워 두면 인쇄 후 위임장에 손으로 적으셔도 됩니다." },
-      { field:"agentPhone", label:"수임인(대리인) 전화번호 (선택)", req:false, type:"text",
+        hint:"위임장에 들어갈 수임인(대리인)의 주소입니다." },
+      { field:"agentPhone", label:"수임인(대리인) 전화번호", req:true, type:"text",
         mask:"phone", inputmode:"numeric", maxlength:13, ph:"예) 010-0000-0000",
         cond:needsProxy,
-        hint:"비워 두면 인쇄 후 위임장에 손으로 적으셔도 됩니다." }
+        hint:"위임장에 들어갈 수임인(대리인)의 연락처입니다." },
+      { field:"guardianRel", label:function(d){ return needsProxy(d) ? "위임인과의 관계" : "신청인과의 관계"; }, req:true, type:"text", ph:"예) 부, 모, 조부모",
+        cond:function(d){ return needsConsent(d) || needsProxy(d); },
+        hint:"대리인(수임인·법정대리인)이 신청인(위임인)과 어떤 관계인지 — 동의서·위임장에 들어갑니다." },
+      { field:"guardianJumin", label:"법정대리인 주민등록번호 (선택)", req:false, type:"text",
+        mask:"jumin", inputmode:"numeric", maxlength:14, ph:"앞 6자리 - 뒤 7자리",
+        cond:needsConsent,
+        hint:"비워 두어도 됩니다. 창구에서 신분증을 보고 직접 적으셔도 됩니다." },
+      // 위임인(신청인 본인) 성명·생년월일 = 앞 단계 입력에서 자동, 수정 불가
+      { field:"_delegatorName", label:"위임인(본인) 성명", readonly:true, cond:needsProxy,
+        value:function(d){ return d.nameKor; },
+        hint:"‘신청인 정보’ 단계의 한글 성명이 자동으로 들어갑니다. (수정 불가)" },
+      { field:"_delegatorBirth", label:"위임인(본인) 생년월일", readonly:true, cond:needsProxy,
+        value:function(d){ return birthFromJumin(d.jumin); },
+        hint:"주민등록번호로 자동 계산됩니다. (수정 불가)" },
+      { field:"applicantAddr",
+        label:function(d){ return needsProxy(d) ? "위임인(본인) 주소" : "신청인(본인) 주소"; },
+        req:function(d){ return needsConsent(d); }, type:"text",
+        ph:"예) 경기도 군포시 산본로 000, 000동 000호",
+        cond:function(d){ return needsConsent(d) || needsProxy(d); },
+        fallback:function(d){ return d.mailAddr||""; },
+        hint:"앞에서 주소를 입력했다면 자동으로 들어가며, 수정할 수 있습니다. 비워 두면 인쇄 후 손으로 적으셔도 됩니다." },
+      { field:"guardianAddr", label:"법정대리인 주소 (신청인과 다를 때만 · 선택)", req:false, type:"text",
+        ph:"신청인과 주소가 같으면 비워 두세요",
+        cond:needsConsent,
+        hint:"입력하면 법정대리인 주소만 이 값으로 바뀝니다. 신청인 주소는 위 값 그대로입니다." }
     ],
     note:{ when:function(d){ return needsConsent(d) || needsProxy(d); },
            msg:function(d){
              if(needsConsent(d)) return "미성년자 여권 신청입니다. 본인이 신청하더라도 「법정대리인 동의서」가 필요하여, 인쇄하면 신청서 뒤에 동의서가 한 장 더 출력됩니다. 신청인 이름·주소·법정대리인 정보·작성일은 자동으로 채워지고, 서명란과 법정대리인 2(공동친권자)는 창구에서 손으로 적고 서명하세요.";
-             return "대리인이 신청하는 경우 「위임장」이 필요합니다. 인쇄하면 신청서 뒤에 위임장이 한 장 더 출력됩니다. 수임인(대리인)·위임인(신청인) 정보는 아래에 입력하면 자동으로 채워지고, 비워 두면 인쇄 후 위임장에 손으로 적으셔도 됩니다. 서명은 인쇄한 뒤 직접 하세요. (위임인 신분증 사본·관계 증빙 필요)";
+             return "대리인이 신청하는 경우 「위임장」이 필요합니다. 인쇄하면 신청서 뒤에 위임장이 한 장 더 출력됩니다. 아래 순서(수임인 성명·생년월일·주소·전화번호·위임인과의 관계)대로 입력해 주세요. 위임인(신청인 본인)의 성명·생년월일은 앞 단계 입력에서 자동으로 채워지며 수정할 수 없고, 주소는 앞서 입력한 주소가 있으면 자동으로 들어가고 수정할 수 있습니다. 서명은 인쇄한 뒤 직접 하세요. (위임인 신분증 사본·관계 증빙 필요)";
            } } },
 
   // 10. 확인·완료
@@ -734,11 +747,11 @@ const SUMMARY_ROWS = [
   ["guardianName","법정대리인 성명", function(d){ return needsConsent(d) && d.applyBy==="본인"; }],
   ["guardianRel","대리인·법정대리인 관계", function(d){ return needsConsent(d) || needsProxy(d); }],
   ["guardianJumin","법정대리인 주민등록번호", needsConsent, function(v){ return formatJumin(v); }],
-  ["applicantAddr","신청인(본인) 주소", function(d){ return needsConsent(d) || needsProxy(d); }],
-  ["guardianAddr","법정대리인 주소(다를 때)", function(d){ return needsConsent(d) && !!d.guardianAddr; }],
   ["agentBirth","수임인 생년월일", function(d){ return needsProxy(d) && !!d.agentBirth; }],
-  ["agentAddr","수임인 주소", function(d){ return needsProxy(d) && !!d.agentAddr; }],
-  ["agentPhone","수임인 전화번호", function(d){ return needsProxy(d) && !!d.agentPhone; }, function(v){ return formatPhone(v); }]
+  ["agentAddr","수임인 주소", needsProxy],
+  ["agentPhone","수임인 전화번호", needsProxy, function(v){ return formatPhone(v); }],
+  ["applicantAddr","신청인·위임인 주소", function(d){ return needsConsent(d) || needsProxy(d); }],
+  ["guardianAddr","법정대리인 주소(다를 때)", function(d){ return needsConsent(d) && !!d.guardianAddr; }]
 ];
 
 /* =========================================================
@@ -748,6 +761,8 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
   return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
 function escBr(s){ return esc(s).replace(/\n/g,"<br>"); }
 function reqTag(req){ return req ? ' <span class="fb fb-req">필수</span>' : ' <span class="fb fb-opt">선택</span>'; }
+// 필드 속성(label·req·readonly·value·fallback)이 함수면 현재 상태로 평가, 아니면 그대로
+function resolveField(v){ return typeof v==="function" ? v(state.data) : v; }
 
 function formatDate(d){
   const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,"0"), day=String(d.getDate()).padStart(2,"0");
@@ -823,7 +838,7 @@ function stepRequired(def){
   const r=[];
   (def.groups||[]).forEach(function(g){ if(g.req && (!g.cond||g.cond(state.data))) r.push(g.field); });
   (def.inputs||[]).forEach(function(i){ if(i.req && (!i.cond||i.cond(state.data))) r.push(i.field); });
-  (def.condInputs||[]).forEach(function(i){ if(i.req && (!i.cond||i.cond(state.data))) r.push(i.field); });
+  (def.condInputs||[]).forEach(function(i){ if(resolveField(i.req) && (!i.cond||i.cond(state.data))) r.push(i.field); });
   if(def.addrInput && def.addrInput.req && (!def.addrInput.cond||def.addrInput.cond(state.data))) r.push(def.addrInput.field);
   return r;
 }
@@ -1032,7 +1047,7 @@ function renderProxy(){
   h+='<div class="cbox"><div class="cfields">'+
        '<div class="cline"><div class="plab">성명</div><div class="cf">'+cell(d.nameKor)+'</div>'+
          '<div class="plab">생년월일</div><div class="cf">'+cell(birthFromJumin(d.jumin))+'</div></div>'+
-       '<div class="cline"><div class="plab">주소</div><div class="cf full">'+cell(d.applicantAddr,true)+'</div></div>'+
+       '<div class="cline"><div class="plab">주소</div><div class="cf full">'+cell(d.applicantAddr||d.mailAddr,true)+'</div></div>'+
      '</div></div>';
 
   // 위임 내용 — ① 여권 발급 신청 자동 체크
@@ -1141,9 +1156,19 @@ function renderAddrInput(cfg){
   return h+"</div>";
 }
 function renderInput(inp){
-  const raw=state.data[inp.field]||"";
+  const label=resolveField(inp.label);
+  // 읽기전용(자동 입력·수정 불가): 위임인 성명·생년월일처럼 다른 값에서 파생돼 고정되는 칸
+  if(resolveField(inp.readonly)){
+    const rv=resolveField(inp.value)||"";
+    return '<div class="field"><label class="field-label">'+esc(label)+' <span class="fb fb-auto">자동</span></label>'+
+      '<input class="text-input ro" type="text" value="'+esc(rv)+'" readonly tabindex="-1" aria-readonly="true">'+
+      (inp.hint?'<div class="hint">'+esc(inp.hint)+"</div>":"")+"</div>";
+  }
+  // 값이 비어 있으면 fallback(예: 앞서 입력한 우편 주소)을 미리 채워 보여 줌(수정 가능)
+  const cur=state.data[inp.field];
+  const raw=(cur!=null && cur!=="") ? cur : (resolveField(inp.fallback)||"");
   return '<div class="field"><label class="field-label" for="in_'+esc(inp.field)+'">'+
-    esc(inp.label)+reqTag(inp.req)+"</label>"+
+    esc(label)+reqTag(resolveField(inp.req))+"</label>"+
     '<input id="in_'+esc(inp.field)+'" class="text-input" type="'+esc(inp.type)+'" value="'+esc(raw)+'"'+
     (inp.ph?' placeholder="'+esc(inp.ph)+'"':"")+
     (inp.inputmode?' inputmode="'+esc(inp.inputmode)+'"':"")+
