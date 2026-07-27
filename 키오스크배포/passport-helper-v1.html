@@ -495,6 +495,13 @@ function birthFromJumin(v){
   if(mm<1||mm>12||dd<1||dd>31) return "";
   return (c+yy)+"."+String(mm).padStart(2,"0")+"."+String(dd).padStart(2,"0");
 }
+// 생년월일 표기 통일: 숫자 8자리(YYYYMMDD) → YYYY.MM.DD. 이미 점이 있거나 형식이 다르면 그대로 둠.
+function formatBirth(v){
+  var s=String(v||"").trim(); if(!s) return "";
+  var g=s.replace(/\D/g,"");
+  if(g.length===8) return g.slice(0,4)+"."+g.slice(4,6)+"."+g.slice(6,8);
+  return s;
+}
 /* 외교부 여권안내(passport.go.kr)·정부24 기준 요약 — 확인일 2026-07. 규정 개정 시 재확인 필요.
    출처: passport.go.kr(사진/긴급/관용·외교관), gov.kr 정부24(온라인 재발급 제한 대상) */
 const OFFICIAL_QA = {
@@ -747,7 +754,7 @@ const SUMMARY_ROWS = [
   ["guardianName","법정대리인 성명", function(d){ return needsConsent(d) && d.applyBy==="본인"; }],
   ["guardianRel","대리인·법정대리인 관계", function(d){ return needsConsent(d) || needsProxy(d); }],
   ["guardianJumin","법정대리인 주민등록번호", needsConsent, function(v){ return formatJumin(v); }],
-  ["agentBirth","수임인 생년월일", function(d){ return needsProxy(d) && !!d.agentBirth; }],
+  ["agentBirth","수임인 생년월일", function(d){ return needsProxy(d) && !!d.agentBirth; }, function(v){ return formatBirth(v); }],
   ["agentAddr","수임인 주소", needsProxy],
   ["agentPhone","수임인 전화번호", needsProxy, function(v){ return formatPhone(v); }],
   ["applicantAddr","신청인·위임인 주소", function(d){ return needsConsent(d) || needsProxy(d); }],
@@ -1036,7 +1043,7 @@ function renderProxy(){
   h+='<div class="psec">【수임인(위임받는 자) 정보】</div>';
   h+='<div class="cbox"><div class="cfields">'+
        '<div class="cline"><div class="plab">성명</div><div class="cf">'+cell(d.agentName)+'</div>'+
-         '<div class="plab">생년월일</div><div class="cf">'+cell(d.agentBirth)+'</div></div>'+
+         '<div class="plab">생년월일</div><div class="cf">'+cell(formatBirth(d.agentBirth))+'</div></div>'+
        '<div class="cline"><div class="plab">주소</div><div class="cf full">'+cell(d.agentAddr,true)+'</div></div>'+
        '<div class="cline"><div class="plab">전화번호</div><div class="cf full">'+cell(formatPhone(d.agentPhone),true)+'</div></div>'+
        '<div class="cline"><div class="plab">위임인과의 관계</div><div class="cf full">'+cell(d.guardianRel,true)+'</div></div>'+
