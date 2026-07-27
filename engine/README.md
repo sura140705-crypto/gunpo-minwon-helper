@@ -14,6 +14,7 @@ forms/
 tools/
   prep-bg.py       서식 PDF 1쪽 → engine/assets/<이름>.b64
   build-form.js    base+engine+config+배경 → <이름>-helper-v1.html (자체완결)
+  sync-kiosk.sh    루트 배포 HTML → 키오스크배포/ · kiosk-app/app/ 동기화
 ```
 
 ## 새 서식 만들기
@@ -30,7 +31,15 @@ node tools/build-form.js death            # → death-helper-v1.html
 node tools/build-form.js death _gen.html  # 검증용 임시 출력
 
 # 4) index.html 허브에 href 연결
+
+# 5) 배포 3곳 동기화 (루트 → 키오스크배포/ · kiosk-app/app/)
+bash tools/sync-kiosk.sh          # 복사
+bash tools/sync-kiosk.sh --check  # 커밋 전 드리프트 검증(다르면 exit 1)
 ```
+
+> **드리프트 주의**: 배포 HTML은 루트(원본) / `키오스크배포/` / `kiosk-app/app/` 3곳에
+> 사본이 존재한다. **항상 루트 파일만 수정**하고 `sync-kiosk.sh` 로 두 배포 위치를 맞출 것.
+> 기존 서식(혼인·이혼·출생 등 손작성본 포함)을 고칠 때도 동일하게 루트 수정 후 동기화한다.
 
 ## config(FORM) 인터페이스
 
