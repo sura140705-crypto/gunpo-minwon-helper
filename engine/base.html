@@ -244,5 +244,53 @@ var FORM_IMG="__BGDATA__";
    ===================================================================== */
 /*{{ENGINE}}*/
 </script>
+<!-- 키오스크 자동 초기화: 5분 무동작 시 경고 후 처음 화면(허브)으로 이동 → 입력 내용 리셋 -->
+<script>
+(function(){
+  var IDLE_MS = 5*60*1000;   // 총 대기 시간(5분)
+  var WARN_SEC = 30;         // 초기화 전 경고(마지막 30초 카운트다운)
+  var HOME = "index.html";   // 되돌아갈 처음 화면(허브 메뉴). 이동 시 입력값(메모리) 전부 소멸
+  var warnTimer=null, tickTimer=null, remain=0, ov=null, numEl=null;
+
+  function build(){
+    ov=document.createElement("div");
+    ov.id="idleGuard";
+    ov.setAttribute("role","alertdialog");
+    ov.setAttribute("aria-live","assertive");
+    ov.style.cssText="position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.72);font-family:'Malgun Gothic','맑은 고딕',sans-serif;";
+    var box=document.createElement("div");
+    box.style.cssText="background:#fff;border-radius:18px;padding:34px 40px;max-width:540px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);";
+    box.innerHTML='<div style="font-size:26px;font-weight:800;color:#1b5fc0;margin-bottom:12px;">잠시 후 처음 화면으로 돌아갑니다</div>'+
+      '<div style="font-size:19px;color:#333;line-height:1.65;margin-bottom:24px;">개인정보 보호를 위해 <b id="idleNum" style="color:#c0392b;font-size:22px;">30</b>초 후 입력하신 내용이 모두 지워집니다.<br>계속 작성하시려면 화면을 터치하거나 아래 버튼을 누르세요.</div>'+
+      '<button type="button" id="idleStay" style="font-size:20px;font-weight:700;color:#fff;background:#1b5fc0;border:0;border-radius:12px;padding:14px 32px;cursor:pointer;">계속 작성하기</button>';
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    numEl=box.querySelector("#idleNum");
+    box.querySelector("#idleStay").addEventListener("click", function(e){ e.stopPropagation(); reset(); });
+  }
+  function goHome(){ try{ location.href=HOME; }catch(e){ location.reload(); } }
+  function showWarn(){
+    if(!ov) build();
+    remain=WARN_SEC; if(numEl) numEl.textContent=remain;
+    ov.style.display="flex";
+    tickTimer=setInterval(function(){
+      remain--; if(numEl) numEl.textContent=remain;
+      if(remain<=0){ clearInterval(tickTimer); tickTimer=null; goHome(); }
+    },1000);
+  }
+  function clearAll(){ if(warnTimer){clearTimeout(warnTimer);warnTimer=null;} if(tickTimer){clearInterval(tickTimer);tickTimer=null;} }
+  function reset(){
+    clearAll();
+    if(ov) ov.style.display="none";
+    warnTimer=setTimeout(showWarn, Math.max(0, IDLE_MS - WARN_SEC*1000));
+  }
+  // 사용자 활동 감지 → 타이머 리셋(경고 중이면 취소). 인쇄 대화상자는 별도 처리 불필요.
+  ["mousemove","mousedown","keydown","touchstart","wheel"].forEach(function(ev){
+    window.addEventListener(ev, reset, {passive:true});
+  });
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", reset);
+  else reset();
+})();
+</script>
 </body>
 </html>
