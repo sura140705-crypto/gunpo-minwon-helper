@@ -15,6 +15,7 @@ tools/
   prep-bg.py       서식 PDF 1쪽 → engine/assets/<이름>.b64
   build-form.js    base+engine+config+배경 → <이름>-helper-v1.html (자체완결)
   sync-kiosk.sh    루트 배포 HTML → 키오스크배포/ · kiosk-app/app/ 동기화
+  pack-kiosk.sh    키오스크배포/ → 키오스크배포.zip (전달용, .gitignore·재생성 가능)
 ```
 
 ## 새 서식 만들기
@@ -35,6 +36,9 @@ node tools/build-form.js death _gen.html  # 검증용 임시 출력
 # 5) 배포 3곳 동기화 (루트 → 키오스크배포/ · kiosk-app/app/)
 bash tools/sync-kiosk.sh          # 복사
 bash tools/sync-kiosk.sh --check  # 커밋 전 드리프트 검증(다르면 exit 1)
+
+# 6) 담당자 전달용 압축본 갱신 (필요할 때만)
+bash tools/pack-kiosk.sh          # 키오스크배포/ → 키오스크배포.zip (내부에서 --check 선행)
 ```
 
 > **드리프트 주의**: 배포 HTML은 루트(원본) / `키오스크배포/` / `kiosk-app/app/` 3곳에

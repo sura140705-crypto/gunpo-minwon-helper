@@ -23,6 +23,9 @@ engine/assets/*.b64
 # Electron 키오스크 빌드 산출물 (npm run dist 로 재생성)
 kiosk-app/dist/
 
+# 키오스크 배포 압축본 (키오스크배포/ 폴더에서 재생성: tools/pack-kiosk.sh)
+키오스크배포.zip
+
 # OS / 에디터
 Thumbs.db
 Desktop.ini
