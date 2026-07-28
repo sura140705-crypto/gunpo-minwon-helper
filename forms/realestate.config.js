@@ -37,6 +37,71 @@ function moneyField(A,f){
 }
 function isPrevNeeded(){ return state.d_rightKind==="입주권"; }
 
+/* =====================================================================
+   별지(첨부 서식) — 당사자·부동산이 여럿일 때
+   시행규칙 별지 제1호서식 작성방법 11: "다수의 부동산, 관련 필지, 매도·매수인,
+   개업공인중개사 등 기재사항이 복잡한 경우에는 다른 용지에 작성하여 간인 처리한 후
+   첨부합니다." — 정형화된 서식이 아니라 별지 샘플 서식을 따르는 자유 양식이므로,
+   좌표 고정 이미지가 아니라 **HTML 표**로 만든다. 입력한 만큼 줄이 늘고, 한 장을
+   넘치면 다음 장으로 자동으로 이어진다.
+   ===================================================================== */
+var MAXX = 4;                     // 구역마다 추가 가능한 최대 개수
+var XSEC = [
+  { n:"nxs", pre:"xs", label:"매도인 추가",
+    cols:[["name","성명(법인명)"],["jumin","주민등록번호"],["addr","주소"],
+          ["share","거래지분"],["phone","전화"],["mobile","휴대전화"]] },
+  { n:"nxb", pre:"xb", label:"매수인 추가",
+    cols:[["name","성명(법인명)"],["jumin","주민등록번호"],["addr","주소"],
+          ["share","거래지분"],["phone","전화"],["mobile","휴대전화"]] },
+  { n:"nxa", pre:"xa", label:"개업공인중개사 추가", sm:true,
+    cols:[["name","성명(법인명)"],["jumin","주민등록번호"],["office","상호"],
+          ["regno","등록번호"],["addr","사무소 소재지"],["phone","전화"],["mobile","휴대전화"]] },
+  { n:"nxp", pre:"xp", label:"소재지 관계지번 추가",
+    cols:[["addr","관계지번"],["jimok","지목"],["area","토지(㎡)"],
+          ["share","토지 거래지분"],["dae","대지권비율"]] },
+  { n:"nxd", pre:"xd", label:"거래부동산 추가", sm:true,
+    cols:[["addr","소재지"],["kind","종류"],["supply","계약 종류"],["jimok","지목"],
+          ["area","토지(㎡)"],["bldgArea","건축물(㎡)"],
+          ["cland","계약토지(㎡)"],["cbldg","계약건축물(㎡)"],["price","거래가격(원)"]] }
+];
+/* 분수(○분의○)·선택지는 입력칸이 둘 이상이라 실제 상태키를 따로 펼친다 */
+function XFIELDS(pre){
+  var f=[];
+  XSEC.forEach(function(s){
+    if(s.pre!==pre) return;
+    s.cols.forEach(function(c){
+      if(c[0]==="share") f.push("sd","sn");
+      else if(c[0]==="dae") f.push("dd","dn");
+      else if(c[0]==="kind") f.push("kind","bldgKind");
+      else if(c[0]==="supply") f.push("supply","rightKind");
+      else f.push(c[0]);
+    });
+  });
+  return f;
+}
+function XKEYS(){
+  var keys=[];
+  XSEC.forEach(function(s){
+    var fs=XFIELDS(s.pre);
+    for(var i=1;i<=MAXX;i++) fs.forEach(function(f){ keys.push(s.pre+i+"_"+f); });
+  });
+  return keys;
+}
+function xcount(k){ return Math.max(0, Math.min(MAXX, +state[k]||0)); }
+function xAnyExtra(){ return XSEC.some(function(s){ return xcount(s.n)>0; }); }
+/* 별지 한 칸의 표시값 */
+function xcell(pre, i, key){
+  var g=function(f){ return String(state[pre+i+"_"+f]||"").trim(); };
+  if(key==="share"){ var a=g("sd"), b=g("sn"); return (a||b)?(a+"분의 "+b):""; }
+  if(key==="dae"){ var c=g("dd"), d=g("dn"); return (c||d)?(c+"분의 "+d):""; }
+  if(key==="kind"){ var k=g("kind"), bk=g("bldgKind"); return k?(k+(bk?" ("+bk+")":"")):""; }
+  if(key==="supply"){ var s=g("supply"), r=g("rightKind"); return s?(s+(r?" · "+r:"")):""; }
+  if(key==="jumin"){ return g("jumin")?formatJumin(g("jumin")):""; }
+  if(key==="phone"||key==="mobile"){ return formatPhone(g(key)); }
+  if(key==="price"){ return g("price")?formatMoney(g("price")):""; }
+  return g(key);
+}
+
 function buildSummary(){
   var d=state, h='';
   h+='<div class="sum-sec"><h4>① 매도인</h4>';
@@ -80,6 +145,13 @@ function buildSummary(){
     h+=sumRow("거래금액 합계", d.v_total?formatMoney(d.v_total)+"원":"");
     h+='</div>';
   }
+  if(xAnyExtra()){
+    h+='<div class="sum-sec"><h4>별지 (첨부)</h4>';
+    XSEC.forEach(function(sec){
+      var n=xcount(sec.n); if(n) h+=sumRow(sec.label, n+"건");
+    });
+    h+='</div>';
+  }
   return h;
 }
 
@@ -121,7 +193,11 @@ var FORM={
      "v_cLandArea","v_cBldgArea","v_bldgType",
      "v_total","v_extra","v_right","v_down","v_mid","v_bal"],
     // ⑪ 계약의 조건 및 참고사항
-    ["memo"]),
+    ["memo"],
+    // 별지(첨부) — 추가 인원·물건 수
+    ["nxs","nxb","nxa","nxp","nxd"],
+    // 별지 항목 (i=1..MAXX). 아래 XKEYS()가 만들어 준다.
+    XKEYS()),
 
   CO:{
     texts:{
@@ -318,6 +394,56 @@ var FORM={
 
   /* 신고일 — "  년      월      일" */
   today:{y:723.2, yx:445, mx:481, dx:517},
+
+  /* ── 별지(첨부 페이지) ── */
+  extraCss:
+    ".xpaper{font-family:'Malgun Gothic','맑은 고딕',sans-serif;color:#000;font-size:10pt;line-height:1.5;}"+
+    ".xpaper h2{font-size:15pt;text-align:center;margin:0 0 4mm;letter-spacing:3px;font-weight:800;}"+
+    ".xhead{display:flex;justify-content:flex-end;margin-bottom:3mm;font-size:9pt;}"+
+    ".xhead span{border:1px solid #000;padding:1mm 6mm;}"+
+    ".xnote{border:1px solid #000;padding:2mm 3mm;font-size:9pt;margin-bottom:5mm;line-height:1.55;}"+
+    ".xsec{margin-bottom:5mm;}"+
+    ".xsec h3{font-size:10.5pt;margin:0;padding:1.2mm 2mm;background:#eaeaea;"+
+      "border:1px solid #000;border-bottom:none;font-weight:700;}"+
+    "table.xt{width:100%;border-collapse:collapse;font-size:9pt;}"+
+    ".xt th,.xt td{border:1px solid #000;padding:1.6mm 2mm;text-align:left;vertical-align:top;"+
+      "word-break:break-all;}"+
+    ".xt th{background:#f5f5f5;font-weight:700;white-space:nowrap;}"+"table.xt.sm{font-size:8pt;}"+".xt.sm th,.xt.sm td{padding:1.1mm 1.4mm;}"+
+    ".xt .i{text-align:center;white-space:nowrap;width:9mm;}"+
+    ".xt tr{page-break-inside:avoid;}"+
+    ".xtail{margin-top:7mm;font-size:9pt;}"+
+    ".xtail .xsign{margin-top:4mm;}",
+
+  extraPages:function(state){
+    if(!xAnyExtra()) return "";                    // 추가가 없으면 별지 없음
+    var esc2=esc, h='<div class="xpaper">';
+    h+='<h2>부동산거래계약 신고서 별지</h2>';
+    h+='<div class="xhead"><span>관리번호</span></div>';
+    h+='<div class="xnote">이 별지는 <b>부동산거래계약 신고서</b>의 첨부 서류입니다. '
+      +'신고서에 적지 못한 매도인·매수인·개업공인중개사·부동산을 아래에 이어서 적었습니다. '
+      +'신고서와 이 별지 사이에 <b>간인</b>하여 함께 제출하십시오.'
+      +'<br>· 신고서 ① 매도인 : <b>'+esc2(state.s_name||"")+'</b>'
+      +' &nbsp; · ② 매수인 : <b>'+esc2(state.b_name||"")+'</b>'
+      +' &nbsp; · 소재지 : <b>'+esc2(state.p_addr||"")+'</b></div>';
+    XSEC.forEach(function(s){
+      var n=xcount(s.n); if(!n) return;
+      h+='<div class="xsec"><h3>['+s.label+']</h3><table class="xt'+(s.sm?" sm":"")
+        +'"><thead><tr><th class="i">번호</th>';
+      s.cols.forEach(function(c){ h+='<th>'+esc2(c[1])+'</th>'; });
+      h+='</tr></thead><tbody>';
+      for(var i=1;i<=n;i++){
+        h+='<tr><td class="i">'+i+'</td>';
+        s.cols.forEach(function(c){ h+='<td>'+esc2(xcell(s.pre,i,c[0]))+'</td>'; });
+        h+='</tr>';
+      }
+      h+='</tbody></table></div>';
+    });
+    h+='<div class="xtail">이하 여백'
+      +'<div class="xsign">작성일 &nbsp; '+(APP_TODAY?APP_TODAY.getFullYear():"")+' 년 &nbsp; '
+      +(APP_TODAY?APP_TODAY.getMonth()+1:"")+' 월 &nbsp; '+(APP_TODAY?APP_TODAY.getDate():"")+' 일 &nbsp;&nbsp;&nbsp; '
+      +'신고인 : &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; (서명 또는 인)</div></div>';
+    return h+'</div>';
+  },
 
   STEPS:[
     {n:1, short:"시작", title:"부동산거래계약 신고서 작성 시작",
@@ -562,7 +688,72 @@ var FORM={
           help:"계약에 조건이나 기한을 붙였거나, 참고할 내용이 있을 때만 적습니다."});
         return h; }},
 
-    {n:11, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:11, short:"별지", title:"별지 (당사자·부동산이 여럿일 때)",
+      q:"매도인·매수인이 여러 명이거나 부동산이 여러 건인가요? 해당 없으면 그대로 [다음]을 누르세요.",
+      why:"신고서에는 매도인·매수인이 각 한 명, 부동산이 한 건만 들어갑니다. 그보다 많으면 별지에 이어서 적고 신고서와 간인하여 함께 제출합니다. 아래에서 추가한 만큼 별지가 자동으로 만들어져 인쇄됩니다.",
+      kind:"extra",
+      body:function(A){
+        var h='<div class="note-box">부부 공동명의처럼 <b>당사자가 여러 명</b>이거나, 한 번에 '
+          +'<b>여러 건</b>을 거래한 경우에만 씁니다. 대부분 비워 둡니다.</div>';
+        XSEC.forEach(function(s){
+          var n=xcount(s.n);
+          h+='<div class="field-label" style="margin-top:10px">'+A.esc(s.label)
+            +' <span class="fb fb-opt">'+(n?n+"명/건":"없음")+'</span></div>';
+          h+='<div class="opts row">'
+            +'<button type="button" class="opt" data-inc="'+s.n+'" data-by="1" data-max="'+MAXX+'">＋ 추가</button>'
+            +(n?'<button type="button" class="opt" data-inc="'+s.n+'" data-by="-1" data-max="'+MAXX+'">－ 삭제</button>':'')
+            +'</div>';
+          for(var i=1;i<=n;i++){
+            h+='<div class="q-help" style="margin-top:6px"><b>'+A.esc(s.label)+' '+i+'</b></div>';
+            if(s.pre==="xs"||s.pre==="xb"){
+              h+=A.inputHtml({k:s.pre+i+"_name", label:"성명(법인명)", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_jumin", label:"주민등록번호", type:"jumin", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_addr", label:"주소(법인소재지)"});
+              h+=A.inputHtml({k:s.pre+i+"_sd", label:"거래지분 ( ○○ 분의", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_sn", label:"○○ )", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_phone", label:"전화번호", type:"phone", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_mobile", label:"휴대전화번호", type:"phone", half:true});
+            } else if(s.pre==="xa"){
+              h+=A.inputHtml({k:s.pre+i+"_name", label:"성명(법인명)", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_jumin", label:"주민등록번호", type:"jumin", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_office", label:"상호", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_regno", label:"등록번호", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_addr", label:"사무소 소재지"});
+              h+=A.inputHtml({k:s.pre+i+"_phone", label:"전화번호 (사무실)", type:"phone", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_mobile", label:"휴대전화번호", type:"phone", half:true});
+            } else if(s.pre==="xp"){
+              h+=A.inputHtml({k:s.pre+i+"_addr", label:"관계지번", ph:"경기도 군포시 산본동 000-1"});
+              h+=A.inputHtml({k:s.pre+i+"_jimok", label:"지목", half:true, ph:"대"});
+              h+=A.inputHtml({k:s.pre+i+"_area", label:"토지면적(㎡)", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_sd", label:"토지 거래지분 ( ○○ 분의", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_sn", label:"○○ )", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_dd", label:"대지권비율 ( ○○ 분의", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_dn", label:"○○ )", half:true});
+            } else {
+              h+=A.inputHtml({k:s.pre+i+"_addr", label:"소재지 (지번주소)",
+                help:"도로명주소 아님. 아파트 등은 동·호수까지."});
+              h+='<div class="field"><label class="field-label">종류</label>'
+                +A.choiceHtml(s.pre+i+"_kind",["토지","건축물","토지 및 건축물"],"")+'</div>';
+              h+=A.inputHtml({k:s.pre+i+"_bldgKind", label:"건축물의 종류", half:true, ph:"아파트"});
+              h+='<div class="field"><label class="field-label">계약 종류 <span class="fb fb-opt">선택</span></label>'
+                +A.choiceHtml(s.pre+i+"_supply",["공급계약","전매"],"")+'</div>';
+              h+='<div class="field"><label class="field-label">전매 대상 <span class="fb fb-opt">선택</span></label>'
+                +A.choiceHtml(s.pre+i+"_rightKind",["분양권","입주권"],"")+'</div>';
+              h+=A.inputHtml({k:s.pre+i+"_jimok", label:"지목", half:true, ph:"대"});
+              h+=A.inputHtml({k:s.pre+i+"_area", label:"토지면적(㎡)", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_bldgArea", label:"건축물면적(㎡)", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_cland", label:"계약대상 토지(㎡)", half:true});
+              h+=A.inputHtml({k:s.pre+i+"_cbldg", label:"계약대상 건축물(㎡)", half:true});
+              h+=moneyField(A,{k:s.pre+i+"_price", label:"물건별 거래가격(원)"});
+            }
+          }
+        });
+        if(xAnyExtra())
+          h+='<div class="info-box" style="margin-top:10px">별지가 <b>서식 다음 장</b>에 함께 인쇄됩니다. '
+            +'인쇄한 뒤 신고서와 별지 사이에 <b>간인</b>하세요.</div>';
+        return h; }},
+
+    {n:12, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
       body:function(){
         return buildSummary()
           +'<div class="info-box">인쇄한 뒤 <b>매도인·매수인</b>(중개 거래는 개업공인중개사)이 '
@@ -601,7 +792,13 @@ var FORM={
       pr_down:"35000000", dt_contract:"2026.07.10",
       pr_mid:"100000000", dt_mid:"2026.08.20",
       pr_bal:"215000000", dt_bal:"2026.10.15",
-      corpDoc:"해당 없음"
+      corpDoc:"해당 없음",
+      // 부부 공동명의로 매수 → 매수인 2명, 각 2분의 1. 두 번째 매수인은 별지에 실린다.
+      b_shareDen:"2", b_shareNum:"1",
+      nxb:"1",
+      xb1_name:"이영희", xb1_jumin:"8709182000000",
+      xb1_addr:"경기도 안양시 동안구 시민대로 000",
+      xb1_sd:"2", xb1_sn:"1", xb1_mobile:"01033334444"
     });
     if(kind==="right"){
       // 입주권 전매 — ⑤전매·입주권, ⑧ 분양가격/추가지급액, ⑩ 종전 부동산까지

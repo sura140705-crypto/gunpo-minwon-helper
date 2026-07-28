@@ -54,6 +54,12 @@
   .stage{position:relative;width:100%;container-type:inline-size;}
   .stage .bg{display:block;width:100%;height:auto;}
   .ovl{position:absolute;inset:0;pointer-events:none;}
+  /* 첨부 페이지(별지 등) — FORM.extraPages 가 있을 때만 생긴다. 내용이 없으면 비어 있음 */
+  .extra:empty{display:none;}
+  .xpaper{background:#fff;padding:14mm 12mm;}
+  .form-col .xpaper{margin-top:36px;position:relative;}
+  .form-col .xpaper::before{content:"";position:absolute;left:0;right:0;top:-19px;
+    border-top:2px dashed #a9b2bd;}
   /* 얹는 글자 = 검은 펜 느낌 */
   .ov{position:absolute;transform:translate(-50%,-50%);color:#111;font-weight:700;line-height:1;white-space:nowrap;}
   .ov.o{color:#c0392b;font-weight:900;-webkit-text-stroke:0.5px #c0392b;}  /* 선택항목 영표 ○ (진하게) */
@@ -163,14 +169,20 @@
   .modal-top b{font-size:18px;}
   .modal-scroll{flex:1;overflow:auto;display:flex;justify-content:center;background:#5a5a5a;padding:12px;border-radius:8px;}
   .modal-scroll .paper{width:min(210mm,96vw);height:max-content;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+  .mstack{display:flex;flex-direction:column;gap:14px;height:max-content;}
 
   /* ===== 인쇄 ===== */
   @media print{
     @page{size:A4;margin:0;}
+    html,body{background:#fff !important;}   /* 첨부 페이지 여백에 화면 배경색이 남지 않게 */
     .topbar,.panel-col,.m-preview,.modal-back,.ovhl{display:none !important;}
     .layout{display:block;padding:0;}
     .form-col{display:block !important;}
     .paper{box-shadow:none;width:auto;margin:0;padding:0;}
+    /* 첨부 페이지는 서식 다음 장부터 인쇄 */
+    .xpaper{page-break-before:always;padding:12mm 10mm;}
+    .form-col .xpaper{margin-top:0;}
+    .form-col .xpaper::before{display:none;}
     .ov{color:#000 !important;}
     .ov.o{color:#c0392b !important;}
     .ov.o.blk{color:#111 !important;}
@@ -212,6 +224,7 @@
 <div class="layout">
   <section class="form-col" aria-label="서식 미리보기">
     <div class="paper"><div class="stage"><img class="bg" alt="서식"><div class="ovl" id="ovl"></div></div></div>
+    <div class="paper extra"></div>
   </section>
 
   <aside class="panel-col">
@@ -247,7 +260,7 @@
 <div class="modal-back" id="modalBack">
   <div class="modal-top"><b id="modalTitle"></b>
     <button class="btn" id="btnCloseModal">닫기 ✕</button></div>
-  <div class="modal-scroll"><div class="paper"><div class="stage"><img class="bg" alt="서식"><div class="ovl" id="ovlModal"></div></div></div></div>
+  <div class="modal-scroll"><div class="mstack"><div class="paper"><div class="stage"><img class="bg" alt="서식"><div class="ovl" id="ovlModal"></div></div></div><div class="paper extra"></div></div></div>
 </div>
 
 <script>

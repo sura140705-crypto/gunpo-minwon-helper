@@ -82,6 +82,18 @@ FIGURES = {
                    "js": 'fillSample("self"); state.step=3; renderAll();'},
     "f_realest":  {"file": "realestate-helper-v1.html", "size": (1300, 880),
                    "js": APT + ' state.step=7; renderAll();'},
+    # 별지 — 본 서식 종이를 숨겨 별지만 위로 올린 뒤 촬영한다
+    "byeolji":    {"file": "realestate-helper-v1.html", "size": (1100, 1250),
+                   "crop": (30, 20, 1070, 1150),
+                   "js": APT + ' Object.assign(state,{nxs:"1",nxa:"1",'
+                         'xs1_name:"홍길순", xs1_jumin:"6503051000000",'
+                         'xs1_addr:"경기도 군포시 산본동 000-0 101동 1001호",'
+                         'xs1_sd:"2", xs1_sn:"1", xs1_mobile:"01011112222",'
+                         'xa1_name:"최중개", xa1_jumin:"8001011000000",'
+                         'xa1_office:"금정공인중개사사무소", xa1_regno:"41410-2026-00002",'
+                         'xa1_addr:"경기도 군포시 금정로 22, 2층", xa1_phone:"0313902222"});'
+                         ' renderAll();'
+                         ' document.querySelector(".form-col .paper:not(.extra)").style.display="none";'},
 }
 
 CSS = """

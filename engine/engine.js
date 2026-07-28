@@ -148,6 +148,14 @@ function renderForm(){
   }
 
   document.querySelectorAll(".ovl").forEach(function(o){ o.innerHTML=h; });
+  renderExtras();
+}
+
+/* 첨부 페이지(별지 등) — FORM.extraPages(state)가 HTML을 돌려주면 서식 뒤에 붙는다.
+   내용이 없으면 빈 문자열을 돌려주고, .extra:empty 규칙으로 화면·인쇄에서 사라진다. */
+function renderExtras(){
+  var html=FORM.extraPages?(FORM.extraPages(state)||""):"";
+  document.querySelectorAll(".extra").forEach(function(e){ e.innerHTML=html; });
 }
 
 /* 5) 우측 위저드 렌더 */
@@ -156,7 +164,10 @@ function num(i){ return "①②③④⑤⑥⑦⑧⑨⑩".charAt(i); }
 
 function inputHtml(f){
   var v=state[f.k]||"", req=f.req?'<span class="fb fb-req">필수</span>':'<span class="fb fb-opt">선택</span>';
-  if(f.type==="money") v=formatMoney(v);   // 재렌더 시에도 콤마 유지
+  // 재렌더(단계 이동·조건부 갱신) 때도 입력 중과 같은 형식으로 보이게 한다
+  if(f.type==="money") v=formatMoney(v);
+  else if(f.type==="jumin") v=formatJumin(v);
+  else if(f.type==="phone") v=formatPhone(v);
   var cls="field"+(f.half?" half":"");
   var h='<div class="'+cls+'"><label class="field-label" for="in_'+f.k+'">'+esc(f.label)+req+'</label>';
   if(f.help) h+='<div class="q-help">'+esc(f.help)+'</div>';
@@ -267,7 +278,7 @@ function onBlurDate(e){
   var f=t.getAttribute("data-f"); state[f]=formatDateFlexible(state[f]); t.value=state[f]; renderForm();
 }
 function onClick(e){
-  var t=e.target.closest("[data-set],[data-toggle],[data-next],[data-goto],[data-childinc]");
+  var t=e.target.closest("[data-set],[data-toggle],[data-next],[data-goto],[data-childinc],[data-inc]");
   if(!t) return;
   if(t.hasAttribute("data-set")){
     var k=t.getAttribute("data-set"), val=t.getAttribute("data-val");
@@ -278,6 +289,13 @@ function onClick(e){
   else if(t.hasAttribute("data-toggle")){ var kk=t.getAttribute("data-toggle"); state[kk]=!state[kk]; renderAll(); }
   else if(t.hasAttribute("data-next")){ goNext(); }
   else if(t.hasAttribute("data-goto")){ gotoStep(+t.getAttribute("data-goto")); }
+  else if(t.hasAttribute("data-inc")){
+    // 범용 카운터(별지 추가 인원·물건 수 등) — data-inc=상태키, data-by=증감, data-max/min
+    var ik=t.getAttribute("data-inc"), by=+t.getAttribute("data-by")||1;
+    var lo=+(t.getAttribute("data-min")||0), hi=+(t.getAttribute("data-max")||4);
+    state[ik]=String(Math.max(lo, Math.min(hi, (+state[ik]||0)+by)));
+    renderStep(); renderForm();
+  }
   else if(t.hasAttribute("data-childinc")){
     var nc=(state.childCount||1)+(+t.getAttribute("data-childinc"));
     state.childCount=Math.max(1,Math.min(FORM.maxChild||4,nc)); renderAll();
@@ -354,6 +372,11 @@ function init(){
   setText("orgName", org.orgName);
   setText("today", formatDate(APP_TODAY));
   document.querySelectorAll(".bg").forEach(function(img){ img.src=FORM_IMG; });
+  // 서식별 첨부 페이지 CSS 주입(있을 때만)
+  if(FORM.extraCss){
+    var st=document.createElement("style"); st.textContent=FORM.extraCss;
+    document.head.appendChild(st);
+  }
   bind();
   renderAll();
   el.stepper.setAttribute("aria-valuemax", FORM.STEPS.length);

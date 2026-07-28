@@ -80,8 +80,13 @@ bash tools/pack-kiosk.sh          # 키오스크배포/ → 키오스크배포.z
 | `applySample(state,kind)` | 작성예시 채우기 |
 | `checkVisible(field,state)` | 선택 표기를 조건부로 숨김(해당 없는 항목 잔상 방지) |
 | `checkMark` / `checkSize` | 선택 표기 기호·크기 (기본 `"○"`·12pt). 서식 머리말이 지시하는 기호를 따를 것 — 가족관계등록 신고서는 영표 `○`, `[ ]` 를 쓰는 부동산거래계약 신고서는 `"✔"`·8pt |
+| `checkBlack` | 선택 표기를 검정으로 (기본은 빨강 영표). 인쇄 CSS가 `!important` 라 클래스로 처리한다 |
+| `extraPages(state)` / `extraCss` | **첨부 페이지(별지 등)** HTML과 그 CSS. 서식 이미지 뒤 `.paper.extra` 에 들어가고 인쇄 시 다음 장부터 나온다. 빈 문자열을 돌려주면 페이지가 사라진다(`.extra:empty`). 좌표 고정이 아닌 HTML 표라 줄 수가 자유롭고 넘치면 자동으로 다음 장으로 이어진다 — `forms/realestate.config.js` 의 별지 참고 |
 
 단계 `body(A)`는 `A.inputHtml/choiceHtml/toggleHtml/sumRow/state/formatMoney/digits/…`를 써서 HTML 문자열을 반환합니다.
+
+버튼 속성: `data-set`/`data-val`(선택) · `data-toggle`(켜기·끄기) · `data-goto`(단계 이동) ·
+`data-inc`(카운터 증감 — `data-by`·`data-max`·`data-min`, 별지 추가 인원 수 등).
 
 입력칸 `type` : `text`(기본) · `jumin`(6-7 하이픈) · `phone`(02는 2자리 지역번호) · `money`(3자리 콤마) · `date`(숫자 8자리 → yyyy.mm.dd, blur 시).
 
