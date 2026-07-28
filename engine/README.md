@@ -26,8 +26,14 @@ tools/
 > 로고는 화면 전용이며 인쇄물(서식)에는 절대 나오지 않는다(8종 인쇄 0px 검증).
 
 > **운영문서 PDF**: `운영문서/*.md` 가 원본이고 PDF는 항상 다시 만든다.
-> 서식을 추가하면 `.md` 를 고치고 `python tools/make-manual.py` 를 돌릴 것.
+> 서식을 추가하면 `.md` 를 고치고 아래 두 줄을 돌릴 것.
+> ```bash
+> python tools/make-manual.py                                   # 붙임2 → 사용매뉴얼.pdf (간단본)
+> python tools/make-manual.py "운영문서/붙임2-1_사용매뉴얼(상세).md" 운영문서/사용매뉴얼_상세.pdf
+> ```
 > 그림은 `![캡션](fig:이름)` 으로 넣고, 이름은 `make-manual.py` 의 `FIGURES` 에 정의한다.
+> `FIGURES` 항목은 `{file, js, size, crop, patch, budget}` — `js` 로 예시를 채우고 원하는
+> 단계로 이동시킨 뒤 촬영하고, `crop` 으로 화면 일부만 오려낼 수 있다(용량 절감).
 
 ## 새 서식 만들기
 

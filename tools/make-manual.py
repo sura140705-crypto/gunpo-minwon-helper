@@ -27,20 +27,61 @@ CHROME_CANDIDATES = [
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
 ]
 
-# 그림 이름 → (열 파일, 촬영 전 주입할 JS, 뷰포트)
+# 그림 정의 — 이름 → {file, js, size, crop, patch, budget}
+#   file   : 촬영할 HTML (리포 루트 기준)
+#   js     : 촬영 전 주입할 스크립트 (예: 예시 채우고 특정 단계로 이동)
+#   size   : 창 크기 (뷰포트). 잘라 찍는 방식이라 문서가 더 길면 아래쪽은 안 담긴다.
+#   crop   : (l,t,r,b) 로 일부만 오려낸다 — 화면 일부를 설명할 때 · PDF 용량 절감
+#   patch  : 사본의 소스 문자열 치환 (타이머 단축 등)
+#   budget : 가상시간(ms). 기본 6000. 타이머 화면은 짧게 줘야 원하는 순간이 잡힌다.
+APT = 'fillSample("apt");'
 FIGURES = {
+    # ── 공통 화면 ──
     # 허브는 문서 전체 높이가 1802px — 마지막 '부동산' 섹션까지 담기게 잘라 찍는다
-    "hub":        ("index.html", "", (1440, 1530)),
-    "passport":   ("passport-helper-v1.html",
-                   'fillSample("adult"); state.step=3; renderAll();', (1440, 1000)),
+    "hub":        {"file": "index.html", "size": (1440, 1530)},
+    "passport":   {"file": "passport-helper-v1.html", "size": (1440, 1000),
+                   "js": 'fillSample("adult"); state.step=3; renderAll();'},
     # 유휴 경고 오버레이 — 대기시간을 경고시간과 같게 줄여 즉시 표시시킨다(사본만 수정)
-    "idle":       ("passport-helper-v1.html",
-                   'fillSample("adult"); state.step=3; renderAll();', (1440, 1000),
-                   {"IDLE_MS = 5*60*1000": "IDLE_MS = 30*1000"}),
-    "marriage":   ("marriage-helper-v1.html",
-                   'fillSample("adult"); state.step=4; renderAll();', (1440, 1000)),
-    "realestate": ("realestate-helper-v1.html",
-                   'fillSample("apt"); state.step=8; renderAll();', (1440, 1000)),
+    "idle":       {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
+                   "js": 'fillSample("adult"); state.step=3; renderAll();',
+                   "patch": {"IDLE_MS = 5*60*1000": "IDLE_MS = 30*1000"}},
+    "marriage":   {"file": "marriage-helper-v1.html", "size": (1440, 1000),
+                   "js": 'fillSample("adult"); state.step=4; renderAll();'},
+    "realestate": {"file": "realestate-helper-v1.html", "size": (1440, 1000),
+                   "js": APT + ' state.step=8; renderAll();'},
+
+    # ── 상세 매뉴얼용 ──
+    "coach":      {"file": "realestate-helper-v1.html", "size": (1500, 1150),
+                   "js": APT + ' state.step=7; renderAll();', "crop": (1020, 90, 1500, 1080)},
+    "topbar":     {"file": "realestate-helper-v1.html", "size": (1500, 400),
+                   "js": APT, "crop": (0, 0, 1500, 120)},
+    "required":   {"file": "realestate-helper-v1.html", "size": (1500, 1000),
+                   "js": 'state.step=2; renderAll(); goNext();', "crop": (1020, 820, 1500, 1000)},
+    "preview":    {"file": "realestate-helper-v1.html", "size": (1440, 1000),
+                   "js": APT + ' openPreview();'},
+    "summary":    {"file": "realestate-helper-v1.html", "size": (1500, 1150),
+                   "js": APT + ' state.step=11; renderAll();', "crop": (1020, 90, 1500, 1120)},
+    "mobile":     {"file": "realestate-helper-v1.html", "size": (560, 1000),
+                   "js": APT + ' state.step=8; renderAll();'},
+    "money":      {"file": "realestate-helper-v1.html", "size": (1500, 1150),
+                   "js": APT + ' state.step=8; renderAll();', "crop": (1020, 480, 1500, 1080)},
+    # ── 서식별 대표 화면(8종) ──
+    "f_passport": {"file": "passport-helper-v1.html", "size": (1300, 880),
+                   "js": 'fillSample("adult"); state.step=2; renderAll();'},
+    "f_marriage": {"file": "marriage-helper-v1.html", "size": (1300, 880),
+                   "js": 'fillSample("adult"); state.step=2; renderAll();'},
+    "f_birth":    {"file": "birth-helper-v1.html", "size": (1300, 880),
+                   "js": 'fillSample("adult"); state.step=2; renderAll();'},
+    "f_death":    {"file": "death-helper-v1.html", "size": (1300, 880),
+                   "js": 'fillSample("hospital"); state.step=2; renderAll();'},
+    "f_naming":   {"file": "naming-helper-v1.html", "size": (1300, 880),
+                   "js": 'fillSample("self"); state.step=2; renderAll();'},
+    "f_divorce":  {"file": "divorce-helper-v1.html", "size": (1300, 880),
+                   "js": 'fillSample("adult"); state.step=2; renderAll();'},
+    "f_cert":     {"file": "cert-helper-v1.html", "size": (1300, 880),
+                   "js": 'fillSample("self"); state.step=3; renderAll();'},
+    "f_realest":  {"file": "realestate-helper-v1.html", "size": (1300, 880),
+                   "js": APT + ' state.step=7; renderAll();'},
 }
 
 CSS = """
@@ -93,27 +134,36 @@ def chrome():
 
 def shoot(name, spec, tmpdir):
     """FIGURES 항목을 헤드리스 크롬으로 촬영해 PNG 바이트를 돌려준다."""
-    src_name, js, (vw, vh) = spec[0], spec[1], spec[2]
-    patches = spec[3] if len(spec) > 3 else {}
-    src = io.open(os.path.join(ROOT, src_name), encoding="utf-8").read()
-    for old, new in patches.items():
+    vw, vh = spec["size"]
+    src = io.open(os.path.join(ROOT, spec["file"]), encoding="utf-8").read()
+    for old, new in (spec.get("patch") or {}).items():
         if old not in src:
             sys.exit("그림 '%s': 치환 대상을 찾지 못했습니다 → %s" % (name, old))
         src = src.replace(old, new)
+    js = spec.get("js")
     if js:
         i = src.rindex("</script>")
         src = src[:i] + "\n" + js + "\n" + src[i:]
     page = os.path.join(tmpdir, "fig_%s.html" % name)
     io.open(page, "w", encoding="utf-8").write(src)
     png = os.path.join(tmpdir, "fig_%s.png" % name)
-    # 유휴 경고는 타이머가 돌아야 하므로 가상시간을 조금 더 준다
-    budget = "1200" if name == "idle" else "6000"
     subprocess.run([chrome(), "--headless=new", "--disable-gpu", "--hide-scrollbars",
                     "--window-size=%d,%d" % (vw, vh), "--screenshot=" + png,
-                    "--virtual-time-budget=" + budget,
+                    "--virtual-time-budget=%d" % spec.get("budget", 6000),
                     "file:///" + page.replace("\\", "/")], capture_output=True)
     if not os.path.exists(png):
         sys.exit("그림 '%s' 촬영 실패" % name)
+    crop = spec.get("crop")
+    if crop:
+        try:
+            from PIL import Image
+        except ImportError:
+            sys.exit("crop 옵션에는 Pillow가 필요합니다:  pip install pillow")
+        im = Image.open(png)
+        box = (max(0, crop[0]), max(0, crop[1]), min(im.width, crop[2]), min(im.height, crop[3]))
+        buf = io.BytesIO()
+        im.crop(box).save(buf, format="PNG", optimize=True)
+        return buf.getvalue()
     return io.open(png, "rb").read()
 
 
@@ -138,7 +188,7 @@ def md_to_html(md, figs):
         line = raw.strip()
 
         # 그림: ![캡션](fig:이름)
-        m = re.match(r"^!\[(.*)\]\(fig:([a-z]+)\)$", line)
+        m = re.match(r"^!\[(.*)\]\(fig:([a-z0-9_]+)\)$", line)
         if m:
             close_lists()
             cap, key = m.group(1), m.group(2)
@@ -222,7 +272,7 @@ def main():
     pdf_path = pdf_path if os.path.isabs(pdf_path) else os.path.join(ROOT, pdf_path)
 
     md = io.open(md_path, encoding="utf-8").read()
-    needed = sorted(set(re.findall(r"\]\(fig:([a-z]+)\)", md)))
+    needed = sorted(set(re.findall(r"\]\(fig:([a-z0-9_]+)\)", md)))
 
     tmpdir = tempfile.mkdtemp(prefix="manual_")
     figs = {}
