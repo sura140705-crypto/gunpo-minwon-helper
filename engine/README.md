@@ -66,7 +66,8 @@ bash tools/pack-kiosk.sh          # 키오스크배포/ → 키오스크배포.z
 | `signatureHI(v,state)` | 서명·날인 형광 박스 배열(내용 있을 때만) |
 | `STEPS[]` | `{n,short,title,q,why,kind,body(A),required(state)}` |
 | `applySample(state,kind)` | 작성예시 채우기 |
-| `checkVisible(field,state)` | 선택 ○ 를 조건부로 숨김(해당 없는 항목 잔상 방지) |
+| `checkVisible(field,state)` | 선택 표기를 조건부로 숨김(해당 없는 항목 잔상 방지) |
+| `checkMark` / `checkSize` | 선택 표기 기호·크기 (기본 `"○"`·12pt). 서식 머리말이 지시하는 기호를 따를 것 — 가족관계등록 신고서는 영표 `○`, `[ ]` 를 쓰는 부동산거래계약 신고서는 `"✔"`·8pt |
 
 단계 `body(A)`는 `A.inputHtml/choiceHtml/toggleHtml/sumRow/state/formatMoney/digits/…`를 써서 HTML 문자열을 반환합니다.
 

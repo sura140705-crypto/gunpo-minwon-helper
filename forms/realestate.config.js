@@ -89,6 +89,8 @@ var FORM={
   org:{ orgName:"경기도 군포시", officeName:"군포시청 민원실" },
   sampleLabels:["작성예시(아파트 매매)","작성예시(입주권 전매)"],
   sampleKinds:["apt","right"],
+  /* 이 서식은 머리말이 "[  ]에는 해당하는 곳에 √표를 합니다" — 영표(○)가 아니라 체크 */
+  checkMark:"✔", checkSize:8,
   /* 선택 즉시 조건부 입력칸이 나타나야 하는 항목 */
   rerenderOnSet:["d_kind","d_supply","d_rightKind","f_visaType"],
 
