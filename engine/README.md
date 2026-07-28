@@ -17,7 +17,13 @@ tools/
   sync-kiosk.sh    루트 배포 HTML → 키오스크배포/ · kiosk-app/app/ 동기화
   pack-kiosk.sh    키오스크배포/ → 키오스크배포.zip (전달용, .gitignore·재생성 가능)
   make-manual.py   운영문서 .md → 배포용 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입)
+  embed-logo.py    assets/gunpo-logo.png → 허브 상단바·입력 패널 머리에 로고 삽입
 ```
+
+> **로고**: `python tools/embed-logo.py` 를 돌리면 허브(민트 원본)와 서식 도우미
+> 입력 패널 파란 머리(흰색 반전본)에 base64로 박힌다. `--remove` 로 원상복구.
+> `engine/base.html` 도 함께 고치므로 **엔진 서식 4종은 재빌드**해야 반영된다.
+> 로고는 화면 전용이며 인쇄물(서식)에는 절대 나오지 않는다(8종 인쇄 0px 검증).
 
 > **운영문서 PDF**: `운영문서/*.md` 가 원본이고 PDF는 항상 다시 만든다.
 > 서식을 추가하면 `.md` 를 고치고 `python tools/make-manual.py` 를 돌릴 것.
