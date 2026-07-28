@@ -57,6 +57,7 @@
   /* 얹는 글자 = 검은 펜 느낌 */
   .ov{position:absolute;transform:translate(-50%,-50%);color:#111;font-weight:700;line-height:1;white-space:nowrap;}
   .ov.o{color:#c0392b;font-weight:900;-webkit-text-stroke:0.5px #c0392b;}  /* 선택항목 영표 ○ (진하게) */
+  .ov.o.blk{color:#111;-webkit-text-stroke-color:#111;}   /* 검정 표기(√표 서식) — FORM.checkBlack */
   .ov.t{transform:translateY(-50%);}            /* 좌측정렬 자유 텍스트(세로중앙; wrap 2줄도 칸 중앙) */
   .ov.r{transform:translate(-100%,-50%);}       /* 우측정렬(기준점=우측 끝) */
   /* 현재 단계 강조(화면 전용) */
@@ -172,6 +173,7 @@
     .paper{box-shadow:none;width:auto;margin:0;padding:0;}
     .ov{color:#000 !important;}
     .ov.o{color:#c0392b !important;}
+    .ov.o.blk{color:#111 !important;}
   }
 </style>
 <!--GUNPO-LOGO-->
@@ -345,8 +347,9 @@ var FORM={
   org:{ orgName:"경기도 군포시", officeName:"군포시청 민원실" },
   sampleLabels:["작성예시(아파트 매매)","작성예시(입주권 전매)"],
   sampleKinds:["apt","right"],
-  /* 이 서식은 머리말이 "[  ]에는 해당하는 곳에 √표를 합니다" — 영표(○)가 아니라 체크 */
-  checkMark:"✔", checkSize:8,
+  /* 이 서식은 머리말이 "[  ]에는 해당하는 곳에 √표를 합니다" — 영표(○)가 아니라 체크,
+     색도 신고서 5종의 빨간 영표와 달리 검정으로 표기한다. */
+  checkMark:"✔", checkSize:8, checkBlack:true,
   /* 선택 즉시 조건부 입력칸이 나타나야 하는 항목 */
   rerenderOnSet:["d_kind","d_supply","d_rightKind","f_visaType"],
 
@@ -561,12 +564,13 @@ var FORM={
     return v;
   },
 
-  /* 인쇄 후 서명·날인해야 하는 칸 — 이름이 채워졌을 때만 형광 */
+  /* 인쇄 후 서명·날인해야 하는 자리 = 우측 「(서명 또는 인)」 칸.
+     이름 옆이 아니라 이 괄호 위에 직접 서명·날인한다(실측 x 466.1~516.7). */
   signatureHI:function(v){
     var HI=[];
-    if(v.sign_seller) HI.push([305,729.4,462,740.4]);
-    if(v.sign_buyer)  HI.push([305,739.5,462,750.5]);
-    if(v.sign_agent)  HI.push([343,749.5,462,760.5]);
+    if(v.sign_seller) HI.push([464.5,735.6,518.5,744.0]);   // 매도인
+    if(v.sign_buyer)  HI.push([464.5,743.7,518.5,752.0]);   // 매수인
+    if(v.sign_agent)  HI.push([464.5,751.8,518.5,760.3]);   // 개업공인중개사
     return HI;
   },
 
@@ -662,17 +666,24 @@ var FORM={
       q:"공인중개사를 통해 거래했나요? 직거래라면 그대로 [다음]을 누르세요.",
       why:"중개사가 중개한 거래는 중개사가 신고 의무자입니다. 매도인·매수인끼리 직접 거래(직거래)했다면 두 사람이 함께 신고합니다.",
       kind:"agent",
+      required:function(s){ var m=[];
+        if(s.hasAgent){
+          if(!String(s.a_name||"").trim()) m.push("개업공인중개사 성명");
+          if(!digits(s.a_phone)) m.push("개업공인중개사 전화번호(사무실)");
+        }
+        return m; },
       body:function(A){ var h='';
         h+='<div class="opts">'+A.toggleHtml("hasAgent","개업공인중개사가 중개했습니다")+'</div>';
         if(!A.state.hasAgent)
           return h+'<div class="note-box">직거래는 <b>매도인과 매수인이 함께</b> 신고합니다. '
             +'한쪽이 신고를 거부하면 단독으로 신고할 수 있고, 이때는 <b>단독신고사유서</b>를 첨부합니다.</div>';
-        h+=A.inputHtml({k:"a_name", label:"성명(법인명)", ph:"박중개"});
+        h+=A.inputHtml({k:"a_name", label:"성명(법인명)", req:true, ph:"박중개"});
         h+=A.inputHtml({k:"a_jumin", label:"주민등록번호(법인등록번호)", type:"jumin"});
         h+=A.inputHtml({k:"a_office", label:"상호", half:true, ph:"○○공인중개사사무소"});
         h+=A.inputHtml({k:"a_regno", label:"등록번호", half:true, ph:"41410-2026-00000"});
         h+=A.inputHtml({k:"a_addr", label:"사무소 소재지", ph:"경기도 군포시 …"});
-        h+=A.inputHtml({k:"a_phone", label:"전화번호", type:"phone", half:true});
+        h+=A.inputHtml({k:"a_phone", label:"전화번호 (사무실)", type:"phone", req:true, ph:"031-000-0000",
+          help:"사무소 전화번호는 반드시 적어야 합니다. 휴대전화번호로 대신할 수 없습니다."});
         h+=A.inputHtml({k:"a_mobile", label:"휴대전화번호", type:"phone", half:true});
         return h; }},
 
@@ -705,20 +716,27 @@ var FORM={
 
     {n:7, short:"소재지·면적", title:"⑥⑦ 어디에 있는 부동산인가요?",
       q:"거래한 부동산의 소재지와 면적을 적으세요.",
-      why:"소재지는 지번까지(아파트 등은 동·호수까지) 적습니다. 면적은 토지대장의 토지면적, 건축물대장의 건축물 면적(아파트 등 집합건축물은 전용면적)을 적습니다.",
+      why:"소재지는 반드시 지번주소로, 지번까지(아파트 등은 동·호수까지) 적습니다. 면적은 토지대장의 토지면적, 건축물대장의 건축물 면적(아파트 등 집합건축물은 전용면적)을 적습니다.",
       kind:"parcel",
       required:function(s){ return String(s.p_addr||"").trim()?[]:["소재지"]; },
       body:function(A){ var h='';
-        h+=A.inputHtml({k:"p_addr", label:"⑥ 소재지", req:true, ph:"경기도 군포시 산본로 000, 101동 1001호"});
+        h+='<div class="note-box"><b>⚠️ 소재지는 지번주소로 적습니다.</b> 도로명주소(○○로 00)로 적으면 '
+          +'접수되지 않습니다. 등기사항증명서·토지대장에 적힌 <b>지번</b>(○○동 000-0)으로, '
+          +'아파트 등 집합건축물은 <b>동·호수까지</b> 적으세요.</div>';
+        h+=A.inputHtml({k:"p_addr", label:"⑥ 소재지 (지번주소)", req:true,
+          ph:"경기도 군포시 산본동 000-0 101동 1001호",
+          help:"도로명주소 아님. ①② 주소란(주민등록 주소)은 도로명으로 적어도 되지만, 이 칸은 지번주소여야 합니다."});
         h+=A.inputHtml({k:"p_jimok", label:"지목", half:true, ph:"대",
           help:"토지대장에 적힌 지목(대, 전, 답 등)."});
-        h+=A.inputHtml({k:"p_landArea", label:"토지면적(㎡)", half:true, ph:"52.43"});
+        h+=A.inputHtml({k:"p_landArea", label:"토지면적(㎡)", ph:"45000",
+          help:"아파트 등 집합건축물은 내 지분이 아니라 그 아파트 토지(단지 대지)의 전체 면적을 적습니다. 내 몫은 아래 대지권비율로 나타냅니다."});
         h+='<div class="q-help">토지 거래지분 — 여러 명이 나눠 살 때만. 예) 2분의 1</div>';
         h+=A.inputHtml({k:"p_landShareDen", label:"토지 지분 ( ○○ 분의", half:true});
         h+=A.inputHtml({k:"p_landShareNum", label:"○○ )", half:true});
-        h+='<div class="q-help" style="margin-top:8px">대지권비율 — 아파트 등 집합건축물의 등기사항증명서에 적힌 비율. 예) 45000분의 52</div>';
-        h+=A.inputHtml({k:"p_daejiDen", label:"대지권비율 ( ○○ 분의", half:true});
-        h+=A.inputHtml({k:"p_daejiNum", label:"○○ )", half:true});
+        h+='<div class="q-help" style="margin-top:8px">대지권비율 — 아파트 등 집합건축물의 등기사항증명서에 적힌 비율. '
+          +'<b>분모(왼쪽)는 위 토지면적, 즉 단지 전체 면적</b>이고 분자(오른쪽)가 내 몫입니다. 예) 45000분의 52.43</div>';
+        h+=A.inputHtml({k:"p_daejiDen", label:"대지권비율 ( ○○ 분의", half:true, ph:"45000"});
+        h+=A.inputHtml({k:"p_daejiNum", label:"○○ )", half:true, ph:"52.43"});
         h+=A.inputHtml({k:"p_bldgArea", label:"건축물면적(㎡)", half:true, ph:"84.97",
           help:"아파트 등 집합건축물은 전용면적, 그 밖은 연면적."});
         h+=A.inputHtml({k:"p_bldgShareDen", label:"건축물 지분 ( ○○ 분의", half:true});
@@ -828,11 +846,14 @@ var FORM={
       b_natl:"대한민국", b_mobile:"01098765432",
       hasAgent:true, a_name:"박중개", a_jumin:"7205051000000",
       a_office:"산본공인중개사사무소", a_regno:"41410-2026-00001",
-      a_addr:"경기도 군포시 산본로 111, 1층", a_mobile:"01055556666",
+      a_addr:"경기도 군포시 산본로 111, 1층",
+      a_phone:"0313901234", a_mobile:"01055556666",
       d_kind:"토지 및 건축물", d_bldgKind:"아파트",
-      p_addr:"경기도 군포시 산본로 000, 101동 1001호",
-      p_jimok:"대", p_landArea:"52.43", p_bldgArea:"84.97",
-      p_daejiDen:"45000", p_daejiNum:"52",
+      // ⑥ 소재지는 지번주소(도로명 아님). 토지면적은 단지 대지 전체 면적이고,
+      // 내 몫은 대지권비율(45000분의 52.43)로 나타낸다 → ⑦ 계약대상 토지면적과 일치.
+      p_addr:"경기도 군포시 산본동 000-0 101동 1001호",
+      p_jimok:"대", p_landArea:"45000", p_bldgArea:"84.97",
+      p_daejiDen:"45000", p_daejiNum:"52.43",
       c_landArea:"52.43", c_bldgArea:"84.97",
       pr_item:"350000000", pr_total:"350000000",
       pr_down:"35000000", dt_contract:"2026.07.10",
@@ -846,17 +867,17 @@ var FORM={
         hasAgent:false, a_name:"", a_jumin:"", a_office:"", a_regno:"", a_addr:"", a_mobile:"",
         d_kind:"토지 및 건축물", d_bldgKind:"아파트",
         d_supply:"전매", d_rightKind:"입주권",
-        p_addr:"경기도 군포시 금정동 000 재건축 조합 101동 1502호",
-        p_jimok:"대", p_landArea:"48.10", p_bldgArea:"74.52",
-        p_daejiDen:"38000", p_daejiNum:"48",
+        p_addr:"경기도 군포시 금정동 000-0 101동 1502호",
+        p_jimok:"대", p_landArea:"38000", p_bldgArea:"74.52",
+        p_daejiDen:"38000", p_daejiNum:"48.10",
         c_landArea:"48.10", c_bldgArea:"74.52",
         pr_item:"420000000", pr_supply:"380000000",
         pr_balcony:"12000000", pr_extra:"28000000",
         pr_total:"420000000", pr_down:"42000000", dt_contract:"2026.07.05",
         pr_mid:"", dt_mid:"", pr_bal:"378000000", dt_bal:"2026.09.30",
-        v_addr:"경기도 군포시 금정동 000-0", v_jimok:"대",
-        v_landArea:"66.20", v_bldgArea:"59.80",
-        v_daejiDen:"38000", v_daejiNum:"66",
+        v_addr:"경기도 군포시 금정동 000-1", v_jimok:"대",
+        v_landArea:"38000", v_bldgArea:"59.80",
+        v_daejiDen:"38000", v_daejiNum:"66.20",
         v_cLandArea:"66.20", v_cBldgArea:"59.80", v_bldgType:"아파트",
         v_total:"330000000", v_extra:"28000000", v_right:"302000000",
         v_down:"33000000", v_mid:"", v_bal:"297000000",
@@ -1000,7 +1021,8 @@ function renderForm(){
   // 선택항목 표기 — 서식이 지시하는 기호를 쓴다.
   // 가족관계등록 신고서는 '영표(○)', 부동산거래계약 신고서 등 [ ] 서식은 '√표'.
   var MK=FORM.checkMark||"○", MKS=FORM.checkSize||12;
-  var circle=function(p){ return '<span class="ov o" style="left:'+X(p[0])+'%;top:'+Y(p[1])
+  var MKC=FORM.checkBlack?" blk":"";     // 검정 표기(인쇄 CSS가 !important라 클래스로 처리)
+  var circle=function(p){ return '<span class="ov o'+MKC+'" style="left:'+X(p[0])+'%;top:'+Y(p[1])
     +'%;font-size:'+fs(MKS)+'cqw;">'+MK+'</span>'; };
   Object.keys(CO.checks||{}).forEach(function(field){
     if(FORM.checkVisible && !FORM.checkVisible(field,state)) return;

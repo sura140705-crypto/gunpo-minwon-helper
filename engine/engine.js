@@ -129,7 +129,8 @@ function renderForm(){
   // 선택항목 표기 — 서식이 지시하는 기호를 쓴다.
   // 가족관계등록 신고서는 '영표(○)', 부동산거래계약 신고서 등 [ ] 서식은 '√표'.
   var MK=FORM.checkMark||"○", MKS=FORM.checkSize||12;
-  var circle=function(p){ return '<span class="ov o" style="left:'+X(p[0])+'%;top:'+Y(p[1])
+  var MKC=FORM.checkBlack?" blk":"";     // 검정 표기(인쇄 CSS가 !important라 클래스로 처리)
+  var circle=function(p){ return '<span class="ov o'+MKC+'" style="left:'+X(p[0])+'%;top:'+Y(p[1])
     +'%;font-size:'+fs(MKS)+'cqw;">'+MK+'</span>'; };
   Object.keys(CO.checks||{}).forEach(function(field){
     if(FORM.checkVisible && !FORM.checkVisible(field,state)) return;

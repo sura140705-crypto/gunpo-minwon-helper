@@ -57,6 +57,7 @@
   /* 얹는 글자 = 검은 펜 느낌 */
   .ov{position:absolute;transform:translate(-50%,-50%);color:#111;font-weight:700;line-height:1;white-space:nowrap;}
   .ov.o{color:#c0392b;font-weight:900;-webkit-text-stroke:0.5px #c0392b;}  /* 선택항목 영표 ○ (진하게) */
+  .ov.o.blk{color:#111;-webkit-text-stroke-color:#111;}   /* 검정 표기(√표 서식) — FORM.checkBlack */
   .ov.t{transform:translateY(-50%);}            /* 좌측정렬 자유 텍스트(세로중앙; wrap 2줄도 칸 중앙) */
   .ov.r{transform:translate(-100%,-50%);}       /* 우측정렬(기준점=우측 끝) */
   /* 현재 단계 강조(화면 전용) */
@@ -172,6 +173,7 @@
     .paper{box-shadow:none;width:auto;margin:0;padding:0;}
     .ov{color:#000 !important;}
     .ov.o{color:#c0392b !important;}
+    .ov.o.blk{color:#111 !important;}
   }
 </style>
 <!--GUNPO-LOGO-->
