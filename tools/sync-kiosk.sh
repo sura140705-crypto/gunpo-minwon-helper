@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # 배포 HTML 3곳 동기화 도구
 #
-# 루트(원본) → 키오스크배포/ , kiosk-app/app/ 로 8개 배포 파일을 복사한다.
+# 루트(원본) → 키오스크배포/ , kiosk-app/app/ 로 배포 파일(서식 helper + index.html)을 복사한다.
 # 서식을 수정하면 루트 파일만 고치고 이 스크립트를 돌리면 두 배포 위치가 맞춰진다.
 #
 # 사용법:
@@ -24,6 +24,7 @@ FILES=(
   marriage-helper-v1.html
   naming-helper-v1.html
   passport-helper-v1.html
+  realestate-helper-v1.html
   index.html
 )
 

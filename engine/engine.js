@@ -61,6 +61,11 @@ function formatJumin(v){
 function formatPhone(v){
   var d=String(v||"").replace(/\D/g,"").slice(0,11);
   if(d.length<4) return d;
+  if(d.slice(0,2)==="02"){                       // 서울 지역번호만 2자리
+    if(d.length<=5) return d.slice(0,2)+"-"+d.slice(2);
+    if(d.length<=9) return d.slice(0,2)+"-"+d.slice(2,5)+"-"+d.slice(5);
+    return d.slice(0,2)+"-"+d.slice(2,6)+"-"+d.slice(6);
+  }
   if(d.length<7) return d.slice(0,3)+"-"+d.slice(3);
   if(d.length<11) return d.slice(0,3)+"-"+d.slice(3,6)+"-"+d.slice(6);
   return d.slice(0,3)+"-"+d.slice(3,7)+"-"+d.slice(7);
@@ -73,6 +78,8 @@ function formatDateFlexible(v){
   return raw;
 }
 function digits(s){ return String(s||"").replace(/\D/g,""); }
+/* 금액: 숫자만 남기고 3자리마다 콤마 (거래가격 등 — 0 자릿수 확인용) */
+function formatMoney(v){ var d=digits(v).replace(/^0+(?=\d)/,""); return d?d.replace(/\B(?=(\d{3})+(?!\d))/g,","):""; }
 function j1(s){ return digits(s).slice(0,6); }
 function j2(s){ return digits(s).slice(6,13); }
 function ymd(s){ var m=String(s||"").match(/(\d{4})\D*(\d{1,2})\D*(\d{1,2})/); return m?[m[1],m[2],m[3]]:["","",""]; }
@@ -146,12 +153,13 @@ function num(i){ return "①②③④⑤⑥⑦⑧⑨⑩".charAt(i); }
 
 function inputHtml(f){
   var v=state[f.k]||"", req=f.req?'<span class="fb fb-req">필수</span>':'<span class="fb fb-opt">선택</span>';
+  if(f.type==="money") v=formatMoney(v);   // 재렌더 시에도 콤마 유지
   var cls="field"+(f.half?" half":"");
   var h='<div class="'+cls+'"><label class="field-label" for="in_'+f.k+'">'+esc(f.label)+req+'</label>';
   if(f.help) h+='<div class="q-help">'+esc(f.help)+'</div>';
   h+='<input class="text-input" id="in_'+f.k+'" data-f="'+f.k+'" data-t="'+(f.type||"text")+'" '
     +'value="'+esc(v)+'" '
-    +(f.type==="jumin"||f.type==="phone"?'inputmode="numeric" ':'')+'autocomplete="off"></div>';
+    +(f.type==="jumin"||f.type==="phone"||f.type==="money"?'inputmode="numeric" ':'')+'autocomplete="off"></div>';
   return h;
 }
 function choiceHtml(field, opts, help){
@@ -177,7 +185,8 @@ function sumRow(k,val){
 
 // 서식 config의 단계 body(API)에 넘길 헬퍼 묶음
 var API={ get state(){return state;}, esc:esc, inputHtml:inputHtml, choiceHtml:choiceHtml,
-  toggleHtml:toggleHtml, sumRow:sumRow, num:num, formatJumin:formatJumin, formatPhone:formatPhone };
+  toggleHtml:toggleHtml, sumRow:sumRow, num:num, formatJumin:formatJumin, formatPhone:formatPhone,
+  formatMoney:formatMoney, digits:digits };
 
 function renderStepBody(step){
   var def=FORM.STEPS[step-1], h='';
@@ -246,6 +255,7 @@ function onInput(e){
     if(FORM.onJuminChange) FORM.onJuminChange(f, val, state);
   }
   else if(typ==="phone"){ val=t.value.replace(/\D/g,"").slice(0,11); state[f]=val; t.value=formatPhone(val); }
+  else if(typ==="money"){ val=t.value.replace(/\D/g,"").slice(0,15); state[f]=val; t.value=formatMoney(val); }
   else { state[f]=val; }
   renderForm();
 }

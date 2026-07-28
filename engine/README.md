@@ -61,8 +61,21 @@ bash tools/pack-kiosk.sh          # 키오스크배포/ → 키오스크배포.z
 | `signatureHI(v,state)` | 서명·날인 형광 박스 배열(내용 있을 때만) |
 | `STEPS[]` | `{n,short,title,q,why,kind,body(A),required(state)}` |
 | `applySample(state,kind)` | 작성예시 채우기 |
+| `checkVisible(field,state)` | 선택 ○ 를 조건부로 숨김(해당 없는 항목 잔상 방지) |
 
-단계 `body(A)`는 `A.inputHtml/choiceHtml/toggleHtml/sumRow/state/…`를 써서 HTML 문자열을 반환합니다.
+단계 `body(A)`는 `A.inputHtml/choiceHtml/toggleHtml/sumRow/state/formatMoney/digits/…`를 써서 HTML 문자열을 반환합니다.
+
+입력칸 `type` : `text`(기본) · `jumin`(6-7 하이픈) · `phone`(02는 2자리 지역번호) · `money`(3자리 콤마) · `date`(숫자 8자리 → yyyy.mm.dd, blur 시).
+
+### 참고할 config
+
+| 파일 | 성격 |
+|---|---|
+| `forms/naming.config.js` | 가장 단순한 표준형 신고서 |
+| `forms/death.config.js` | 다지선다 + 조건부 상세 입력 |
+| `forms/birth.config.js` | 필드가 많은 복잡한 신고서 |
+| `forms/cert.config.js` | 체크박스 + 통수(건수) 위주 |
+| `forms/realestate.config.js` | 금액·면적·지분 위주, 조건부 구역(외국인·중개사·종전 부동산)이 많은 서식 |
 
 ## 검증
 
