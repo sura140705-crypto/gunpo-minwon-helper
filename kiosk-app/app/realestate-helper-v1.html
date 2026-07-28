@@ -179,7 +179,10 @@
   .phone-head{position:relative;}
   .phone-head .gunpo-logo{position:absolute;right:18px;top:15px;height:28px;width:auto;
     pointer-events:none;}
-  .phone-head .wiz-title,.phone-head .wiz-count{padding-right:56px;}
+  /* 로고 자리를 비우면 제목 폭이 좁아진다. 긴 제목이 두 줄로 넘어가 패널이
+     내려앉지 않도록 한 줄 고정 + 넘칠 때만 글자를 줄인다(아래 스크립트). */
+  .phone-head .wiz-title{padding-right:56px;white-space:nowrap;}
+  .phone-head .wiz-count{padding-right:56px;}
   @media (max-width:860px){
     .phone-head .gunpo-logo{height:24px;right:14px;top:14px;}
     .phone-head .wiz-title,.phone-head .wiz-count{padding-right:48px;}
@@ -1276,5 +1279,36 @@ init();
   else reset();
 })();
 </script>
-</body>
+<!--GUNPO-LOGO-->
+<script>
+(function(){
+  var MIN=14;                                  // 이보다 작게는 줄이지 않는다
+  // 글자 실제 폭은 Range로 잰다. scrollWidth/clientWidth 비교는 쓸 수 없다 —
+  // 로고 자리로 준 padding-right가 clientWidth에 포함되어, 제목이 로고 아래로
+  // 파고들어도 '넘치지 않음'으로 나온다.
+  function textWidth(t, rng){ rng.selectNodeContents(t); return rng.getBoundingClientRect().width; }
+  function fit(){
+    var t=document.getElementById("wizTitle"); if(!t || !t.firstChild) return;
+    t.style.fontSize="";                       // 원래(CSS) 크기에서 다시 계산
+    var cs=getComputedStyle(t);
+    var avail=t.clientWidth - parseFloat(cs.paddingLeft||0) - parseFloat(cs.paddingRight||0);
+    if(!(avail>0)) return;
+    var rng=document.createRange(), s=parseFloat(cs.fontSize)||20, guard=0;
+    while(textWidth(t,rng)>avail && s>MIN && guard++<40){
+      s-=0.5; t.style.fontSize=s+"px";
+    }
+    rng.detach && rng.detach();
+  }
+  function start(){
+    var t=document.getElementById("wizTitle"); if(!t) return;
+    fit();
+    // 글자 크기는 style 속성이라 관찰 대상(childList·characterData)이 아니다 → 무한루프 없음
+    new MutationObserver(fit).observe(t,{childList:true,characterData:true,subtree:true});
+    window.addEventListener("resize", fit);
+  }
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",start);
+  else start();
+})();
+</script>
+<!--/GUNPO-LOGO--></body>
 </html>
