@@ -71,6 +71,15 @@
   .go{margin-left:auto;font-size:15px;font-weight:700;color:var(--blue);}
   .card.soon .go{display:none;}
 
+  /* ===== 개인정보 강조 띠 (화면 상단) ===== */
+  .privacy-bar{display:flex;gap:14px;align-items:flex-start;
+    background:#fff5f5;border:1.5px solid #f0b4b4;border-left:7px solid #c0392b;
+    border-radius:12px;padding:16px 20px;margin:0 0 22px;}
+  .privacy-bar .pb-ic{flex:none;font-size:26px;line-height:1.25;}
+  .privacy-bar p{margin:0;font-size:17.5px;color:#333;line-height:1.65;}
+  .privacy-bar p + p{margin-top:6px;}
+  .key{color:#c0392b;font-weight:800;}
+
   /* ===== 하단 안내 ===== */
   .notice{background:#fff;border:1px solid var(--line);border-radius:14px;
     padding:18px 22px;margin-top:8px;}
@@ -103,6 +112,15 @@
 </header>
 
 <main class="wrap">
+  <!-- 개인정보 안내: 민원실 요청으로 화면 상단에 별도 강조 표기 -->
+  <div class="privacy-bar" role="note" aria-label="개인정보 보호 안내">
+    <span class="pb-ic" aria-hidden="true">🔒</span>
+    <div>
+      <p>공용 PC에서 사용한 후에는 <b class="key">창을 닫아 개인정보가 남지 않도록</b> 해 주세요.</p>
+      <p>출력물에는 <b class="key">개인정보가 포함</b>되므로 <b class="key">본인이 직접 수령·관리</b>해야 합니다.</p>
+    </div>
+  </div>
+
   <section class="hero">
     <h2>어떤 서식을 작성하시나요?</h2>
     <p>아래에서 필요한 서식을 고르면, 한 단계씩 쉬운 안내를 따라 작성할 수 있습니다.
@@ -117,8 +135,8 @@
       <li>본 도구는 서식 작성을 돕기 위한 <b>미리보기 도구</b>입니다. 공식 신청서와 항목·배치가 다를 수 있습니다.</li>
       <li>입력한 내용은 <b>서버로 전송되지 않으며 저장되지 않습니다.</b> 브라우저를 새로고침하면 사라집니다.</li>
       <li>실제 접수 가능 여부와 필요 서류는 담당 직원의 확인을 따릅니다.</li>
-      <li>공용 PC에서 사용한 후에는 창을 닫아 개인정보가 남지 않도록 해 주세요.</li>
-      <li>출력물에는 개인정보가 포함되므로 본인이 직접 수령·관리해야 합니다.</li>
+      <li>공용 PC에서 사용한 후에는 <b class="key">창을 닫아 개인정보가 남지 않도록</b> 해 주세요.</li>
+      <li>출력물에는 <b class="key">개인정보가 포함</b>되므로 <b class="key">본인이 직접 수령·관리</b>해야 합니다.</li>
     </ul>
   </div>
 </main>

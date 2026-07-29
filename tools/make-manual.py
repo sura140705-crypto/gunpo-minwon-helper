@@ -44,7 +44,12 @@ FIGURES = {
     # 유휴 경고 오버레이 — 대기시간을 경고시간과 같게 줄여 즉시 표시시킨다(사본만 수정)
     "idle":       {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
                    "js": 'fillSample("adult"); state.step=3; renderAll();',
-                   "patch": {"IDLE_MS = 5*60*1000": "IDLE_MS = 30*1000"}},
+                   "patch": {"IDLE_MS = 3*60*1000": "IDLE_MS = 30*1000"}},
+    # 인쇄 직후 초기화 안내 — afterprint 를 직접 발생시키고, 허브 이동은 막아 화면만 담는다
+    "printed":    {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
+                   "js": 'fillSample("adult"); state.step=3; renderAll();'
+                         ' window.dispatchEvent(new Event("afterprint"));',
+                   "patch": {"PRINTED_MS = 2600": "PRINTED_MS = 9999999"}},
     "marriage":   {"file": "marriage-helper-v1.html", "size": (1440, 1000),
                    "js": 'fillSample("adult"); state.step=4; renderAll();'},
     "realestate": {"file": "realestate-helper-v1.html", "size": (1440, 1000),
