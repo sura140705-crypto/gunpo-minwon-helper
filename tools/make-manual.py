@@ -45,6 +45,11 @@ FIGURES = {
     "idle":       {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
                    "js": 'fillSample("adult"); state.step=3; renderAll();',
                    "patch": {"IDLE_MS = 3*60*1000": "IDLE_MS = 30*1000"}},
+    # 인쇄 직전 안내 창 — 실제로 [인쇄] 를 눌러 띄우고, 인쇄는 막아 둔다
+    "notice":     {"file": "passport-helper-v1.html", "size": (1440, 900), "budget": 900,
+                   "js": 'fillSample("adult"); state.step=3; renderAll();'
+                         ' window.print=function(){};'
+                         ' document.getElementById("btnPrint").click();'},
     # 인쇄 직후 초기화 안내 — afterprint 를 직접 발생시키고, 허브 이동은 막아 화면만 담는다
     "printed":    {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
                    "js": 'fillSample("adult"); state.step=3; renderAll();'
