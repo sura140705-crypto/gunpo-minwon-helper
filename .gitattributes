@@ -1,2 +1,6 @@
 # 셸 스크립트는 항상 LF 유지 (CRLF 변환 시 실행 깨짐 방지)
 *.sh text eol=lf
+
+# 윈도우 스크립트는 항상 CRLF 유지 (LF 만 있으면 goto/label 처리가 깨질 수 있음)
+*.bat text eol=crlf
+*.ps1 text eol=crlf

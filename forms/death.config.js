@@ -228,7 +228,7 @@ var FORM={
     {n:8, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
       body:function(){
         return buildSummary()
-          +'<div class="info-box">인쇄하거나 PDF로 저장한 뒤, 신고인이 서명·날인을 직접 하여 민원실에 제출하세요. '
+          +'<div class="info-box">인쇄한 뒤, 신고인이 서명·날인을 직접 하여 민원실에 제출하세요. '
           +'사망진단서(또는 시체검안서) 등 첨부서류는 담당 직원이 안내합니다.</div>';
       }}
   ],

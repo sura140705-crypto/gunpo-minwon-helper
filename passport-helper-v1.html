@@ -359,7 +359,7 @@
     <button class="btn ghost" id="btnReset">초기화</button>
     <button class="btn ghost" id="btnFlip" title="입력란과 신청서의 좌우 위치를 바꿉니다">↔ 좌우 바꾸기</button>
     <button class="btn" id="btnPreview">미리보기</button>
-    <button class="btn primary" id="btnPrint">인쇄 / PDF 저장</button>
+    <button class="btn primary" id="btnPrint">🖨️ 인쇄</button>
   </div>
 </header>
 
@@ -1109,7 +1109,7 @@ function openPreview(){
   closePreview();
   const m=document.createElement("div"); m.className="modal-back"; m.id="pvModal";
   m.innerHTML='<div class="modal-box"><div class="modal-top"><b>여권발급신청서 미리보기</b>'+
-    '<span><button class="btn primary" id="pvPrint">인쇄 / PDF 저장</button> '+
+    '<span><button class="btn primary" id="pvPrint">🖨️ 인쇄</button> '+
     '<button class="btn ghost" id="pvClose">닫기</button></span></div>'+
     '<div class="print-tip modal">🖨️ 인쇄 창에서 <b>여백 «없음»</b> · <b>배율 «100% (실제 크기)»</b>로 맞춰 주세요.</div>'+
     '<div class="modal-scroll"><div><div class="paper"><div class="stage">'+
@@ -1333,7 +1333,7 @@ function renderSummary(){
   else if(needsProxy(state.data))
     h+='<div class="info-box">🧾 대리 신청이라, 인쇄하면 <b>「위임장」이 2쪽으로 함께 출력</b>됩니다. 입력하신 수임인(대리인)·위임인(신청인) 정보와 작성일이 자동으로 채워집니다. 수임인 생년월일·주소·전화번호는 <b>비워 두면 인쇄 후 손으로 적어도 됩니다.</b> 서명은 인쇄한 뒤 직접 하세요. (위임인 신분증 사본·관계 증빙 필요)</div>';
   h+='<div class="print-tip">🖨️ <b>인쇄할 때 꼭 확인하세요</b><br>인쇄 창에서 <b>여백 «없음»</b> · <b>배율 «100% (실제 크기)»</b>로 맞춰 주세요. 그래야 칸 위치가 정확해 여권 판독기가 제대로 읽습니다.</div>';
-  h+='<button type="button" class="btn primary" style="width:100%;padding:16px;font-size:18px;" data-act="print">🖨️ 신청서 인쇄 / PDF로 저장</button>';
+  h+='<button type="button" class="btn primary" style="width:100%;padding:16px;font-size:18px;" data-act="print">🖨️ 신청서 인쇄</button>';
   return h;
 }
 

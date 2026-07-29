@@ -200,7 +200,7 @@
     <button class="btn ghost hide-m" id="btnSampleMinor">작성예시(미성년)<span class="test-tag">테스트용</span></button>
     <button class="btn ghost" id="btnReset">초기화</button>
     <button class="btn" id="btnPreview">미리보기</button>
-    <button class="btn primary" id="btnPrint">인쇄 / PDF 저장</button>
+    <button class="btn primary" id="btnPrint">🖨️ 인쇄</button>
   </div>
 </header>
 
@@ -618,7 +618,7 @@ function renderStepBody(step){
   }
   else if(def.kind==="summary"){
     h+=buildSummary();
-    h+='<div class="info-box">인쇄하거나 PDF로 저장한 뒤, 서명·날인을 직접 하고 증인·부모 서명을 받아 '
+    h+='<div class="info-box">인쇄한 뒤, 서명·날인을 직접 하고 증인·부모 서명을 받아 '
       +'민원실에 제출하세요. 첨부서류(기본·혼인관계·가족관계증명서 등)는 담당 직원이 안내합니다.</div>';
   }
   return h;
