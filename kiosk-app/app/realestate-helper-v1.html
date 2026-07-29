@@ -1492,7 +1492,7 @@ init();
 (function(){
   var IDLE_MS = 3*60*1000;    // 무동작 대기 시간(3분)
   var WARN_SEC = 30;          // 초기화 전 경고(마지막 30초 카운트다운)
-  var PRINTED_MS = 2600;      // 인쇄 후 처음 화면으로 돌아가기까지(입력값은 즉시 가려짐)
+  var PRINTED_MS = 5000;      // 인쇄 후 처음 화면으로 돌아가기까지(입력값은 즉시 가려짐)
   var HOME = "index.html";    // 되돌아갈 처음 화면(허브 메뉴). 이동 시 입력값(메모리) 전부 소멸
   var warnTimer=null, tickTimer=null, remain=0, ov=null, numEl=null, locked=false;
 
@@ -1554,6 +1554,7 @@ init();
   window.addEventListener("afterprint", showPrinted);
   /* 인쇄 직전 안내 — 네이티브 alert 은 크기·색을 바꿀 수 없어(하단이 잘림)
      화면 모달로 대체한다. 확인을 누르면 그때 실제 인쇄창이 열린다.
+     개인정보 안내를 1번(맨 위)에 둔다 — 민원실 요청.
      화면이 낮으면(t) 여백·글자를 줄여 스크롤 없이 한 화면에 담는다. */
   window.__printNotice = function(whyLine, onOk){
     var old=document.getElementById("printNotice");
@@ -1573,19 +1574,19 @@ init();
     back.innerHTML=
       '<div style="background:#fff;border-radius:20px;max-width:820px;width:100%;max-height:96vh;overflow:auto;padding:'+PAD+';box-shadow:0 24px 70px rgba(0,0,0,.42);text-align:left;">'
       + '<div style="font-size:'+TTL+'px;font-weight:800;color:#1b5fc0;margin:0 0 '+TTLM+'px;">🖨️ 인쇄하기 전에 확인해 주세요</div>'
-      + '<div style="font-size:'+SEC+'px;font-weight:800;color:#123f7f;margin:0 0 8px;">1. 인쇄 창에서 이렇게 맞춰 주세요</div>'
+      + '<div style="font-size:'+SEC+'px;font-weight:800;color:#123f7f;margin:0 0 8px;">1. 개인정보 안내</div>'
+      + '<div style="margin:0 0 '+GAP+'px;padding:'+BOXP+';background:#fff5f5;border:2px solid #f0b4b4;border-left:7px solid #c0392b;border-radius:12px;font-size:'+PRIV+'px;line-height:1.6;">'
+      +   '<div style="margin-bottom:6px;"><b style="color:#c0392b;">출력물에는 개인정보가 들어 있습니다. 본인이 직접 수령·관리해 주세요.</b></div>'
+      +   '<div style="margin-bottom:6px;"><b style="color:#c0392b;">공용 PC입니다. 사용 후에는 창을 닫아 개인정보가 남지 않게 해 주세요.</b></div>'
+      +   '<div style="color:#333;">인쇄 창을 닫으면 <b>화면이 처음으로 초기화</b>됩니다. (인쇄를 취소한 경우에도)</div>'
+      + '</div>'
+      + '<div style="font-size:'+SEC+'px;font-weight:800;color:#123f7f;margin:0 0 8px;">2. 인쇄 창에서 이렇게 맞춰 주세요</div>'
       + '<div style="padding:'+BOXP+';background:#fff5f5;border:2px solid #f0b4b4;border-left:7px solid #c0392b;border-radius:12px;font-size:'+BASE+'px;line-height:1.6;">'
       +   '<div>여백(Margins) : <b style="color:#c0392b;font-size:'+BIG+'px;">없음</b></div>'
       +   '<div>배율(Scale) : <b style="color:#c0392b;font-size:'+BIG+'px;">100% (실제 크기)</b></div>'
       +   '<div style="font-size:'+NOTE+'px;font-weight:800;color:#c0392b;margin-top:5px;">※ ‘맞춤(Fit)’ · ‘축소’ 로 하면 안 됩니다</div>'
       + '</div>'
-      + '<div style="font-size:'+WHYF+'px;color:#5b626c;margin:7px 0 '+GAP+'px;">' + (whyLine||"") + '</div>'
-      + '<div style="font-size:'+SEC+'px;font-weight:800;color:#123f7f;margin:0 0 8px;">2. 개인정보 안내</div>'
-      + '<div style="padding:'+BOXP+';background:#fff5f5;border:2px solid #f0b4b4;border-left:7px solid #c0392b;border-radius:12px;font-size:'+PRIV+'px;line-height:1.6;">'
-      +   '<div style="margin-bottom:6px;"><b style="color:#c0392b;">출력물에는 개인정보가 들어 있습니다. 본인이 직접 수령·관리해 주세요.</b></div>'
-      +   '<div style="margin-bottom:6px;"><b style="color:#c0392b;">공용 PC입니다. 사용 후에는 창을 닫아 개인정보가 남지 않게 해 주세요.</b></div>'
-      +   '<div style="color:#333;">인쇄 창을 닫으면 <b>화면이 처음으로 초기화</b>됩니다. (인쇄를 취소한 경우에도)</div>'
-      + '</div>'
+      + '<div style="font-size:'+WHYF+'px;color:#5b626c;margin:7px 0 0;">' + (whyLine||"") + '</div>'
       + '<div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:'+GAP+'px;">'
       +   '<button type="button" id="pnCancel" style="font-family:inherit;font-size:'+(BTN-2)+'px;font-weight:700;color:#1b5fc0;background:#fff;border:2px solid #1b5fc0;border-radius:12px;padding:'+BTNP+';cursor:pointer;">취소</button>'
       +   '<button type="button" id="pnOk" style="font-family:inherit;font-size:'+BTN+'px;font-weight:800;color:#fff;background:#1b5fc0;border:0;border-radius:12px;padding:'+BTNP+';cursor:pointer;">인쇄 창 열기</button>'

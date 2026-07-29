@@ -54,7 +54,7 @@ FIGURES = {
     "printed":    {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
                    "js": 'fillSample("adult"); state.step=3; renderAll();'
                          ' window.dispatchEvent(new Event("afterprint"));',
-                   "patch": {"PRINTED_MS = 2600": "PRINTED_MS = 9999999"}},
+                   "patch": {"PRINTED_MS = 5000": "PRINTED_MS = 9999999"}},
     "marriage":   {"file": "marriage-helper-v1.html", "size": (1440, 1000),
                    "js": 'fillSample("adult"); state.step=4; renderAll();'},
     "realestate": {"file": "realestate-helper-v1.html", "size": (1440, 1000),
