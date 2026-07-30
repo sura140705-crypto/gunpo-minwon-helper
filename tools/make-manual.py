@@ -18,6 +18,7 @@ import base64, io, os, re, subprocess, sys, tempfile
 
 try:                       # 콘솔 코드페이지(cp949)와 무관하게 한글·기호 출력
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+    sys.stderr.reconfigure(encoding="utf-8", errors="replace")   # 오류 메시지도 깨지지 않게
 except Exception:
     pass
 
@@ -128,6 +129,14 @@ blockquote { margin:4mm 0; padding:3.5mm 5mm; background:#fff8e1;
 blockquote h3 { margin:0 0 2mm; color:#8a5a00; }
 blockquote ul { margin-bottom:0; }
 blockquote p:last-child { margin-bottom:0; }
+/* 도표·명령어 — 한글이 섞인 ASCII 도표는 한글이 정확히 2칸인 고정폭 글꼴이어야 정렬이 맞는다 */
+pre { font-family:'D2Coding','GulimChe','굴림체','DotumChe',Consolas,monospace;
+      font-size:8.6pt; line-height:1.5; white-space:pre; margin:3mm 0 4mm;
+      padding:3mm 4mm; background:#f5f7fa; border:1px solid #ccd4de; border-radius:4px;
+      page-break-inside:avoid; }
+code { font-family:'Consolas','Courier New',monospace; font-size:9.2pt;
+       background:#f0f3f7; padding:0 1mm; border-radius:3px; }
+pre code { background:none; padding:0; font-size:inherit; }
 table { width:100%; border-collapse:collapse; margin:3mm 0 4mm; font-size:9.8pt; }
 th,td { border:1px solid #c8d0da; padding:2.2mm 3mm; vertical-align:top; text-align:left; }
 th { background:#eef3fb; color:#123f7f; font-weight:700; }
@@ -222,6 +231,19 @@ def md_to_html(md, figs):
             i += 1
             continue
 
+        # 코드블록 (``` … ```) — 명령어·ASCII 도표. 공백을 그대로 살려야 정렬이 유지된다.
+        if line.startswith("```"):
+            close_lists()
+            i += 1
+            block = []
+            while i < len(lines) and not lines[i].strip().startswith("```"):
+                block.append(lines[i].rstrip())
+                i += 1
+            i += 1                       # 닫는 ``` 소비
+            out.append("<pre>%s</pre>" % ("\n".join(block).replace("&", "&amp;")
+                                          .replace("<", "&lt;").replace(">", "&gt;")))
+            continue
+
         if not line:
             close_lists(); i += 1; continue
 
@@ -296,6 +318,15 @@ def main():
     md = io.open(md_path, encoding="utf-8").read()
     needed = sorted(set(re.findall(r"\]\(fig:([a-z0-9_]+)\)", md)))
 
+    # 잠김은 그림 촬영 전에 확인한다 — 20장을 다 찍고 실패하면 촬영 시간이 통째로 버려진다.
+    before = os.path.getmtime(pdf_path) if os.path.exists(pdf_path) else None
+    if before is not None:
+        try:
+            io.open(pdf_path, "r+b").close()
+        except OSError:
+            sys.exit("PDF가 다른 프로그램에 열려 있습니다 — 뷰어·브라우저 탭을 닫고 다시 실행하십시오:\n  "
+                     + os.path.relpath(pdf_path, ROOT))
+
     tmpdir = tempfile.mkdtemp(prefix="manual_")
     figs = {}
     for name in needed:
@@ -320,11 +351,17 @@ def main():
 
     src_html = os.path.join(tmpdir, "manual.html")
     io.open(src_html, "w", encoding="utf-8").write(html)
-    subprocess.run([chrome(), "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
-                    "--print-to-pdf=" + pdf_path, "--virtual-time-budget=8000",
-                    "file:///" + src_html.replace("\\", "/")], capture_output=True)
+
+    # 크롬은 대상 PDF가 열려 있으면 조용히 쓰기를 포기한다 —
+    # 위에서 잠김을 확인했더라도 갱신 여부까지 대조해야 옛 파일을 성공으로 오판하지 않는다.
+    r = subprocess.run([chrome(), "--headless=new", "--disable-gpu", "--no-pdf-header-footer",
+                        "--print-to-pdf=" + pdf_path, "--virtual-time-budget=8000",
+                        "file:///" + src_html.replace("\\", "/")], capture_output=True)
     if not os.path.exists(pdf_path):
-        sys.exit("PDF 생성 실패")
+        sys.exit("PDF 생성 실패\n" + (r.stderr or b"").decode("utf-8", "replace")[-500:])
+    if before is not None and os.path.getmtime(pdf_path) == before:
+        sys.exit("PDF가 갱신되지 않았습니다(옛 파일이 그대로입니다) — 파일 잠김 여부를 확인하십시오:\n  "
+                 + os.path.relpath(pdf_path, ROOT))
     size = os.path.getsize(pdf_path)
     pages = ""
     try:
