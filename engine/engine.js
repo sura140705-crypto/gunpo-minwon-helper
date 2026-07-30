@@ -369,6 +369,11 @@ function init(){
   setLabelHtml("btnSampleAdult", esc(labels[0])+'<span class="test-tag">테스트용</span>');
   setLabelHtml("btnSampleMinor", esc(labels[1])+'<span class="test-tag">테스트용</span>');
   document.querySelectorAll(".bg").forEach(function(img){ img.alt=FORM.formName; });
+  // 이용 안내(화면 하단) — 서식 고유 문구가 있으면 교체, 없으면 base.html 기본 문구
+  if(FORM.noticeItems){
+    var nl=document.getElementById("noticeList");
+    if(nl) nl.innerHTML=FORM.noticeItems.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
+  }
   var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
   setText("orgName", org.orgName);
   setText("today", formatDate(APP_TODAY));
