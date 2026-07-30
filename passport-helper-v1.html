@@ -451,7 +451,7 @@ let state = createEmptyState();
    2-b) 파생 상태 · 규칙 (개인정보로 오류 자동 감지 + 나이/종류 규칙)
    --- 검증된 법정 사실 (확인일 2026-07, 여권법 시행령 / passport.go.kr / 정책브리핑) ---
    · 유효기간: 만 18세 이상=10년 복수여권 / 만 18세 미만(만 8세 미만 포함)=5년.  ※'5년 미만'은 병역 등 특수 제한 사유용(연령 아님).
-   · 긴급여권=유효기간 1년 이내 단수·비전자(사진전사식). 면수 선택 없음.
+   · 긴급여권=유효기간 1년 이내 단수·비전자(사진전사식)·12면 고정. 기간·면수 선택 없음(26면/58면 체크 안 함).
    · 관용·외교관=공무 목적 특수여권, 소속기관 추천·확인 필요(일반 신청 대상 아님).
    ========================================================= */
 /* 주민등록번호 → 만나이·미성년·유효성. 순수 함수, 저장 안 함.
@@ -474,18 +474,26 @@ function deriveState(d){
   out.ageKnown=true; out.ageYears=age; out.isMinor=(age<18);
   return out;
 }
+/* 종류에 따라 사증면수가 고정되는 경우 — 서식의 26면/58면 칸에 없는 값이라 renderForm이 체크를 그리지 않는다.
+   · 긴급여권 = 비전자(사진전사식) 12면 고정 → 면수를 선택하지 않는다
+   · 여행증명서 = 사증면수 개념이 없다
+   ※ CO.checks.pages 에 "12면" 같은 키를 추가하면 체크가 찍히게 되니 주의. */
+const PAGES_FIXED={ "긴급":"12면(긴급여권 고정)", "여행증명서":"해당 없음" };
 /* 나이 규칙: 미성년은 10년 여권 불가 → 유효기간을 5년으로 '강제 선택'(제거 대신). 안내는 note가 담당 */
 function applyAgeRules(){
   var s=deriveState(state.data);
   if(s.ageKnown && s.isMinor && state.data.period==="10년") state.data.period="5년";
   if(state.data.kind==="긴급") state.data.period="단수(1년)";   // 긴급여권은 1년 단수만 가능
+  var fx=PAGES_FIXED[state.data.kind];
+  if(fx) state.data.pages=fx;                                          // 26면·58면 체크가 찍히지 않게 고정값으로
+  else if(!CO.checks.pages[state.data.pages]) state.data.pages="58면";  // 고정값에서 벗어나면 기본(58면) 복원
 }
 /* 예상 수수료(원) — 2026-03-01 인상 기준(passport.go.kr 수수료 안내). 정확한 금액은 창구 확인.
    불명확(관용·외교관·여행증명서·잔여기간·5년미만)은 null → '창구 안내' */
 function estimateFee(d){
   var k=d.kind, pg=(d.pages==="26면")?"26":"58", p=d.period, s=deriveState(d);
   if(k==="관용"||k==="외교관"||k==="여행증명서") return null;
-  if(k==="긴급") return { won:50000, note:"긴급여권(단수·1년)" };
+  if(k==="긴급") return { won:50000, note:"긴급여권(단수·1년·12면)" };
   if(p==="단수(1년)") return { won:17000, note:"단수여권(1년)" };
   if(p==="잔여기간"||p==="5년 미만"||!p) return null;
   var t;
@@ -573,9 +581,10 @@ const STEP_DEFS = [
     why:"자주 신청하는 값(일반·10년·58면)을 미리 골라 두었어요. 서식에 표시가 없으면 이대로 발급됩니다.",
     warn:{ when:function(d){ return d.kind==="외교관"||d.kind==="관용"; },
            msg:"관용·외교관 여권은 공무 목적의 특수 여권으로, 소속 기관의 추천·확인을 거쳐야 합니다. 일반 신청 대상이 아니니 창구 직원에게 확인하세요." },
-    note:{ when:function(d){ var s=deriveState(d); return (s.ageKnown && s.isMinor) || d.kind==="긴급"; },
+    note:{ when:function(d){ var s=deriveState(d); return (s.ageKnown && s.isMinor) || d.kind==="긴급" || d.kind==="여행증명서"; },
            msg:function(d){
-             if(d.kind==="긴급") return "긴급여권은 유효기간 1년의 단수여권으로만 발급됩니다. (면수 선택 없음)";
+             if(d.kind==="긴급") return "긴급여권은 유효기간 1년의 단수여권(비전자)으로만 발급되고, 사증 면수는 12면으로 고정됩니다. 그래서 기간·면수는 선택하지 않습니다.";
+             if(d.kind==="여행증명서") return "여행증명서는 사증 면수를 선택하지 않습니다. (발급 요건은 창구에서 확인)";
              return "만 18세 미만은 '10년' 여권을 발급할 수 없어 유효기간을 '5년'으로 맞췄습니다. (세부 기간은 창구에서 확인)";
            } },
     groups:[
@@ -583,7 +592,7 @@ const STEP_DEFS = [
         {v:"일반", rec:true, desc:"보통의 시민이 발급받는 여권"},
         {v:"관용", desc:"공무 목적 — 소속 기관을 통해 신청"},
         {v:"외교관", desc:"외교관용 — 소속 기관을 통해 신청"},
-        {v:"긴급", desc:"긴급한 사유(단수) · 창구 문의"},
+        {v:"긴급", desc:"긴급한 사유 · 1년 단수 · 12면 고정 · 창구 문의"},
         {v:"여행증명서", desc:"여권을 대신하는 증명서"}
       ] },
       { field:"travelType", label:"여행증명서 구분", req:false,
