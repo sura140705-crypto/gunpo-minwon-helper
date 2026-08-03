@@ -16,6 +16,7 @@
     "files": ["main.js", "preload.js", "app/**/*"],
     "win": {
       "target": ["nsis", "portable"],
+      "icon": "build/icon.ico",
       "artifactName": "군포민원서식도우미-${version}-${arch}.${ext}"
     },
     "nsis": {

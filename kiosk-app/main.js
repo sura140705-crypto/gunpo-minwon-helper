@@ -3,6 +3,10 @@
 const { app, BrowserWindow, Menu, globalShortcut, session, ipcMain } = require('electron');
 const path = require('path');
 
+/* 설치본은 실행파일에 아이콘이 박혀 있어 창이 그것을 물려받는다(build/icon.ico 는 포장에 안 들어감).
+   `npm start` 로 개발 실행할 때만 아이콘 파일을 직접 지정한다. */
+const DEV_ICON = app.isPackaged ? undefined : path.join(__dirname, 'build', 'icon.ico');
+
 let win = null;
 
 /* 서식 HTML 의 window.print 를 대화상자 없는 인쇄로 바꿔 끼운다(메인 월드에 주입).
@@ -25,6 +29,7 @@ function createWindow() {
     kiosk: true,               // 키오스크 잠금(전체화면·창 조작 제한)
     autoHideMenuBar: true,
     backgroundColor: '#eef2f7',
+    icon: DEV_ICON,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,  // 렌더러에서 Node 접근 차단(보안)
