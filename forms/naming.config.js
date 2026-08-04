@@ -1,7 +1,7 @@
 /* =====================================================================
    개명신고서(양식 제27호) — FORM 설정
    engine/engine.js와 함께 build-form.js가 자체완결 HTML로 인라인한다.
-   재생성: python tools/prep-bg.py naming 개명신고서.pdf
+   재생성: python tools/prep-bg.py naming 서식원본/개명신고서.pdf
           node tools/build-form.js naming
    ===================================================================== */
 var QUAL_OPTS=["본인","법정대리인","기타"];

@@ -4,7 +4,7 @@
 prep-bg.py — 서식 PDF 1쪽을 배경 이미지(base64 data URI)로 렌더링.
   사용: python tools/prep-bg.py <이름> <서식.pdf> [배율]
   출력: engine/assets/<이름>.b64   (build-form.js가 읽어 인라인)
-  예:  python tools/prep-bg.py birth 출생신고서.pdf
+  예:  python tools/prep-bg.py birth 서식원본/출생신고서.pdf
 """
 import sys, os, base64, io
 

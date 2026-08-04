@@ -1,7 +1,8 @@
 /* =====================================================================
    출생신고서(양식 제1호) — FORM 설정
    engine/engine.js와 함께 build-form.js가 자체완결 HTML로 인라인한다.
-   재생성: node tools/build-form.js birth
+   재생성: python tools/prep-bg.py birth 서식원본/출생신고서.pdf
+          node tools/build-form.js birth
    ===================================================================== */
 var EDU=["학력 없음","초등학교","중학교","고등학교","대학(교)","대학원 이상"];
 var SEX_OPTS=["남","여"];

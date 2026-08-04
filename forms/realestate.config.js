@@ -2,7 +2,7 @@
    부동산거래계약 신고서 (부동산 거래신고 등에 관한 법률 시행규칙 별지 제1호서식,
    개정 2026. 2. 6.) — FORM 설정
    engine/engine.js와 함께 build-form.js가 자체완결 HTML로 인라인한다.
-   재생성: python tools/prep-bg.py realestate "부동산거래계약 신고서.pdf"
+   재생성: python tools/prep-bg.py realestate "서식원본/부동산거래계약 신고서.pdf"
           node tools/build-form.js realestate
    좌표계: PW=595 / PH=841 (PDF 포인트). 값 위치는 각 칸의 빈 공간 중심.
 
