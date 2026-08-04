@@ -22,7 +22,10 @@ from PIL import Image
 sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = Path(__file__).resolve().parent.parent
-SRC = ROOT / "assets" / "gunpo-logo.png"
+# 로고 파일은 assets/logo.png (예전 이름 gunpo-logo.png 도 계속 받는다)
+SRC = next((p for p in (ROOT / "assets" / "logo.png",
+                        ROOT / "assets" / "gunpo-logo.png") if p.exists()),
+           ROOT / "assets" / "logo.png")
 OUT = ROOT / "kiosk-app" / "build" / "icon.ico"
 
 # ICO 에 담을 크기. 작은 크기는 여백 없이 꽉 채워 글자를 최대한 살린다.

@@ -43,10 +43,12 @@ MIME = {".svg": "image/svg+xml", ".png": "image/png",
 
 def find_logo():
     d = os.path.join(ROOT, "assets")
-    for ext in (".svg", ".png", ".jpg", ".jpeg"):
-        p = os.path.join(d, "gunpo-logo" + ext)
-        if os.path.exists(p):
-            return p
+    # assets/logo.* 가 기본. 예전 이름(gunpo-logo.*)도 계속 받는다.
+    for stem in ("logo", "gunpo-logo"):
+        for ext in (".svg", ".png", ".jpg", ".jpeg"):
+            p = os.path.join(d, stem + ext)
+            if os.path.exists(p):
+                return p
     return None
 
 
