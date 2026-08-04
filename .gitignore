@@ -1,9 +1,9 @@
-# 백업 / 이전 버전 (배포 불필요)
-passport-helper-v1.bak.html
-passport-helper-v1.bak-*.html
-passport-helper-v1.prev-*.html
+# 손으로 뜬 백업 사본 (되돌릴 일은 git 이력으로 — 커밋하지 않는다)
+*.bak.html
+*.bak-*.html
+*.prev-*.html
 
-# 임시 · 테스트 산출물
+# 임시 · 검증 산출물 — 검증용 렌더/스크린샷/분석 스크립트는 반드시 `_` 로 시작할 것
 _*.html
 _*.png
 _*.pdf
@@ -15,7 +15,7 @@ _*.txt
 _hwpx/
 _hwpx_consent/
 
-# 빌드 중간 산출물 (PDF에서 재생성 가능: python tools/prep-bg.py <이름> <서식.pdf>)
+# 빌드 중간 산출물 (재생성: python tools/prep-bg.py <이름> 서식원본/<서식.pdf>)
 engine/assets/*.b64
 
 # 로컬 설정 (개인 환경)
@@ -27,6 +27,10 @@ kiosk-app/dist/
 
 # 키오스크 배포 압축본 (키오스크배포/ 폴더에서 재생성: tools/pack-kiosk.sh)
 키오스크배포.zip
+
+# 보안성 검토서 — 외부 수령·제출용 문서. DRM(Fasoo)으로 암호화돼 있어
+# 커밋해도 다른 PC에서 열리지 않는다(암호 덩어리). 실수로 담기지 않게 제외.
+운영문서/보안성검토서.pdf
 
 # OS / 에디터
 Thumbs.db

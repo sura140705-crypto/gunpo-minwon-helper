@@ -19,6 +19,8 @@ tools/
   make-manual.py   운영문서 .md → 배포용 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입)
   embed-logo.py    assets/gunpo-logo.png → 허브 상단바·입력 패널 머리에 로고 삽입
   make-icon.py     assets/gunpo-logo.png → kiosk-app/build/icon.ico (Electron 앱 아이콘)
+서식원본/
+  <서식>.pdf        관공서 서식 원본 (prep-bg.py 의 입력. 앱 실행에는 쓰이지 않음)
 ```
 
 > **로고**: `python tools/embed-logo.py` 를 돌리면 허브(민트 원본)와 서식 도우미
@@ -37,6 +39,9 @@ tools/
 > python tools/make-manual.py                                   # 붙임2 → 사용매뉴얼.pdf (간단본)
 > python tools/make-manual.py "운영문서/붙임2-1_사용매뉴얼(상세).md" 운영문서/사용매뉴얼_상세.pdf
 > ```
+> ⚠️ **날짜는 점 표기(`2026.08.04`)로 쓸 것.** 연·월·일을 하이픈으로 끊으면 DRM/DLP가 개인정보로
+> 오인해 만들어진 PDF를 그 자리에서 암호화한다(열면 `no objects found`). 점 표기는 통과한다.
+>
 > 그림은 `![캡션](fig:이름)` 으로 넣고, 이름은 `make-manual.py` 의 `FIGURES` 에 정의한다.
 > `FIGURES` 항목은 `{file, js, size, crop, patch, budget}` — `js` 로 예시를 채우고 원하는
 > 단계로 이동시킨 뒤 촬영하고, `crop` 으로 화면 일부만 오려낼 수 있다(용량 절감).
@@ -45,7 +50,7 @@ tools/
 
 ```bash
 # 1) 배경 이미지 준비 (PyMuPDF 필요)
-python tools/prep-bg.py death 사망신고서.pdf
+python tools/prep-bg.py death 서식원본/사망신고서.pdf
 
 # 2) forms/death.config.js 작성 (forms/birth.config.js 참고)
 #    - 좌표는 PDF 텍스트/격자선 추출로: get_text('words') + get_drawings()
@@ -111,7 +116,7 @@ bash tools/pack-kiosk.sh          # 키오스크배포/ → 키오스크배포.z
 
 ## 검증
 
-**출생신고서는 2026-07-30 부터 엔진 생성본이 배포본입니다.** 그 전까지는 손작성 `birth-helper-v1.html` 과
+**출생신고서는 2026.07.30 부터 엔진 생성본이 배포본입니다.** 그 전까지는 손작성 `birth-helper-v1.html` 과
 `forms/birth.config.js` 가 나란히 존재해 드리프트 위험이 있었는데, 교체 직전에 다음을 확인한 뒤 단일화했습니다.
 
 - 인쇄 출력: 예시 2종(혼인 중·혼인 외) 모두 손작성본과 **0px 차이**

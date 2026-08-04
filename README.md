@@ -1,78 +1,111 @@
-# 민원실 신청서 작성 도우미
+# 군포시 민원 서식 작성 도우미
 
-시청 민원실 **키오스크용** 신청서 작성 도우미. 어르신 친화(큰 글씨·고대비·큰 버튼),
-**양식 위 작성**(SVG 배경 + 절대좌표 입력), 우측 실시간 가이드, **메모리 전용·무저장**.
+민원실을 찾은 시민이 **신청서를 손으로 채우기 전에** 화면 안내를 따라가며 서식을 완성해
+그대로 인쇄하는 키오스크 앱. 현재 서식 **8종**.
 
-## 아키텍처
+- 어르신 친화 — 큰 글씨·고대비·한 번에 한 가지만 묻는 단계 진행
+- **양식 위 작성** — 실제 관공서 서식을 배경으로 깔고 절대좌표로 값을 얹어, 인쇄하면 서식 원본 그대로
+- **무저장** — 입력값은 메모리에만 존재. 파일·서버 기록 0, 외부 통신 0 → 완전 오프라인
+- **자체완결 HTML** — 서식 이미지·글꼴·로직이 파일 하나에 들어 있어 `file://` 로 바로 열림
 
-개발은 모듈 소스로, **배포는 자체완결 단일 HTML**(서버 불필요)로 번들한다.
-전역 `window.App` 네임스페이스에 클래식 스크립트로 부착 → 빌드 시 단순 병합.
+## 서식 8종
+
+| 배포 파일 | 서식 | 만드는 방식 |
+|---|---|---|
+| `passport-helper-v1.html` | 여권발급신청서 (미성년 법정대리인 동의서·위임장 자동 첨부) | 손작성 |
+| `marriage-helper-v1.html` | 혼인신고서 (양식 제10호) | 손작성 |
+| `divorce-helper-v1.html` | 이혼(친권자 지정)신고서 (양식 제11호) | 손작성 |
+| `birth-helper-v1.html` | 출생신고서 (양식 제1호) | 엔진 |
+| `death-helper-v1.html` | 사망신고서 (양식 제19호) | 엔진 |
+| `naming-helper-v1.html` | 개명신고서 (양식 제27호) | 엔진 |
+| `cert-helper-v1.html` | 가족관계 등록사항별 증명서 교부 등 신청서 (별지 제11호) | 엔진 |
+| `realestate-helper-v1.html` | 부동산거래계약 신고서 (+당사자·부동산 추가 별지) | 엔진 |
+| `index.html` | 허브 — 4개 구역(여권 / 가족관계등록 신고 / 증명서 발급 / 부동산) | — |
+
+**손작성**은 그 HTML 자체가 원본이고, **엔진**은 `forms/<이름>.config.js` 를 원본으로 두고 빌드해 만든다.
+
+## 어디를 고쳐야 하는가
+
+가장 자주 틀리는 지점이라 먼저 적는다.
+
+| 고칠 것 | 고칠 파일 | 뒤이어 할 일 |
+|---|---|---|
+| 손작성 3종(여권·혼인·이혼) 내용 | 루트의 해당 `*-helper-v1.html` | `sync-kiosk.sh` |
+| 엔진 5종 내용 | `forms/<이름>.config.js` | `build-form.js` 재빌드 → `sync-kiosk.sh` |
+| 8종 공통 동작 (유휴 초기화·인쇄 안내 모달·CSS 등) | `engine/engine.js` · `engine/base.html` **와** 손작성 3종에 같은 내용 손수 반영 | 엔진 5종 재빌드 → `sync-kiosk.sh` |
+| 허브 메뉴 | `index.html` | `sync-kiosk.sh` |
+| 운영·제출 문서 | `운영문서/*.md` (원본) | 필요할 때 `make-manual.py` 로 PDF 재생성 |
+
+> ⚠️ **엔진 5종의 루트 HTML을 직접 고치지 말 것** — 다음 재빌드에 덮여 사라진다.
+> ⚠️ **배포 HTML은 3곳에 사본이 있다** (루트 = 원본 / `키오스크배포/` / `kiosk-app/app/`).
+> 항상 루트만 고치고 `bash tools/sync-kiosk.sh` 로 맞춘 뒤, 커밋 전 `--check` 로 확인한다.
+
+## 디렉터리
 
 ```
 gunpo_minwon/
-├── index.html               개발 진입점 (모듈 로드 + SVG fetch 부팅)
-├── build.js                 무의존 번들러 → dist/작성도우미.html
-├── src/
-│   ├── styles.css
-│   ├── core/   state·render·a11y·app
-│   ├── lib/    romanize(성명 로마자)·validate·juso(주소)
-│   ├── schemas/ index(레지스트리)·passport·family·land·seal
-│   └── assets/  passport.svg (실제 양식 모사)
-├── tools/
-│   ├── dev-server.js         무의존 정적 개발 서버 (+좌표 저장 엔드포인트)
-│   └── coord-editor.html     좌표 편집기 (드래그·리사이즈·미세이동 → 스키마 저장)
-├── dist/                     빌드 산출물 (배포용)
-└── draft/                    타 AI 초안(참고용), 여권신청서.pdf(실제 서식)
+├─ index.html, *-helper-v1.html (8종)   배포 원본 ★루트 고정(상대경로·file:// 실행)
+├─ engine/          공통 엔진 — base.html(골격·CSS) · engine.js · assets/*.b64(배경, 재생성물)
+│   └─ README.md    ☞ 새 서식 만들기 · FORM(config) 인터페이스 · 좌표 잡는 법
+├─ forms/           엔진 서식 5종의 config (좌표맵·필드·단계·작성예시)
+├─ tools/           빌드·동기화·문서·로고 도구 (아래 표)
+├─ assets/          gunpo-logo.png (허브·입력 패널 머리에 base64로 박음)
+├─ 서식원본/         관공서 서식 원본 PDF·HWP — prep-bg.py 의 입력. 앱 실행과 무관
+├─ 운영문서/         시청 제출·현장용 문서. **.md 가 원본**, PDF는 재생성물
+├─ 키오스크배포/      정식 배포 세트(크롬 키오스크) — HTML 9개 + 실행/관리자 .bat
+├─ kiosk-app/       배포 대안(Electron) — main.js·preload.js·app/(사본 9개)
+├─ docs/archive/    과거 인계·요청 문서 (참고용, 현행 아님)
+└─ CHANGELOG.md     시범운영 피드백 반영 이력
 ```
 
-## 개발 / 빌드
+## 도구
 
-```bash
-node tools/dev-server.js      # http://localhost:5173 (기본)
-node build.js                 # dist/작성도우미.html 생성
-```
-> 개발 모드는 SVG를 `fetch` 하므로 정적 서버가 필요하다(`file://` 불가).
-> **배포본(dist)** 은 모든 자산이 인라인되어 `file://` 로도 단독 실행된다.
+| 도구 | 하는 일 |
+|---|---|
+| `python tools/prep-bg.py <이름> 서식원본/<서식.pdf>` | 서식 1쪽 → `engine/assets/<이름>.b64` 배경 |
+| `node tools/build-form.js <이름>` | base + engine + config + 배경 → 자체완결 `<이름>-helper-v1.html` |
+| `bash tools/sync-kiosk.sh [--check]` | 루트 배포 HTML 9개 → `키오스크배포/` · `kiosk-app/app/` 동기화(검증) |
+| `bash tools/pack-kiosk.sh` | `키오스크배포/` → `키오스크배포.zip` (전달용, 내부에서 `--check` 선행) |
+| `python tools/make-manual.py [입력.md] [출력.pdf]` | 운영문서 `.md` → 배포 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입) |
+| `python tools/embed-logo.py [--remove]` | 로고를 허브·입력 패널에 base64 삽입 |
+| `python tools/make-icon.py` | 로고 → `kiosk-app/build/icon.ico` (Electron 앱 아이콘) |
 
-## 스키마 확장
+자세한 사용법과 새 서식 추가 절차는 **`engine/README.md`**.
 
-신청서 하나 = `src/schemas/<id>.js` 한 파일. `App.registerSchema(id, def)` 로 등록.
-필드 타입: `text` / `grid`(문자당 한 칸) / `check`(group 지정 시 라디오) / `addr`(주소검색).
-좌표(x,y,w,h)는 해당 `assets/<bg>.svg` 의 viewBox(794×1123, A4) 기준.
+## 배포
 
-## 주소 API(juso) 운영 전환
+**A. 크롬 키오스크 (정식)** — `키오스크배포/` 폴더를 통째로 복사 → `민원도우미_실행.bat` 실행
+(크롬을 `--kiosk --incognito` 로 전체화면. 관리자 종료 Alt+F4)
 
-`src/lib/juso.js` `CONFIG`:
-1. business.juso.go.kr 에서 `confmKey` 발급 → `JUSO_KEY` 입력
-2. `USE_DEMO = false`
-3. 방식 선택: 서버 프록시(`PROXY_URL`) 또는 팝업(`POPUP_URL`) — 키오스크는 팝업 권장
+**B. Electron (대안)** — `cd kiosk-app && npm run dist` → NSIS 설치본·portable
+(관리자 단축키 `Ctrl+Shift+Q` 종료 · `Ctrl+Shift+H` 첫 화면)
 
-## 좌표 편집기
+**설치 PC에서 반드시 1회** — `관리자_개인정보보호_설정.bat` (관리자 권한)
+인쇄창의 'PDF로 저장'·파일로 저장하는 가상 프린터를 막는다. 상세는 `운영문서/붙임3_키오스크_설치운영_안내.md` Ⅴ장.
 
-양식 위 필드 좌표를 스캔본과 대조해 정밀화하는 개발 도구.
+## 개인정보 보호 (설계 전제)
 
-```bash
-node tools/dev-server.js
-# → http://localhost:5173/tools/coord-editor.html
-```
-- 필드 박스를 **드래그**해 이동, **핸들**로 크기(비격자: w·h / 격자: cellW·h) 조정,
-  선택 후 **화살표키** 1px·**Shift+화살표** 10px 미세 이동, 우측 패널에서 수치 직접 입력.
-- **[스키마 파일에 저장]** → dev-server가 `src/schemas/<id>.js` 의 기하 값(x,y,w,h,cells,cellW,gap,sep)만
-  **제자리 치환**(라벨·가이드·검증 로직 보존). 서버 없이 열었으면 **[JSON 복사]** 로 수동 반영.
-- 편집 대상은 `bg`+`fields` 를 가진 스키마(현재 passport)만 노출.
+- **기록 없음** — 입력값은 메모리 전용. 저장·전송·로그 없음, 외부 통신 0
+- **3분 무동작** → 마지막 30초 카운트다운 경고 → 허브로 이동(입력값 소멸)
+- **인쇄 직후** 화면을 즉시 가리고 5초 뒤 허브로 (브라우저가 인쇄/취소를 구분해 주지 않아 **취소해도 초기화**된다 — 인쇄 전 안내에 명시)
+- **인쇄 전 안내 모달** — 여백 없음·배율 100% + 출력물 개인정보 주의
+- **'PDF로 저장' 차단은 PC 설정 몫** — 앱(JS)으로는 인쇄창 목적지를 제어할 수 없다
 
-## 과제 진행 현황
+## 검증 관행
 
-- [x] 1. SCHEMAS `/schemas/*.js` 모듈 분리
-- [x] 3. 외교부 관용표기 매핑 300+ (현재 558: 성씨 154 + 이름음절 404)
-- [x] 4. juso 실연동 구조(데모/프록시/팝업 골격), 키는 추후
-- [x] 2. SVG 외부화 + **좌표 편집기**(`tools/coord-editor.html`, 드래그·저장) 완료
-- [ ] 5. 가족관계증명서 스키마 + 증명서 종류 마법사
-- [ ] 6. 토지대장·인감증명 약식 양식
-- [ ] 7. 인쇄 정합: 실제 외교부 표준 양식과 픽셀 단위 정합(좌표 편집기로 튜닝)
-- [x] 8. 접근성 기반: 격자 키보드 네비게이션, ARIA 라벨, 포커스 가시성 (지속 보강)
+- 서식 변경은 **인쇄물 픽셀로 검증**한다: 헤드리스 크롬 `--print-to-pdf` → PyMuPDF 렌더 → 이전본과 비교(**0px 차이가 기본**, 달라졌으면 이유를 설명할 수 있어야 한다)
+- 검증용 렌더·스크린샷·분석 스크립트는 **`_` 로 시작**해 이름 짓는다(`.gitignore` 처리됨)
+- ⚠️ 이 PC의 DRM 에이전트가 새로 만든 PDF를 몇 분 뒤 암호화한다 → **생성과 분석을 한 스크립트 안에서** 끝낼 것(나중에 열면 `no objects found`)
+- ⚠️ **날짜는 `2026.08.04` 처럼 점으로 쓴다.** 연·월·일을 하이픈으로 끊는 표기는 DRM/DLP가 개인정보(주민등록번호 등)로 오인해 **문서를 암호화**해 버린다 — 점 표기는 통과한다. 전화·주민번호 형태의 예시도 문서 본문에는 넣지 않는다
+- 커밋 전 `bash tools/sync-kiosk.sh --check`
 
-## 실제 서식 기준
+## 현재 상태 (2026.08.04)
 
-`draft/여권신청서.pdf` (여권법 시행규칙 제3조 별지 제1호서식)에 맞춰 스키마·SVG 구성.
-좌표는 근사값이며 좌표 편집기로 스캔본과 대조해 정밀화한다.
+서식 8종 프로토타입 완성 → **시범운영 준비 단계**.
+시범운영 기간에는 파생 산출물(운영문서 PDF·`키오스크배포.zip`·Electron 설치본) **재생성을 멈추고** 현장 피드백을 모은다. 반영 이력은 `CHANGELOG.md`.
+
+남은 일
+
+- `운영문서/` 붙임1~3의 〔부서명〕·〔담당자〕·〔연락처〕 플레이스홀더 기입
+- 보안성검토서 제출 (`운영문서/보안성검토서.pdf` — 외부 수령본이고 DRM 암호화라 **git 추적 제외**)
+- (온라인 배포용 후보) 도로명주소 검색 연동 — 키오스크는 오프라인 유지
