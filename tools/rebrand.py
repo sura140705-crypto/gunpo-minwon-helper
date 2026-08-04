@@ -45,7 +45,8 @@ TARGETS = [
 ]
 
 # 치환 대상에서 지켜야 하는 토큰(기능 이름)
-KEEP = ["<!--GUNPO-LOGO-->", "<!--/GUNPO-LOGO-->", "gunpo-logo", "gunpo-passport-helper"]
+KEEP = ["<!--GUNPO-LOGO-->", "<!--/GUNPO-LOGO-->", "gunpo-logo",
+        "gunpo-minwon-helper", "gunpo-passport-helper"]  # 리포 이름(URL)은 그대로 둔다
 
 OLD_PROVINCE, OLD_CITY = "경기도", "군포시"
 OLD_TEL = "031-390-0131"
