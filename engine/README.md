@@ -17,8 +17,10 @@ tools/
   sync-kiosk.sh    루트 배포 HTML → 키오스크배포/ · kiosk-app/app/ 동기화
   pack-kiosk.sh    키오스크배포/ → 키오스크배포.zip (전달용, .gitignore·재생성 가능)
   make-manual.py   운영문서 .md → 배포용 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입)
-  embed-logo.py    assets/gunpo-logo.png → 허브 상단바·입력 패널 머리에 로고 삽입
-  make-icon.py     assets/gunpo-logo.png → kiosk-app/build/icon.ico (Electron 앱 아이콘)
+  embed-logo.py    assets/logo.png → 허브 상단바·입력 패널 머리에 로고 삽입
+  make-icon.py     assets/logo.png → kiosk-app/build/icon.ico (Electron 앱 아이콘)
+  verify-print.py  인쇄물 8종×예시2 를 tests/baseline/ 과 픽셀 비교 (회귀 안전망)
+  rebrand.py       지역 고유값(기관명·부서·연락처·로고) 일괄 교체 → 타 지자체 확산
 서식원본/
   <서식>.pdf        관공서 서식 원본 (prep-bg.py 의 입력. 앱 실행에는 쓰이지 않음)
 ```

@@ -37,3 +37,6 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 node_modules/
+
+# 파이썬 캐시
+__pycache__/

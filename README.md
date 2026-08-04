@@ -44,18 +44,21 @@
 
 ```
 gunpo_minwon/
+├─ CLAUDE.md         ☞ 작업 지침(원본·생성물 구분, 필수 검증, 금지사항) — 고치기 전에 읽는다
 ├─ index.html, *-helper-v1.html (8종)   배포 원본 ★루트 고정(상대경로·file:// 실행)
 ├─ engine/          공통 엔진 — base.html(골격·CSS) · engine.js · assets/*.b64(배경, 재생성물)
 │   └─ README.md    ☞ 새 서식 만들기 · FORM(config) 인터페이스 · 좌표 잡는 법
 ├─ forms/           엔진 서식 5종의 config (좌표맵·필드·단계·작성예시)
 ├─ tools/           빌드·동기화·문서·로고 도구 (아래 표)
-├─ assets/          gunpo-logo.png (허브·입력 패널 머리에 base64로 박음)
+├─ assets/          logo.png (기관 로고 — 허브·입력 패널 머리에 base64로 박음)
 ├─ 서식원본/         관공서 서식 원본 PDF·HWP — prep-bg.py 의 입력. 앱 실행과 무관
 ├─ 운영문서/         시청 제출·현장용 문서. **.md 가 원본**, PDF는 재생성물
 ├─ 키오스크배포/      정식 배포 세트(크롬 키오스크) — HTML 9개 + 실행/관리자 .bat
 ├─ kiosk-app/       배포 대안(Electron) — main.js·preload.js·app/(사본 9개)
-├─ docs/archive/    과거 인계·요청 문서 (참고용, 현행 아님)
-└─ CHANGELOG.md     시범운영 피드백 반영 이력
+├─ tests/baseline/  인쇄물 기준선 이미지 19쪽 (verify-print.py 가 비교하는 대상)
+├─ docs/            GOTCHAS.md(함정 목록) · 타지자체-확산.md · archive/(과거 인계 문서)
+├─ CHANGELOG.md     시범운영 피드백 반영 이력
+└─ LICENSE          공공누리 제1유형(출처표시)
 ```
 
 ## 도구
@@ -66,6 +69,8 @@ gunpo_minwon/
 | `node tools/build-form.js <이름>` | base + engine + config + 배경 → 자체완결 `<이름>-helper-v1.html` |
 | `bash tools/sync-kiosk.sh [--check]` | 루트 배포 HTML 9개 → `키오스크배포/` · `kiosk-app/app/` 동기화(검증) |
 | `bash tools/pack-kiosk.sh` | `키오스크배포/` → `키오스크배포.zip` (전달용, 내부에서 `--check` 선행) |
+| `python tools/verify-print.py [--update]` | **인쇄물 회귀 검증** — 8종×예시2 = 19쪽을 `tests/baseline/` 과 픽셀 비교 |
+| `python tools/rebrand.py --city ○○시 …` | 지역 고유값(기관명·부서·연락처·로고) 일괄 교체 → 타 지자체 확산 |
 | `python tools/make-manual.py [입력.md] [출력.pdf]` | 운영문서 `.md` → 배포 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입) |
 | `python tools/embed-logo.py [--remove]` | 로고를 허브·입력 패널에 base64 삽입 |
 | `python tools/make-icon.py` | 로고 → `kiosk-app/build/icon.ico` (Electron 앱 아이콘) |
@@ -93,11 +98,23 @@ gunpo_minwon/
 
 ## 검증 관행
 
-- 서식 변경은 **인쇄물 픽셀로 검증**한다: 헤드리스 크롬 `--print-to-pdf` → PyMuPDF 렌더 → 이전본과 비교(**0px 차이가 기본**, 달라졌으면 이유를 설명할 수 있어야 한다)
+- 서식 변경은 **인쇄물 픽셀로 검증**한다 — `python tools/verify-print.py` 가 8종×예시2 = 19쪽을 `tests/baseline/` 과 비교한다. **"전부 0px"가 기본값**이고, 달라졌다면 이유를 설명할 수 있어야 한다(설명 없이 `--update` 금지)
 - 검증용 렌더·스크린샷·분석 스크립트는 **`_` 로 시작**해 이름 짓는다(`.gitignore` 처리됨)
 - ⚠️ 이 PC의 DRM 에이전트가 새로 만든 PDF를 몇 분 뒤 암호화한다 → **생성과 분석을 한 스크립트 안에서** 끝낼 것(나중에 열면 `no objects found`)
 - ⚠️ **날짜는 `2026.08.04` 처럼 점으로 쓴다.** 연·월·일을 하이픈으로 끊는 표기는 DRM/DLP가 개인정보(주민등록번호 등)로 오인해 **문서를 암호화**해 버린다 — 점 표기는 통과한다. 전화·주민번호 형태의 예시도 문서 본문에는 넣지 않는다
 - 커밋 전 `bash tools/sync-kiosk.sh --check`
+
+## 다른 기관이 가져다 쓰는 법
+
+서식 좌표맵 8종은 **법정 별지서식 기준이라 전국 공통**이다. 바꿀 것은 기관 표기·부서·연락처·로고뿐.
+
+```bash
+python tools/rebrand.py --city 안양시 --dry-run    # 무엇이 바뀌는지 미리보기
+```
+
+절차·체크리스트·유지보수를 AI에게 맡길 때 줄 지시문은 **`docs/타지자체-확산.md`**.
+라이선스는 **공공누리 제1유형(출처표시)** — 상업적 이용·변형 모두 가능(`LICENSE`).
+단, **군포시 로고와 서식 원본은 적용 대상이 아니다**(로고는 각 기관 것으로 교체).
 
 ## 현재 상태 (2026.08.04)
 
