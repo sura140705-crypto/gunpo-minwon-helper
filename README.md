@@ -43,7 +43,7 @@
 | 운영·제출 문서 | `운영문서/*.md` (원본) | 필요할 때 `make-manual.py` 로 PDF 재생성 |
 
 > ⚠️ **엔진 5종의 루트 HTML을 직접 고치지 말 것** — 다음 재빌드에 덮여 사라진다.
-> ⚠️ **배포 HTML은 3곳에 사본이 있다** (루트 = 원본 / `키오스크배포/` / `kiosk-app/app/`).
+> ⚠️ **배포 HTML은 사본이 하나 있다** (루트 = 원본 / `kiosk-app/app/`).
 > 항상 루트만 고치고 `bash tools/sync-kiosk.sh` 로 맞춘 뒤, 커밋 전 `--check` 로 확인한다.
 
 ## 디렉터리
@@ -59,8 +59,8 @@ gunpo_minwon/
 ├─ assets/          logo.png (기관 로고 — 허브·입력 패널 머리에 base64로 박음)
 ├─ 서식원본/         관공서 서식 원본 PDF·HWP — prep-bg.py 의 입력. 앱 실행과 무관
 ├─ 운영문서/         시청 제출·현장용 문서. **.md 가 원본**, PDF는 재생성물
-├─ 키오스크배포/      정식 배포 세트(크롬 키오스크) — HTML 9개 + 실행/관리자 .bat
-├─ kiosk-app/       배포 대안(Electron) — main.js·preload.js·app/(사본 9개)
+├─ kiosk-app/       배포(Electron 설치본) — main.js(키오스크 통제)·preload.js·app/(사본 9개)
+│   └─ admin/      관리자 설정 스크립트 · 인쇄실패·점검 안내 화면
 ├─ tests/baseline/  인쇄물 기준선 이미지 19쪽 (verify-print.py 가 비교하는 대상)
 ├─ docs/            GOTCHAS.md(함정 목록) · 타지자체-확산.md · archive/(과거 인계 문서)
 ├─ CHANGELOG.md     시범운영 피드백 반영 이력
@@ -73,8 +73,7 @@ gunpo_minwon/
 |---|---|
 | `python tools/prep-bg.py <이름> 서식원본/<서식.pdf>` | 서식 1쪽 → `engine/assets/<이름>.b64` 배경 |
 | `node tools/build-form.js <이름>` | base + engine + config + 배경 → 자체완결 `<이름>-helper-v1.html` |
-| `bash tools/sync-kiosk.sh [--check]` | 루트 배포 HTML 9개 → `키오스크배포/` · `kiosk-app/app/` 동기화(검증) |
-| `bash tools/pack-kiosk.sh` | `키오스크배포/` → `키오스크배포.zip` (전달용, 내부에서 `--check` 선행) |
+| `bash tools/sync-kiosk.sh [--check]` | 루트 배포 HTML 9개 → `kiosk-app/app/` 동기화(검증) |
 | `python tools/verify-print.py [--update]` | **인쇄물 회귀 검증** — 8종×예시2 = 19쪽을 `tests/baseline/` 과 픽셀 비교 |
 | `python tools/rebrand.py --city ○○시 …` | 지역 고유값(기관명·부서·연락처·로고) 일괄 교체 → 타 지자체 확산 |
 | `python tools/make-manual.py [입력.md] [출력.pdf]` | 운영문서 `.md` → 배포 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입) |
@@ -85,14 +84,30 @@ gunpo_minwon/
 
 ## 배포
 
-**A. 크롬 키오스크 (정식)** — `키오스크배포/` 폴더를 통째로 복사 → `민원도우미_실행.bat` 실행
-(크롬을 `--kiosk --incognito` 로 전체화면. 관리자 종료 Alt+F4)
+**Electron 설치본** — `cd kiosk-app && npm run dist` → NSIS 설치본·portable.
+배포 방식은 이것 하나다(2026.08 보안성 검토 대응으로 크롬 키오스크 방식은 폐지).
 
-**B. Electron (대안)** — `cd kiosk-app && npm run dist` → NSIS 설치본·portable
-(관리자 단축키 `Ctrl+Shift+Q` 종료 · `Ctrl+Shift+H` 첫 화면)
+키오스크 통제는 전부 `kiosk-app/main.js` 에 있다.
 
-**설치 PC에서 반드시 1회** — `관리자_개인정보보호_설정.bat` (관리자 권한)
-인쇄창의 'PDF로 저장'·파일로 저장하는 가상 프린터를 막는다. 상세는 `운영문서/붙임3_키오스크_설치운영_안내.md` Ⅴ장.
+- **인쇄** — 대화상자를 열지 않고 **설정에 지정된 실물 프린터로만** 출력. 여백 없음·배율 100%·배경 인쇄를 코드로 고정.
+  보호 장치가 걸리지 않으면 **인쇄를 하지 않는다**(안내 화면으로 멈춘다). 남은 인쇄 작업은 회수한다.
+- **화면** — sandbox·devTools 차단, `app/`·`admin/` 밖으로 이동 차단, 새 창·권한 요청 차단.
+- **실행** — 중복 실행 차단, 종료는 관리자 PIN(`Ctrl+Shift+Q`) · 첫 화면 복귀 `Ctrl+Shift+H`.
+- **개인정보** — 저장소·크래시덤프를 임시 경로에 두고 시작·종료 때 지운다. 창을 벗어나면 첫 화면으로 초기화.
+
+**설치 PC에서 반드시 1회** — `kiosk-app/admin/관리자_개인정보보호_설정.bat` (관리자 권한)
+
+```
+/status              프린터 이름 확인 (변경 없음)
+/only "프린터이름"    그 프린터만 남기고 지정 + 가상 프린터 제거 + 대기열 잔존 방지
+/pin                 관리자 종료 PIN 설정
+```
+
+설정은 `%ProgramData%\군포민원서식도우미\kiosk.json` 에 기록되고 프로그램이 시작할 때 읽는다.
+**프린터를 지정하지 않으면 인쇄되지 않는다.** 적용 결과는 `군포민원서식도우미.exe --selfcheck` 로 확인한다.
+
+> ⚠️ Alt+Tab·Windows 키 차단은 프로그램이 할 수 없다 — 전용 계정 + 셸 교체 등 OS 설정의 몫이다.
+> 상세는 `운영문서/붙임3_키오스크_설치운영_안내.md`.
 
 ## 개인정보 보호 (설계 전제)
 
@@ -125,10 +140,10 @@ python tools/rebrand.py --city 안양시 --dry-run    # 무엇이 바뀌는지 �
 ## 현재 상태 (2026.08.04)
 
 서식 8종 프로토타입 완성 → **시범운영 준비 단계**.
-시범운영 기간에는 파생 산출물(운영문서 PDF·`키오스크배포.zip`·Electron 설치본) **재생성을 멈추고** 현장 피드백을 모은다. 반영 이력은 `CHANGELOG.md`.
+시범운영 기간에는 파생 산출물(운영문서 PDF·Electron 설치본) **재생성을 멈추고** 현장 피드백을 모은다. 반영 이력은 `CHANGELOG.md`.
 
 남은 일
 
-- `운영문서/` 붙임1~3의 〔부서명〕·〔담당자〕·〔연락처〕 플레이스홀더 기입
+- `운영문서/` 붙임1~4의 〔부서명〕·〔담당자〕·〔연락처〕 플레이스홀더 기입
 - 보안성검토서 제출 (`운영문서/보안성검토서.pdf` — 외부 수령본이고 DRM 암호화라 **git 추적 제외**)
 - (온라인 배포용 후보) 도로명주소 검색 연동 — 키오스크는 오프라인 유지

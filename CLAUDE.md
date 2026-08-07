@@ -15,16 +15,17 @@
 | 8종 공통 동작·CSS | **`engine/engine.js`·`engine/base.html`** + 손작성 3종 | 엔진 수정 → 5종 재빌드 → 손작성 3종에 같은 내용 손수 반영 |
 | `index.html`(허브) | 그 파일 | 직접 수정 |
 | `운영문서/*.pdf` | **`운영문서/*.md`** | `.md` 수정 → `python tools/make-manual.py …` |
-| `키오스크배포/`·`kiosk-app/app/` 안의 HTML | **루트의 같은 파일** | 루트 수정 → `bash tools/sync-kiosk.sh` |
+| `kiosk-app/app/` 안의 HTML | **루트의 같은 파일** | 루트 수정 → `bash tools/sync-kiosk.sh` |
+| 키오스크 동작·보안·인쇄 통제 | **`kiosk-app/main.js`·`preload.js`** | 직접 수정 → `--selfcheck` 로 확인 |
 
 > ⛔ **엔진 5종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
-> ⛔ **`키오스크배포/`·`kiosk-app/app/` 안의 파일을 직접 고치지 마라.** 원본은 루트다.
+> ⛔ **`kiosk-app/app/` 안의 파일을 직접 고치지 마라.** 원본은 루트다.
 
 ## 2. 끝내기 전에 반드시 통과시켜야 하는 것
 
 ```bash
 python tools/verify-print.py        # 인쇄물 회귀 — 8종×예시2 = 19쪽, "전부 0px"가 기본값
-bash tools/sync-kiosk.sh --check    # 배포 3곳 드리프트 — 다르면 exit 1
+bash tools/sync-kiosk.sh --check    # 루트 → kiosk-app/app 드리프트 — 다르면 exit 1
 node --check <고친 파일>.js          # 문법(엔진·config)
 ```
 
@@ -36,10 +37,11 @@ node --check <고친 파일>.js          # 문법(엔진·config)
 
 ## 3. 하지 말 것
 
-- **파생 산출물을 요청 없이 재생성하지 마라** — 운영문서 PDF·`키오스크배포.zip`·Electron 설치본.
+- **파생 산출물을 요청 없이 재생성하지 마라** — 운영문서 PDF·Electron 설치본.
   현재 시범운영 기간이라 사용자가 재생성을 멈춰 두었다(`CHANGELOG.md` 참조).
-- **`키오스크배포/관리자_개인정보보호_설정.bat` 을 적용·되돌리기 모드로 실행하지 마라.**
+- **`kiosk-app/admin/관리자_개인정보보호_설정.bat` 을 적용·되돌리기 모드로 실행하지 마라.**
   관리자 권한이면 **실제로 프린터가 삭제된다.** 점검은 `/preview`(무변경) 또는 `/status` 로만.
+  Git Bash 에서는 `/status` 가 경로로 바뀌므로 `MSYS_NO_PATHCONV=1` 을 앞에 붙인다.
 - 개인정보를 리포에 넣지 마라. 작성예시는 전부 가상 인물이어야 한다.
 - 서식 좌표를 "대충 맞으면 됨"으로 넘기지 마라. 인쇄물은 판독기·창구 접수용이다.
 

@@ -208,9 +208,9 @@ def main():
         io.open(p, "w", encoding="utf-8", newline="").write(out)
         print(("  제거: " if remove else "  삽입: ") + rel)
 
-    print("\n다음 단계 — 엔진 서식 재빌드 후 배포 3곳 동기화:")
+    print("\n다음 단계 — 엔진 서식 재빌드 후 배포 동기화:")
     print("  " + " && ".join("node tools/build-form.js " + f for f in ENGINE_FORMS))
-    print("  bash tools/sync-kiosk.sh && bash tools/pack-kiosk.sh")
+    print("  bash tools/sync-kiosk.sh")
 
 
 if __name__ == "__main__":
