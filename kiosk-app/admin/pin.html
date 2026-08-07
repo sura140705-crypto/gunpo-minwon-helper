@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>관리자 확인</title>
+<!-- 종료 전 관리자 PIN 확인. PIN 은 이 프로그램이 갖고 있지 않고,
+     설정 파일의 해시(SHA-256)와 대조만 한다(main.js). 입력값은 어디에도 저장하지 않는다. -->
+<style>
+  html,body{margin:0;height:100%;font-family:"맑은 고딕","Malgun Gothic",sans-serif;background:#fff;}
+  .wrap{height:100%;display:flex;flex-direction:column;justify-content:center;padding:28px;box-sizing:border-box;}
+  h1{font-size:20px;margin:0 0 4px;color:#123f7f;}
+  .sub{font-size:13px;color:#777;margin-bottom:18px;}
+  input{font-family:inherit;font-size:26px;letter-spacing:8px;text-align:center;padding:10px;
+        border:2px solid #c9d3e0;border-radius:10px;width:100%;box-sizing:border-box;}
+  input:focus{outline:none;border-color:#1b5fc0;}
+  .err{color:#c0392b;font-size:14px;height:18px;margin:8px 2px 0;font-weight:700;}
+  .row{display:flex;gap:10px;margin-top:16px;}
+  button{flex:1;font-family:inherit;font-size:16px;font-weight:800;padding:12px;border:0;
+         border-radius:10px;cursor:pointer;}
+  .ok{background:#1b5fc0;color:#fff;}
+  .no{background:#e9edf3;color:#333;}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>관리자 확인</h1>
+    <div class="sub">프로그램을 종료하려면 관리자 PIN 을 입력하십시오.</div>
+    <input id="pin" type="password" inputmode="numeric" autocomplete="off" autofocus>
+    <div class="err" id="err"></div>
+    <div class="row">
+      <button class="no" id="cancel">취소</button>
+      <button class="ok" id="ok">종료</button>
+    </div>
+  </div>
+<script>
+  var pin = document.getElementById("pin"), err = document.getElementById("err");
+  function submit(){
+    window.__admin.check(pin.value).then(function(ok){
+      if (!ok) { err.textContent = "PIN 이 맞지 않습니다."; pin.value = ""; pin.focus(); }
+    });
+  }
+  document.getElementById("ok").addEventListener("click", submit);
+  document.getElementById("cancel").addEventListener("click", function(){ window.__admin.cancel(); });
+  pin.addEventListener("keydown", function(e){
+    if (e.key === "Enter") submit();
+    if (e.key === "Escape") window.__admin.cancel();
+  });
+</script>
+</body>
+</html>
