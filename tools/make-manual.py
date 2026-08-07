@@ -294,8 +294,23 @@ def md_to_html(md, figs):
                 out.append("</%s>" % list_stack.pop())
             if len(list_stack) < depth + 1:
                 out.append("<%s>" % kind); list_stack.append(kind)
-            out.append("<li>%s</li>" % inline(text))
+
+            # 한 항목이 여러 줄인 경우 — 들여쓴 다음 줄들을 같은 <li> 안으로 이어 붙인다.
+            # 이걸 안 하면 이어짐 줄이 목록 밖 문단으로 떨어져 나가 조판이 어긋난다(조용히).
             i += 1
+            while i < len(lines):
+                nxt = lines[i].rstrip()
+                if not nxt.strip():
+                    break
+                if re.match(r"^(\s*)([-*]|\d+\.)\s+", nxt):
+                    break                                   # 다음 항목
+                if not re.match(r"^\s+\S", nxt):
+                    break                                   # 들여쓰기가 없으면 목록 밖
+                if nxt.strip().startswith(("|", ">", "#", "```", "![")):
+                    break                                   # 표·인용·제목·코드·그림은 별도 처리
+                text += " " + nxt.strip()
+                i += 1
+            out.append("<li>%s</li>" % inline(text))
             continue
 
         close_lists()
