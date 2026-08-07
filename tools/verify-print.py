@@ -20,6 +20,9 @@ tests/baseline/ 의 기준선 이미지와 **픽셀 단위로** 비교한다.
 ⚠️ 렌더 → 래스터화 → 비교를 **한 프로세스 안에서** 끝낸다.
    이 PC의 DRM 에이전트가 새로 만든 PDF를 몇 분 뒤 암호화하기 때문에,
    PDF를 파일로 남겨 두고 나중에 다시 열면 `no objects found` 로 실패한다.
+
+⚠️ 서식에는 **오늘 날짜가 찍힌다**(신청일·동의일). 날짜를 그대로 두면 기준선을 만든
+   다음 날부터 매일 '회귀'로 잡히므로, 렌더할 때 시계를 FIXED_DATE 로 고정한다.
 """
 import io, os, re, sys, subprocess, tempfile
 
@@ -49,6 +52,23 @@ CHROME_CANDIDATES = [
 # 하므로 판정은 그대로 엄격하다 — 회색 단계가 하나라도 다르면 '다른 픽셀'로 센다.
 TOL = 8
 
+# 렌더할 때 고정하는 날짜(기준선을 처음 만든 날). 서식의 신청일·동의일이 이 날짜로 찍힌다.
+# 바꾸면 인쇄물이 달라지므로 --update 로 기준선을 다시 만들어야 한다.
+FIXED_DATE = (2026, 8, 4)
+
+# 페이지의 모든 스크립트보다 **먼저** 실행돼야 한다(<head> 첫머리에 넣는 이유).
+# 서식들은 로드 시점에 APP_TODAY=new Date() 로 오늘을 붙잡아 두므로, 나중에 끼워 넣으면 늦다.
+CLOCK_FREEZE = """<script>(function(){
+  var D=Date, F=new D(%d,%d,%d,10,0,0).getTime();
+  function K(){
+    if(!(this instanceof K)) return new D(F).toString();
+    if(arguments.length===0) return new D(F);
+    return new (D.bind.apply(D,[null].concat([].slice.call(arguments))))();
+  }
+  K.prototype=D.prototype; K.now=function(){return F;}; K.parse=D.parse; K.UTC=D.UTC;
+  window.Date=K;
+})();</script>""" % (FIXED_DATE[0], FIXED_DATE[1] - 1, FIXED_DATE[2])
+
 
 def norm(img):
     """비교·저장 공통 정규화: 흑백 + 16단계 양자화 (같은 입력 → 같은 출력)."""
@@ -69,6 +89,12 @@ def render(name, kind, dpi, chrome):
 
     src = os.path.join(ROOT, "%s-helper-v1.html" % name)
     html = io.open(src, encoding="utf-8").read()
+
+    # 시계 고정을 <head> 첫머리에 — 페이지 스크립트보다 먼저 실행돼야 한다.
+    m = re.search(r"<head[^>]*>", html, re.I)
+    if not m:
+        sys.exit("%s: <head> 를 찾을 수 없습니다(시계 고정 주입 실패)." % src)
+    html = html[:m.end()] + CLOCK_FREEZE + html[m.end():]
 
     # 작성예시를 채우고 다시 그린다. 실패하면 title 로 알린다(조용한 실패 방지).
     inject = (
