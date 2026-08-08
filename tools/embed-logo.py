@@ -11,7 +11,10 @@ embed-logo.py — 군포시 로고를 허브·서식 도우미에 박아 넣는�
 
 삽입 위치
   1) index.html (허브)  — 상단바 제목 '군포시 민원 서식 작성 도우미' 왼쪽. 원본 색(민트) 그대로.
-  2) 서식 도우미 8종    — 입력 패널 파란 머리(.phone-head) 우측 상단에 흰색(반전)으로.
+  2) 서식 도우미 8종    — 두 군데에 넣는다.
+       ㄱ. 상단바 제목 왼쪽 — 허브와 **같은 자리·같은 크기·원본 색**.
+           세부 페이지에 들어가도 로고가 그대로 보이게 해 달라는 요청(2026.08.08).
+       ㄴ. 입력 패널 파란 머리(.phone-head) 우측 상단에 흰색(반전)으로.
      engine/base.html 을 고친 뒤 엔진 서식은 다시 빌드해야 반영된다(아래 안내 출력).
 
 ⚠️ 흰색 버전을 CSS `filter:invert()` 로 만들면 안 된다. 이 로고는 민트 띠 위에
@@ -33,9 +36,12 @@ except Exception:
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BEG, END = "<!--GUNPO-LOGO-->", "<!--/GUNPO-LOGO-->"
 
+# 손작성 3종은 engine/base.html 을 쓰지 않으므로 여기서 직접 고쳐야 한다.
+# 엔진 5종은 base.html 만 고치고 재빌드한다 — 여기에 넣으면 재빌드에 덮여 헛일이 된다.
+# (birth 는 예전에 손작성이었다가 엔진으로 옮겨졌다. 2026.08.08 목록 바로잡음.)
 HAND_WRITTEN = ["passport-helper-v1.html", "marriage-helper-v1.html",
-                "divorce-helper-v1.html", "birth-helper-v1.html"]
-ENGINE_FORMS = ["death", "naming", "cert", "realestate"]
+                "divorce-helper-v1.html"]
+ENGINE_FORMS = ["birth", "death", "naming", "cert", "realestate"]
 
 MIME = {".svg": "image/svg+xml", ".png": "image/png",
         ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
@@ -91,24 +97,33 @@ def wrap(inner):
     return BEG + inner + END
 
 
-# ── 허브(index.html): 제목 왼쪽, 원본 색 ──────────────────────────────
-HUB_CSS = """
+# ── 상단바(허브·서식 공통): 제목 왼쪽, 원본 색 ────────────────────────
+# 허브와 서식이 **같은 규칙**을 쓴다 — 세부 페이지에 들어가도 로고 위치·크기가
+# 달라지지 않아야 한다는 요청(2026.08.08). 값을 바꿀 때는 양쪽이 함께 바뀐다.
+TOPBAR_CSS = """
 <style>
   .topbar .gunpo-logo{height:38px;width:auto;flex:0 0 auto;display:block;}
   @media (max-width:640px){ .topbar .gunpo-logo{height:30px;} }
+  @media print{ .topbar .gunpo-logo{display:none;} }
 </style>
 """
+
+TOPBAR_ANCHOR = '<header class="topbar">\n  <div class="brand">'
+
+
+def patch_topbar(src, uri, label):
+    """상단바 제목 왼쪽에 원본 색 로고를 넣는다(허브·서식 공통)."""
+    if TOPBAR_ANCHOR not in src:
+        sys.exit("%s: 상단바 구조를 찾지 못했습니다." % label)
+    img = '<img class="gunpo-logo" src="%s" alt="군포시">' % uri
+    return src.replace(TOPBAR_ANCHOR,
+                       '<header class="topbar">\n  ' + wrap(img) + '\n  <div class="brand">', 1)
 
 
 def patch_hub(src, uri):
     src = strip(src)
-    src = src.replace("</head>", wrap(HUB_CSS) + "</head>", 1)
-    img = ('<img class="gunpo-logo" src="%s" alt="군포시">' % uri)
-    anchor = '<header class="topbar">\n  <div class="brand">'
-    if anchor not in src:
-        sys.exit("index.html: 상단바 구조를 찾지 못했습니다.")
-    return src.replace(anchor,
-                       '<header class="topbar">\n  ' + wrap(img) + '\n  <div class="brand">', 1)
+    src = src.replace("</head>", wrap(TOPBAR_CSS) + "</head>", 1)
+    return patch_topbar(src, uri, "index.html")
 
 
 # ── 서식 도우미: 파란 머리 우측 상단, 흰색(반전본) ────────────────────
@@ -168,10 +183,12 @@ FORM_ANCHOR = ('      <div class="phone-head">\n'
                '        <div class="wiz-title" id="wizTitle"></div>')
 
 
-def patch_form(src, uri, label):
+def patch_form(src, uri, white, label):
+    """서식 도우미: 상단바(원본 색) + 입력 패널 파란 머리(흰색 반전본) 두 군데."""
     src = strip(src)
-    src = src.replace("</head>", wrap(FORM_CSS) + "</head>", 1)
-    img = '<img class="gunpo-logo" src="%s" alt="군포시">' % uri
+    src = src.replace("</head>", wrap(TOPBAR_CSS) + wrap(FORM_CSS) + "</head>", 1)
+    src = patch_topbar(src, uri, label)
+    img = '<img class="gunpo-logo" src="%s" alt="군포시">' % white
     if FORM_ANCHOR not in src:
         sys.exit("%s: 입력 패널(.phone-head) 구조를 찾지 못했습니다." % label)
     src = src.replace(FORM_ANCHOR,
@@ -204,7 +221,7 @@ def main():
         elif rel == "index.html":
             out = patch_hub(s, uri)
         else:
-            out = patch_form(s, white, rel)
+            out = patch_form(s, uri, white, rel)
         io.open(p, "w", encoding="utf-8", newline="").write(out)
         print(("  제거: " if remove else "  삽입: ") + rel)
 
