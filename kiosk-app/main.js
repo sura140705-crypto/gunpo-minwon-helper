@@ -256,11 +256,23 @@ function createWindow() {
 
   // 시민이 화면을 벗어나면(Alt+Tab 등) 입력 내용을 남겨 두지 않는다.
   // Alt+Tab·Windows 키 자체는 앱이 막을 수 없다 — 이탈은 OS 설정으로 막고, 여기서는 **잔존**을 막는다.
+  //
+  // ⚠️ 네이티브 대화상자가 떠 있을 때는 손대면 안 된다. 대화상자는 Win32 모달이라 부모 창을
+  //    **비활성 상태(isEnabled=false)** 로 만드는데, 여기서 focus() 로 포커스만 되돌리면
+  //    "포커스는 있는데 입력은 막힌" 상태가 되어 화면이 완전히 먹통이 된다.
+  //    2026.08 포터블 시험에서 서식의 「초기화」(confirm) 로 실제 발생 — 서식 쪽은 페이지 안
+  //    확인 창으로 바꿨고(engine.js `askConfirm`), 여기서는 원인 자체를 막아 둔다.
   win.on('blur', () => {
     if (adminMode || allowQuit || !win || win.isDestroyed()) return;
-    win.loadFile(path.join(APP_DIR, 'index.html'));
-    win.show();
-    win.focus();
+    if (!win.isEnabled()) return;                // 대화상자가 떠 있다 → 이탈이 아니다
+    // 잠깐 사이의 포커스 이동은 이탈이 아니다. 조금 뒤에 다시 확인하고 초기화한다.
+    setTimeout(() => {
+      if (!win || win.isDestroyed() || adminMode || allowQuit) return;
+      if (!win.isEnabled() || win.isFocused()) return;
+      win.loadFile(path.join(APP_DIR, 'index.html'));
+      win.show();
+      win.focus();
+    }, 300);
   });
 
   // Alt+F4·창 닫기는 관리자 확인을 거친 뒤에만

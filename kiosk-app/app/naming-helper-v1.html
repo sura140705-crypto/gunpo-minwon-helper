@@ -272,7 +272,7 @@ var FORM_IMG="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAABKYAAAaSCAIAAACTCGAj
 /* =====================================================================
    개명신고서(양식 제27호) — FORM 설정
    engine/engine.js와 함께 build-form.js가 자체완결 HTML로 인라인한다.
-   재생성: python tools/prep-bg.py naming 개명신고서.pdf
+   재생성: python tools/prep-bg.py naming 서식원본/개명신고서.pdf
           node tools/build-form.js naming
    ===================================================================== */
 var QUAL_OPTS=["본인","법정대리인","기타"];
@@ -857,11 +857,50 @@ function onStepperKey(e){
 function openPreview(){ renderForm(); document.body.classList.add("pv-open"); }
 function closePreview(){ document.body.classList.remove("pv-open"); }
 
+/* 확인 창 — 네이티브 confirm() 을 쓰지 않는다.
+   키오스크(Electron)에서 네이티브 대화상자가 뜨면 창이 **비활성 상태**가 되는데,
+   키오스크의 화면 이탈 방지 조치가 그것을 이탈로 오인해 포커스를 도로 가져간다.
+   그러면 포커스는 있는데 입력은 막힌 채로 남아 화면이 먹통이 된다(2026.08 포터블 시험에서 확인).
+   페이지 안에서 뜨고 닫히는 창이면 이 문제가 없고, 터치 대상도 크게 만들 수 있다. */
+function askConfirm(message, onYes){
+  var old=document.getElementById("askc"); if(old) old.remove();
+  if(!document.getElementById("askc-style")){
+    var st=document.createElement("style"); st.id="askc-style";
+    st.textContent="@media print{#askc{display:none !important;}}";
+    document.head.appendChild(st);
+  }
+  var back=document.createElement("div"); back.id="askc";
+  back.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:200;"+
+    "display:flex;align-items:center;justify-content:center;padding:20px;";
+  var box=document.createElement("div");
+  box.style.cssText="background:#fff;border-radius:14px;padding:26px 24px 20px;max-width:440px;"+
+    "width:100%;box-shadow:0 10px 40px rgba(0,0,0,.35);font-size:17px;line-height:1.6;"+
+    "color:#222;text-align:center;";
+  var msg=document.createElement("div"); msg.textContent=message;
+  var row=document.createElement("div"); row.style.cssText="display:flex;gap:10px;margin-top:22px;";
+  var bs="flex:1;font-family:inherit;font-size:17px;font-weight:800;padding:14px;border:0;"+
+         "border-radius:10px;cursor:pointer;";
+  var no=document.createElement("button");
+  no.textContent="아니요"; no.style.cssText=bs+"background:#e9edf3;color:#333;";
+  var yes=document.createElement("button");
+  yes.textContent="예"; yes.style.cssText=bs+"background:#1b5fc0;color:#fff;";
+  function close(){ back.remove(); document.removeEventListener("keydown", onKey, true); }
+  function onKey(e){ if(e.key==="Escape"){ e.preventDefault(); close(); } }
+  no.addEventListener("click", close);
+  yes.addEventListener("click", function(){ close(); onYes(); });
+  back.addEventListener("click", function(e){ if(e.target===back) close(); });
+  document.addEventListener("keydown", onKey, true);
+  row.appendChild(no); row.appendChild(yes);
+  box.appendChild(msg); box.appendChild(row); back.appendChild(box);
+  document.body.appendChild(back);
+  no.focus();
+}
+
 /* 초기화 / 예시 */
 function resetAll(){
-  if(confirm("입력한 모든 내용을 지우고 처음부터 다시 시작할까요?")){
+  askConfirm("입력한 모든 내용을 지우고 처음부터 다시 시작할까요?", function(){
     state=createEmptyState(); renderAll(); scrollTop();
-  }
+  });
 }
 function fillSample(kind){
   state=createEmptyState();
