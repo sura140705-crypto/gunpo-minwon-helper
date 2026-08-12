@@ -243,13 +243,21 @@ function createWindow() {
   // 서식을 옮겨 다녀도(첫 화면 ↔ 각 서식) 매번 다시 걸어 준다.
   // 안내 화면(admin/)에서는 건너뛴다 — 실패 안내 화면이 다시 실패를 알리는 고리를 만들지 않기 위해서다.
   win.webContents.on('did-finish-load', () => {
-    if (String(win.webContents.getURL()).includes('/admin/')) return;
+    const url = String(win.webContents.getURL());
+    if (url.includes('/admin/')) return;
     win.webContents.executeJavaScript(PRINT_HOOK)
       .then((hooked) => {
         printHookOk = !!hooked;
         if (!hooked) fatal('인쇄 보호 기능을 적용하지 못했습니다.');
       })
       .catch(() => { printHookOk = false; fatal('인쇄 보호 기능을 적용하지 못했습니다.'); });
+
+    // 겹쳐 찍기 — 미리 인쇄된 서식 용지에 값만 얹는다(kiosk.json 의 overlayPrintForms).
+    // 서식 HTML 은 건드리지 않는다. 이 모드는 키오스크 인쇄에만 걸린다.
+    if (printOptions.isOverlayForm(loadConfig(), url)) {
+      win.webContents.insertCSS(printOptions.OVERLAY_PRINT_CSS)
+        .catch((e) => console.error('[키오스크] 겹쳐 찍기 CSS 적용 실패:', e && e.message));
+    }
   });
 
   // 시민이 화면을 벗어나면(Alt+Tab 등) 입력 내용을 남겨 두지 않는다.
@@ -421,6 +429,10 @@ async function runSelfCheck() {
   line('설정 파일 존재', mark(fs.existsSync(CONFIG_PATH)) + fs.existsSync(CONFIG_PATH));
   line('지정 프린터', mark(!!cfg.printerDeviceName) + (cfg.printerDeviceName || '미지정 → 인쇄 차단'));
   line('관리자 PIN', mark(!!cfg.exitPinHash) + (cfg.exitPinHash ? '설정됨' : '미설정 → PIN 없이 종료 가능'));
+  // 겹쳐 찍기는 **미리 인쇄된 서식 용지가 트레이에 있어야** 한다. 검수 기록에 남긴다.
+  const ov = Array.isArray(cfg.overlayPrintForms) ? cfg.overlayPrintForms : [];
+  line('겹쳐 찍기(값만 인쇄)', (ov.length ? '[확인] ' : '[양호] ') +
+       (ov.length ? ov.join(', ') + ' → 미리 인쇄된 서식 용지 필요' : '없음 (서식까지 통째로 인쇄)'));
   L.push('');
 
   L.push('[프린터]');

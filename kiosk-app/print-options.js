@@ -12,8 +12,54 @@
 
 const PAGE_SIZE = 'A4';   // 서식 8종은 전부 A4 별지서식이다
 
+/* ── 겹쳐 찍기(오버레이) 인쇄 ────────────────────────────────────────────
+   **미리 인쇄된 관공서 서식 용지에 값만** 얹어 찍는 모드다.
+
+   왜 필요한가 (2026.08.12):
+     여권발급신청서는 **드롭아웃 컬러 서식**이다 — 기재칸 테두리가 빨강(255,0,0)으로
+     인쇄돼 있고, 스캔할 때 빨강을 걸러내 적힌 글자만 읽는다. 이것을 흑백 프린터로 뽑으면
+     빨강이 밝기 76 의 **검은 선**이 되어 드롭아웃이 안 되고, 판독이 실패한다.
+     컬러 프린터가 준비되기 전까지의 임시 방편으로, 실물 서식 용지에 값만 찍는다.
+
+   ⚠️ 이 모드에서는 **프린터 정합 공차가 그대로 어긋남이 된다.**
+      서식과 값을 함께 찍을 때는 둘이 같이 밀려서 무해했지만, 여기서는 칸이 종이에 고정돼
+      있고 값만 움직인다. 기재칸 높이 약 7mm · 글자 약 4mm 이므로 위아래 여유가 ±1.5mm 뿐이다.
+   ⚠️ **한 인쇄 작업의 모든 쪽에 적용된다.** 여권 미성년자 신청은 2쪽(신청서+법정대리인
+      동의서)이 나오는데, 트레이에는 한 종류의 용지만 들어간다. 2쪽짜리 서식에 이 모드를
+      켜기 전에 용지 운영을 먼저 정해야 한다.
+
+   숨기는 것 — 서식을 '재현'하는 요소 전부. 남기는 것은 값(.ov)뿐이다.
+     .bg    배경 서식 이미지 → **visibility 로 숨긴다.** display:none 으로 지우면
+            .stage 의 높이가 사라져(높이가 이 이미지에서 나온다) 좌표 기준이 무너진다.
+     .cover 원본 안내문을 덮는 흰 사각형
+     .guide 옅은 회색으로 다시 그린 안내문
+     .ovhi  서명란 노란 형광펜 — 드롭아웃 대상 색이 아니어서 스캔을 방해할 수 있다 */
+const OVERLAY_PRINT_CSS = [
+  '@media print{',
+  '  .stage .bg{ visibility:hidden !important; }',
+  '  .cover, .guide, .ovhi{ display:none !important; }',
+  '}',
+].join('\n');
+
+/* 서식 파일 이름에서 서식 키를 뽑는다 — `passport-helper-v1.html` → `passport` */
+function formKey(url) {
+  const m = /([a-z]+)-helper-v\d+\.html/i.exec(String(url || ''));
+  return m ? m[1].toLowerCase() : '';
+}
+
 module.exports = {
   PAGE_SIZE: PAGE_SIZE,
+  OVERLAY_PRINT_CSS: OVERLAY_PRINT_CSS,
+  formKey: formKey,
+
+  /* 이 서식을 겹쳐 찍기로 인쇄해야 하는가 — kiosk.json 의 overlayPrintForms 목록으로 정한다.
+     설정에 없으면 종전대로 서식까지 통째로 인쇄한다(안전한 기본값). */
+  isOverlayForm: function (cfg, url) {
+    const list = (cfg && cfg.overlayPrintForms) || [];
+    if (!Array.isArray(list) || !list.length) return false;
+    const key = formKey(url);
+    return !!key && list.map(String).map((s) => s.toLowerCase()).indexOf(key) >= 0;
+  },
 
   /* webContents.print() 용 — 실제 인쇄가 쓰는 값. */
   forPrint: function () {
