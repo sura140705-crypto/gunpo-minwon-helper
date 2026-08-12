@@ -903,7 +903,9 @@ const CO={
     jumin:{x:316.3,y:258.5,cells:13,cellW:24.7,gap:4.7,h:31.5,sep:6,sepGap:31,digits:true},
     phone:{x:315.5,y:290,cells:13,cellW:29.2,gap:0,h:31.5,digits:true},
     emgName:{x:315.5,y:339.9,cells:8,cellW:31.3,gap:0,h:37.3},
-    emgRel:{x:629,y:339.9,cells:4,cellW:30.5,gap:0,h:37.3},
+    // 칸 폭 26 + 칸 사이 6 = 간격 32 (원본 실측 8.47mm). 종전 cellW:30.5·gap:0 은 둘을 합쳐 둬
+    // 간격이 0.4mm 좁았고, 첫 칸 글자가 오른쪽으로 0.6mm 삐져나왔다(2026.08.12 실측 보정).
+    emgRel:{x:629,y:339.9,cells:4,cellW:26,gap:6,h:37.3},
     emgPhone:{x:315.5,y:377.2,cells:13,cellW:29.2,gap:0,h:37.3,digits:true},
     romanSur:{x:179.6,y:450.1,cells:16,cellW:30,gap:2,h:33.9},
     romanGiven:{x:179.6,y:484,cells:16,cellW:30,gap:2,h:34.1},
