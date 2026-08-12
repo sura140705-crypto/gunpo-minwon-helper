@@ -17,6 +17,7 @@
 | `운영문서/*.pdf` | **`운영문서/*.md`** | `.md` 수정 → `python tools/make-manual.py …` |
 | `kiosk-app/app/` 안의 HTML | **루트의 같은 파일** | 루트 수정 → `bash tools/sync-kiosk.sh` |
 | 키오스크 동작·보안·인쇄 통제 | **`kiosk-app/main.js`·`preload.js`** | 직접 수정 → `--selfcheck` 로 확인 |
+| 인쇄 조판(용지·여백·배율) | **`kiosk-app/print-options.js`** | 수정 → `verify-print.py --electron` |
 
 > ⛔ **엔진 5종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
 > ⛔ **`kiosk-app/app/` 안의 파일을 직접 고치지 마라.** 원본은 루트다.
@@ -24,10 +25,15 @@
 ## 2. 끝내기 전에 반드시 통과시켜야 하는 것
 
 ```bash
-python tools/verify-print.py        # 인쇄물 회귀 — 8종×예시2 = 19쪽, "전부 0px"가 기본값
-bash tools/sync-kiosk.sh --check    # 루트 → kiosk-app/app 드리프트 — 다르면 exit 1
-node --check <고친 파일>.js          # 문법(엔진·config)
+python tools/verify-print.py            # 인쇄물 회귀 — 8종×예시2 = 19쪽, "전부 0px"가 기본값
+python tools/verify-print.py --electron # 키오스크와 같은 Electron 조판 + 용지(A4) 검사
+bash tools/sync-kiosk.sh --check        # 루트 → kiosk-app/app 드리프트 — 다르면 exit 1
+node --check <고친 파일>.js              # 문법(엔진·config)
 ```
+
+`--electron` 은 **인쇄 옵션(`kiosk-app/print-options.js`)·Electron 버전·인쇄 CSS** 를 건드렸을 때 필수다.
+기본값(크롬)만으로는 **실제 인쇄가 지나가는 경로를 못 본다** — 2026.08.12 의 용지 사고가 그 틈으로 빠져나갔다
+(`docs/GOTCHAS.md ㉝`). 기준선은 하나이고 두 경로가 같은 결과를 내야 하므로 `--electron --update` 는 막혀 있다.
 
 `verify-print.py` 가 **이 프로젝트의 유일한 안전망**이다. 좌표·서식·엔진·CSS를 건드렸으면
 반드시 돌리고 결과를 보고에 적어라. 인쇄물이 달라졌는데 그게 의도였다면

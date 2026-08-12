@@ -75,6 +75,8 @@ gunpo_minwon/
 | `node tools/build-form.js <이름>` | base + engine + config + 배경 → 자체완결 `<이름>-helper-v1.html` |
 | `bash tools/sync-kiosk.sh [--check]` | 루트 배포 HTML 9개 → `kiosk-app/app/` 동기화(검증) |
 | `python tools/verify-print.py [--update]` | **인쇄물 회귀 검증** — 8종×예시2 = 19쪽을 `tests/baseline/` 과 픽셀 비교 |
+| `python tools/verify-print.py --electron` | 같은 19쪽을 **키오스크와 같은 Electron 조판**으로 검증 + 용지(A4) 검사 |
+| `tools/calibration-sheet.html` | **프린터 검수지** — 인쇄해서 기기별 인쇄 불가 영역·배율을 재고 기록(설치 검수용) |
 | `python tools/rebrand.py --city ○○시 …` | 지역 고유값(기관명·부서·연락처·로고) 일괄 교체 → 타 지자체 확산 |
 | `python tools/make-manual.py [입력.md] [출력.pdf]` | 운영문서 `.md` → 배포 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입) |
 | `python tools/embed-logo.py [--remove]` | 로고를 허브·입력 패널에 base64 삽입 |
