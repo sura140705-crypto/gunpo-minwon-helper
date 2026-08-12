@@ -17,6 +17,7 @@ const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
+const printOptions = require('./print-options');
 
 const SELFCHECK = process.argv.includes('--selfcheck');
 
@@ -156,14 +157,11 @@ ipcMain.handle('kiosk:print', async (event) => {
   }
 
   const ok = await new Promise((resolve) => {
-    event.sender.print({
+    // 조판 옵션(용지·여백·배율)은 `print-options.js` 에 있다 — 검증 도구와 같은 값을 쓴다.
+    event.sender.print(Object.assign({
       silent: true,                      // 대화상자 없음 → 'PDF로 저장' 목적지가 아예 없다
       deviceName: target.name,           // 지정된 실물 프린터로만
-      printBackground: true,             // 서식 배경(원본 서식 이미지)이 함께 나와야 한다
-      margins: { marginType: 'none' },
-      scaleFactor: 100,
-      copies: 1,
-    }, (done, reason) => {
+    }, printOptions.forPrint()), (done, reason) => {
       if (!done) console.error('[키오스크] 인쇄 실패:', reason);
       resolve(done);
     });

@@ -13,7 +13,7 @@
     "appId": "kr.go.gunpo.minwon.kiosk",
     "productName": "군포민원서식도우미",
     "directories": { "output": "dist" },
-    "files": ["main.js", "preload.js", "app/**/*", "admin/*.html", "admin/pin-preload.js"],
+    "files": ["main.js", "preload.js", "print-options.js", "app/**/*", "admin/*.html", "admin/pin-preload.js"],
     "extraResources": [
       { "from": "admin", "to": "admin", "filter": ["*.bat", "*.ps1"] }
     ],
