@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>프린터 검수지 — 군포시 민원 서식 작성 도우미</title>
+<!--
+  프린터 검수지 — 인쇄 불가 영역과 배율을 재서 **설치 검수 기록**으로 남긴다.
+
+  왜 필요한가
+    서식 8종은 A4 전면(210×297mm)을 **실척**으로 인쇄한다. 그런데 레이저 프린터는 용지
+    가장자리 몇 mm 를 물리적으로 인쇄하지 못하고, 그 값이 기기마다 다르다(실측: 개발PC 1mm,
+    키오스크 2mm). 이 종이는 그 값을 기기별로 재기 위한 것이다.
+
+  쓰는 법
+    1. 검수할 프린터로 인쇄한다. 반드시 **여백 없음 · 배율 100%(실제 크기)**.
+    2. 네 변의 막대 눈금에서 **처음으로 보이는 막대의 숫자** = 그 변의 인쇄 불가 영역(mm).
+       (막대 N 은 종이 끝에서 N mm 까지만 그려져 있다. 그래서 인쇄 불가 영역보다 작은 막대는
+        통째로 사라지고, 큰 막대만 살아남는다. 숫자는 안쪽에 있어 항상 인쇄된다.)
+    3. 가운데 사각형의 가로·세로를 자로 잰다. **190 × 277mm** 면 실척(100%)이다.
+
+  판정 기준 (2026.08.12 실측)
+    서식 8종 19쪽의 인쇄 내용은 전부 가장자리에서 **9.8mm 이상** 안쪽에 있다.
+    → 인쇄 불가 영역이 **9mm 이하**이고 배율이 100%면 잘려 나가는 내용이 없다(합격).
+    ※ 여권 법정대리인 동의서(2쪽)의 회색 점선 절취선만 좌우 끝까지 닿는다 — 잘려도 무방하다.
+
+  ⛔ 배율이 100%가 아니면 그것부터 잡아라. **서식 좌표를 고쳐서 맞추지 마라**
+     — 기기마다 값이 달라 다른 프린터에서 어긋난다(docs/GOTCHAS.md ⑯·㉝).
+-->
+<style>
+  @page { size: A4 portrait; margin: 0; }
+  html, body { margin:0; padding:0; background:#fff; }
+  body { font-family:"맑은 고딕","Malgun Gothic",sans-serif;
+         -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+
+  .page { position:relative; width:210mm; height:297mm; overflow:hidden; }
+
+  /* 본 박스 — 정확히 190 × 277mm (사방 10mm 안쪽). 자로 재는 대상. */
+  .main { position:absolute; left:10mm; top:10mm; width:190mm; height:277mm;
+          border:0.4mm solid #000; box-sizing:border-box; }
+  .mlab { position:absolute; left:13mm; top:12mm; font-size:3mm; font-weight:700; color:#000; }
+
+  /* 모서리 십자 — 위치 어긋남을 눈으로 잡는다 */
+  .cross { position:absolute; width:12mm; height:12mm; }
+  .cross::before, .cross::after { content:""; position:absolute; background:#000; }
+  .cross::before { left:0; top:5.8mm; width:12mm; height:0.4mm; }
+  .cross::after  { top:0; left:5.8mm; height:12mm; width:0.4mm; }
+
+  /* 가장자리 막대 눈금 */
+  .bar  { position:absolute; background:#000; }
+  .bar.odd { background:#c00; }
+  .bnum { position:absolute; font-size:3mm; font-weight:700; color:#000;
+          width:8mm; text-align:center; line-height:1; }
+  .bnum.odd { color:#c00; }
+  .gcap { position:absolute; font-size:2.8mm; color:#333; }
+
+  .box { position:absolute; border:0.3mm solid #888; padding:3mm 4mm; box-sizing:border-box; }
+  .box h2 { margin:0 0 2.5mm; font-size:4.2mm; }
+  .box p  { margin:0 0 1.8mm; font-size:3.1mm; line-height:1.55; }
+  table { border-collapse:collapse; width:100%; font-size:3.1mm; }
+  th, td { border:0.2mm solid #888; padding:2.2mm; text-align:left; }
+  th { background:#f0f0f0; width:40mm; }
+  .fill { color:#bbb; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="main"></div>
+  <div class="mlab">이 사각형 = 190 × 277 mm</div>
+
+  <div class="cross" style="left:4mm;   top:4mm;"></div>
+  <div class="cross" style="left:194mm; top:4mm;"></div>
+  <div class="cross" style="left:4mm;   top:281mm;"></div>
+  <div class="cross" style="left:194mm; top:281mm;"></div>
+
+  <div class="gcap" style="left:66mm;  top:15.5mm;">↑ 처음 보이는 막대의 숫자 = 위쪽 인쇄 불가 영역(mm)</div>
+  <div class="gcap" style="left:66mm;  top:278mm;">↓ 아래쪽 인쇄 불가 영역(mm)</div>
+  <div class="gcap" style="left:16mm;  top:96mm;">← 왼쪽 (mm)</div>
+  <div class="gcap" style="left:150mm; top:96mm;">오른쪽 (mm) →</div>
+
+  <script>
+    /* 막대 N = 종이 끝에서 N mm 까지만 그려진다. 인쇄 불가 영역보다 작은 막대는 통째로 사라진다.
+       숫자는 본 박스 안쪽(항상 인쇄되는 자리)에 둔다 — 막대가 없어져도 눈금을 읽을 수 있게. */
+    (function () {
+      var h = [], N, i, p, odd;
+      for (i = 1; i <= 10; i++) {
+        odd = (i % 2) ? ' odd' : '';
+        // 위 / 아래 : 가로로 늘어놓는다
+        p = 66 + (i - 1) * 8;                       // x
+        h.push('<div class="bar' + odd + '" style="left:' + p + 'mm; top:0; width:5mm; height:' + i + 'mm;"></div>');
+        h.push('<div class="bnum' + odd + '" style="left:' + (p - 1.5) + 'mm; top:11.5mm;">' + i + '</div>');
+        h.push('<div class="bar' + odd + '" style="left:' + p + 'mm; bottom:0; width:5mm; height:' + i + 'mm;"></div>');
+        h.push('<div class="bnum' + odd + '" style="left:' + (p - 1.5) + 'mm; top:282.5mm;">' + i + '</div>');
+        // 좌 / 우 : 세로로 늘어놓는다
+        p = 104 + (i - 1) * 8;                      // y
+        h.push('<div class="bar' + odd + '" style="top:' + p + 'mm; left:0; height:5mm; width:' + i + 'mm;"></div>');
+        h.push('<div class="bnum' + odd + '" style="top:' + (p + 1) + 'mm; left:11.5mm;">' + i + '</div>');
+        h.push('<div class="bar' + odd + '" style="top:' + p + 'mm; right:0; height:5mm; width:' + i + 'mm;"></div>');
+        h.push('<div class="bnum' + odd + '" style="top:' + (p + 1) + 'mm; left:190.5mm;">' + i + '</div>');
+      }
+      document.querySelector('.page').insertAdjacentHTML('beforeend', h.join(''));
+    })();
+  </script>
+
+  <div class="box" style="left:24mm; top:24mm; width:162mm;">
+    <h2>프린터 검수지 — 군포시 민원 서식 작성 도우미</h2>
+    <p><b>1. 인쇄 불가 영역</b> — 네 변의 막대 눈금에서 <b>처음으로 보이는 막대의 숫자</b>를 읽으십시오.
+       막대 <b>N</b> 은 종이 끝에서 <b>N mm</b> 까지만 그려져 있어, 인쇄 불가 영역보다 작은 막대는
+       통째로 사라집니다. 「1」과 「2」가 없고 「3」부터 보이면 그 변은 약 <b>3mm</b> 입니다.</p>
+    <p><b>2. 배율</b> — 가운데 사각형의 가로·세로를 자로 재십시오.
+       <b>190 × 277mm</b> 면 실척(100%)입니다. 짧으면 프린터가 축소하고 있는 것이니
+       드라이버의 「용지에 맞게 크기 조정」을 끄십시오.</p>
+    <p><b>판정</b> — 서식 8종 19쪽의 인쇄 내용은 전부 가장자리에서 <b>9.8mm 이상</b> 안쪽에 있습니다.
+       인쇄 불가 영역이 <b>9mm 이하</b>이고 배율이 <b>100%</b>면 <b>합격</b>입니다.</p>
+  </div>
+
+  <div class="box" style="left:24mm; top:190mm; width:162mm;">
+    <table>
+      <tr><th>프린터 이름</th><td class="fill">(예: M332x 382x 402x Series)</td></tr>
+      <tr><th>설치 위치 · PC</th><td class="fill">&nbsp;</td></tr>
+      <tr><th>인쇄 불가 영역</th><td class="fill">좌 ____ · 우 ____ · 상 ____ · 하 ____ mm</td></tr>
+      <tr><th>사각형 실측</th><td class="fill">가로 ______ mm × 세로 ______ mm  →  배율 ______ %</td></tr>
+      <tr><th>판정</th><td class="fill">합격 / 불합격 (사유: ____________________________)</td></tr>
+      <tr><th>점검일 · 점검자</th><td class="fill">2026. ____ . ____ .  /  ________________</td></tr>
+    </table>
+  </div>
+
+  <div class="box" style="left:24mm; top:250mm; width:162mm; border-style:dashed;">
+    <p style="margin:0;"><b>배율이 100%가 아니거나 인쇄 불가 영역이 9mm 를 넘으면</b> —
+       프린터 [속성] → [인쇄 기본 설정] 에서 <b>용지 A4</b> 와
+       <b>「용지에 맞게 크기 조정」 끄기</b>를 확인하십시오. 그래도 그대로면 그 프린터로는 실척 인쇄가
+       어렵습니다. <b>서식 좌표를 고쳐서 맞추지 마십시오</b> — 기기마다 값이 달라 다른 프린터에서
+       어긋납니다(<code>docs/GOTCHAS.md</code> ⑯·㉝).</p>
+  </div>
+
+</div>
+</body>
+</html>

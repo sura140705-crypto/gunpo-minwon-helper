@@ -11,6 +11,13 @@ tests/baseline/ 의 기준선 이미지와 **픽셀 단위로** 비교한다.
   python tools/verify-print.py passport cert   # 일부만
   python tools/verify-print.py --update        # 기준선 갱신(변경이 '의도된' 것일 때만!)
   python tools/verify-print.py --dpi 200       # 더 촘촘히 (기준선도 같은 dpi여야 함)
+  python tools/verify-print.py --electron      # 키오스크와 같은 Electron 조판으로 검증
+
+⚠️ 기본값은 데스크톱 크롬이다. 그런데 **실제 인쇄가 지나가는 것은 Electron 경로**이므로,
+   크롬만 검증하면 둘 사이의 차이를 못 본다 — 2026.08.12 의 용지 사고(Electron 이
+   `@page{size:A4}` 를 무시하고 Letter 로 조판)가 정확히 그 틈으로 빠져나갔다.
+   `--electron` 은 같은 기준선에 대고 Electron 조판을 비교하고, **용지가 A4 인지도 검사**한다.
+   기준선은 하나다 — 두 경로가 같은 결과를 내야 한다는 것이 이 검증의 요지다.
 
 판정
   ✓ 0px    — 인쇄물 동일 (기대값)
@@ -48,9 +55,26 @@ CHROME_CANDIDATES = [
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
 ]
 
+# 키오스크가 실제로 쓰는 Electron. `kiosk-app` 의 개발 의존성에 들어 있다.
+ELECTRON_EXE = os.path.join(ROOT, "kiosk-app", "node_modules", "electron", "dist", "electron.exe")
+ELECTRON_SCRIPT = os.path.join(ROOT, "tools", "print-electron.js")
+
+# 용지 검사 허용 오차(mm). Electron 내부 반올림이 0.1mm 안팎 있으므로 0 은 쓸 수 없다.
+PAGE_MM = (210.0, 297.0)
+PAGE_TOL = 0.5
+
 # 기준선은 16단계 회색으로 양자화해 저장한다(용량 1/2). 비교할 때 양쪽에 같은 처리를
 # 하므로 판정은 그대로 엄격하다 — 회색 단계가 하나라도 다르면 '다른 픽셀'로 센다.
 TOL = 8
+
+# `--electron` 전용 허용치. 크롬 경로는 지금도 **0px 가 기본값**이고 여기서 느슨해지지 않는다.
+#
+# 크롬과 Electron 은 크로미움 빌드가 달라 글자 몇 개의 안티에일리어싱이 미세하게 다르다
+# (실측: 19쪽 중 18쪽이 0px, 나머지 1쪽이 주민번호 숫자 몇 글자에서 246px).
+# 반면 **조판이 어긋나면 자릿수가 다르다** — 기준선을 1px(0.17mm) 밀어 보면
+# 66,000~300,000px 가 달라진다. 그래서 이 값은 글자 잡음(수백)보다 크고
+# 실제 어긋남(수만)보다 두 자릿수 작은 자리에 둔다. 넘긴 쪽은 회귀로 잡힌다.
+ELECTRON_PX_TOL = 2000
 
 # 렌더할 때 고정하는 날짜(기준선을 처음 만든 날). 서식의 신청일·동의일이 이 날짜로 찍힌다.
 # 바꾸면 인쇄물이 달라지므로 --update 로 기준선을 다시 만들어야 한다.
@@ -82,7 +106,41 @@ def chrome_path():
     sys.exit("크롬을 찾을 수 없습니다. CHROME_CANDIDATES 경로를 확인하세요.")
 
 
-def render(name, kind, dpi, chrome):
+def electron_path():
+    if not os.path.exists(ELECTRON_EXE):
+        sys.exit("Electron 을 찾을 수 없습니다: %s\n  kiosk-app 에서 `npm install` 을 먼저 하세요."
+                 % ELECTRON_EXE)
+    if not os.path.exists(ELECTRON_SCRIPT):
+        sys.exit("렌더러가 없습니다: %s" % ELECTRON_SCRIPT)
+    return ELECTRON_EXE
+
+
+def paper_check(electron):
+    """실제 인쇄와 같은 옵션(`print-options.forPdf()`)으로 한 장 뽑아 **용지**만 본다.
+
+    `pageSize` 가 빠지면 Electron 은 CSS 의 `@page{size:A4}` 를 무시하고 Letter 로 조판한다.
+    A4 조판을 Letter 에 맞추면 가로 +2.9%·세로 -5.9% 로 **두 축이 반대로** 어긋나므로
+    프린터 여백 설정으로는 고쳐지지 않는다. 픽셀 비교와 별개로 여기서 먼저 잡는다.
+    """
+    src = os.path.join(ROOT, "passport-helper-v1.html")
+    tmp_pdf = os.path.join(ROOT, "_vp_paper.pdf")
+    try:
+        r = subprocess.run([electron, ELECTRON_SCRIPT, src, tmp_pdf],
+                           capture_output=True, timeout=180)
+        m = re.search(r"PAGE_MM\s+([\d.]+)\s+([\d.]+)", r.stdout.decode("utf-8", "replace"))
+        if not m:
+            return False, "용지를 읽지 못했습니다(렌더러 실패)"
+        w, h = float(m.group(1)), float(m.group(2))
+        ok = abs(w - PAGE_MM[0]) <= PAGE_TOL and abs(h - PAGE_MM[1]) <= PAGE_TOL
+        note = "%.2f x %.2f mm" % (w, h)
+        if not ok:
+            note += "  (A4 는 %.0f x %.0f — Letter 는 215.9 x 279.4)" % PAGE_MM
+        return ok, note
+    finally:
+        os.path.exists(tmp_pdf) and os.remove(tmp_pdf)
+
+
+def render(name, kind, dpi, engine):
     """도우미 HTML에 작성예시를 채워 인쇄한 뒤, 쪽별 흑백 이미지(PIL) 목록을 돌려준다."""
     from PIL import Image
     import fitz
@@ -111,13 +169,20 @@ def render(name, kind, dpi, chrome):
     tmp_pdf = os.path.join(ROOT, "_vp_%s_%s.pdf" % (name, kind))
     io.open(tmp_html, "w", encoding="utf-8", newline="").write(html)
 
-    url = "file:///" + tmp_html.replace("\\", "/")  # ⚠️ file:///C:/... 형식만 동작
-    cmd = [
-        chrome, "--headless=new", "--disable-gpu", "--hide-scrollbars",
-        "--no-pdf-header-footer", "--run-all-compositor-stages-before-draw",
-        "--virtual-time-budget=4000",
-        "--print-to-pdf=" + tmp_pdf, url,
-    ]
+    kindof, exe = engine
+    if kindof == "electron":
+        # 키오스크와 같은 Chromium 으로 조판한다. 기준선(크롬)과 **같은 페이지 상자**를 얻으려고
+        # `--css-page`(preferCSSPageSize) 를 쓴다 — `pageSize:'A4'` 는 내부 반올림 때문에
+        # 0.1% 크게 나와 픽셀 비교가 크기 불일치로 떨어진다. 용지 자체는 paper_check() 가 본다.
+        cmd = [exe, ELECTRON_SCRIPT, tmp_html, tmp_pdf, "--css-page"]
+    else:
+        url = "file:///" + tmp_html.replace("\\", "/")  # ⚠️ file:///C:/... 형식만 동작
+        cmd = [
+            exe, "--headless=new", "--disable-gpu", "--hide-scrollbars",
+            "--no-pdf-header-footer", "--run-all-compositor-stages-before-draw",
+            "--virtual-time-budget=4000",
+            "--print-to-pdf=" + tmp_pdf, url,
+        ]
     subprocess.run(cmd, capture_output=True,
                    cwd=tempfile.gettempdir(), timeout=180)
     if not os.path.exists(tmp_pdf):
@@ -155,6 +220,10 @@ def compare(cur, ref):
 def main():
     args = sys.argv[1:]
     update = "--update" in args
+    use_electron = "--electron" in args
+    if update and use_electron:
+        sys.exit("--update 는 크롬 경로에서만 하십시오. 기준선은 하나이고, "
+                 "Electron 조판이 그 기준선과 같아야 한다는 것이 이 검증의 요지입니다.")
     dpi = 150
     if "--dpi" in args:
         dpi = int(args[args.index("--dpi") + 1])
@@ -165,15 +234,24 @@ def main():
         sys.exit("해당하는 서식이 없습니다: %s" % ", ".join(only))
 
     os.makedirs(BASE, exist_ok=True)
-    chrome = chrome_path()
-    print("%s  dpi=%d  대상 %d종" % ("기준선 갱신" if update else "인쇄물 검증", dpi, len(todo)))
+    engine = ("electron", electron_path()) if use_electron else ("chrome", chrome_path())
+    print("%s  dpi=%d  대상 %d종  경로=%s" % (
+        "기준선 갱신" if update else "인쇄물 검증", dpi, len(todo),
+        "Electron(키오스크)" if use_electron else "크롬(기준선)"))
 
     from PIL import Image
     bad, checked, missing = [], 0, 0
+
+    # Electron 경로에서는 픽셀 비교에 앞서 **용지**부터 본다. 여기서 틀리면 나머지는 볼 것도 없다.
+    if use_electron:
+        ok, note = paper_check(engine[1])
+        print("  %s 용지(실제 인쇄 옵션)      %s" % ("✓" if ok else "✗", note))
+        if not ok:
+            bad.append("용지")
     for name, kinds in todo:
         for kind in kinds:
             label = "%s-%s" % (name, kind)
-            pages, err = render(name, kind, dpi, chrome)
+            pages, err = render(name, kind, dpi, engine)
             if err:
                 print("  ✗ %-22s %s" % (label, err)); bad.append(label); continue
 
@@ -191,6 +269,9 @@ def main():
                 checked += 1
                 if n == 0:
                     print("  ✓ %-22s 0px" % tag)
+                elif use_electron and 0 < n <= ELECTRON_PX_TOL:
+                    # 숨기지 않고 숫자를 그대로 보여 준다 — 늘어나면 눈에 띄어야 한다.
+                    print("  ✓ %-22s %d px (글자 렌더 차이 · 허용 %d)" % (tag, n, ELECTRON_PX_TOL))
                 else:
                     if n < 0:
                         print("  ✗ %-22s 크기 불일치 (인쇄 배율·용지가 바뀜)" % tag)
