@@ -14,6 +14,14 @@ contextBridge.exposeInMainWorld('__kioskPrint', function () {
   return ipcRenderer.invoke('kiosk:print');
 });
 
+// 환경설정 창에서 정한 화면 쪽 값(무동작 초기화 시간·인쇄 후 대기 시간).
+// ⚠️ **sendSync** 다. preload 는 페이지 스크립트보다 먼저 도는데, 여기서 비동기로 받으면
+//    서식이 이미 기본값으로 타이머를 걸어 버린 뒤에 값이 도착해 아무 효과가 없다.
+//    웹(GitHub Pages) 배포본에는 preload 가 없으므로 이 값도 없고, 서식은 자기 기본값을 쓴다.
+let __cfg = {};
+try { __cfg = ipcRenderer.sendSync('kiosk:cfg') || {}; } catch (e) { __cfg = {}; }
+contextBridge.exposeInMainWorld('__kioskCfg', __cfg);
+
 // 점검 모드(`--selfcheck`)가 렌더러의 보안 설정이 실제로 적용됐는지 확인하는 데 쓴다.
 // 개인정보는 담기지 않으며, 값을 읽기만 할 뿐 아무것도 바꾸지 않는다.
 contextBridge.exposeInMainWorld('__kioskEnv', {

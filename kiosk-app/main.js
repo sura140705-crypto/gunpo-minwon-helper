@@ -8,7 +8,8 @@
 //   4. 개인정보를 디스크에 남기지 않는다 — 저장소·크래시덤프를 임시 경로에 두고 지운다.
 //   5. `--selfcheck` 로 위 상태를 파일에 찍어 **근거로 제출**할 수 있다.
 //
-// ⚠️ 설정은 `%ProgramData%\군포민원서식도우미\kiosk.json` 에서 읽는다(설치 시 관리자가 만든다).
+// ⚠️ 설정은 `kiosk.json` 에서 읽는다. 찾는 순서는 아래 configDir() 주석 참조 —
+//    하드보안관이 걸린 PC 를 위해 **보존 영역을 먼저** 본다.
 //    프린터가 지정돼 있지 않으면 **인쇄를 하지 않는다.** 기본 프린터로 흘려보내면
 //    그것이 가상 프린터일 때 개인정보가 파일로 남기 때문이다.
 const { app, BrowserWindow, Menu, session, ipcMain, dialog } = require('electron');
@@ -23,15 +24,84 @@ const SELFCHECK = process.argv.includes('--selfcheck');
 
 /* ── 설정 ────────────────────────────────────────────────────────────── */
 
-const CONFIG_DIR = path.join(process.env.ProgramData || os.tmpdir(), '군포민원서식도우미');
-const CONFIG_PATH = path.join(CONFIG_DIR, 'kiosk.json');
+const FOLDER = '군포민원서식도우미';
+const PROGRAMDATA_DIR = path.join(process.env.ProgramData || os.tmpdir(), FOLDER);
+
+/* ── 설정 파일을 어디서 찾는가 (2026.08.13) ──────────────────────────────
+   현장 PC 에는 **하드보안관**이 걸려 있다. C: 는 재부팅마다 원복되므로
+   `%ProgramData%` 에 저장한 설정은 다음 부팅에 사라진다. 그러면 **지정 프린터가
+   비어 인쇄가 전면 차단된다**(지정이 없으면 안 찍는 것이 설계다). 설정 편의가 아니라
+   운영 중단 문제다.
+
+   그래서 **보존 영역을 먼저 본다.** 관리자가 원복되지 않는 드라이브에
+   `군포민원서식도우미` 폴더를 만들어 두기만 하면, 앱이 그것을 찾아 그곳에 저장한다.
+   폴더가 없으면 종전대로 `%ProgramData%` 를 쓴다 — 하드보안관이 없는 PC 는 그대로다.
+
+     ① 환경변수 `GUNPO_KIOSK_CONFIG` 에 적힌 파일 (경로를 직접 못박고 싶을 때)
+     ② D:~H: 중 `<드라이브>:\군포민원서식도우미\` 폴더가 **있는** 첫 드라이브
+     ③ %ProgramData%\군포민원서식도우미\   (기본)
+
+   ⚠️ 드라이브 훑기는 **폴더 존재 확인만** 한다(`existsSync`). 없는 드라이브·빈 이동식
+      드라이브에서 조용히 false 를 돌려주므로 대화상자가 뜨지 않는다.
+   ⚠️ 폴더를 만들어 두는 것이 곧 '여기에 저장하라'는 지시다. 파일이 아직 없어도 된다.
+      어느 경로를 쓰고 있는지는 `--selfcheck` 와 환경설정 창에 그대로 찍힌다. */
+const PRESERVE_DRIVES = 'DEFGH';
+
+function configDir() {
+  const env = process.env.GUNPO_KIOSK_CONFIG;
+  if (env) { try { return path.dirname(env); } catch (e) { /* 무시하고 아래로 */ } }
+  for (const L of PRESERVE_DRIVES) {
+    const dir = L + ':\\' + FOLDER;
+    try { if (fs.existsSync(dir)) return dir; } catch (e) { /* 접근 불가는 없는 셈 친다 */ }
+  }
+  return PROGRAMDATA_DIR;
+}
+
+function configPath() {
+  const env = process.env.GUNPO_KIOSK_CONFIG;
+  if (env) return env;
+  return path.join(configDir(), 'kiosk.json');
+}
+
+/* 이 경로가 재부팅에 살아남는가 — %ProgramData%(C:) 면 하드보안관에 원복된다. */
+function configIsPreserved() {
+  return path.resolve(configDir()).toLowerCase() !== path.resolve(PROGRAMDATA_DIR).toLowerCase();
+}
 const JOB_TIMEOUT_SEC = 60;          // 이 시간이 지나도 남아 있는 인쇄 작업은 회수한다
 const PRINT_ERROR_MS = 6000;         // 인쇄 실패 안내를 보여 주는 시간
 
+/* 화면 쪽 기본값 — 환경설정 창에서 바꾸며, 서식 HTML 이 이 값을 읽어 쓴다.
+   ⚠️ 서식 HTML 의 기본값과 **같은 수**여야 한다(웹 배포본은 설정이 없어 그쪽 기본값을 쓴다). */
+const DEFAULT_IDLE_MS = 3 * 60 * 1000;   // 무동작 초기화
+const DEFAULT_PRINTED_MS = 5000;         // 인쇄 후 처음 화면으로
+
 function loadConfig() {
   // BOM 을 떼고 읽는다 — PowerShell 로 저장하면 BOM 이 붙기 쉽고, 붙으면 JSON.parse 가 실패한다.
-  try { return JSON.parse(fs.readFileSync(CONFIG_PATH, 'utf8').replace(/^﻿/, '')); }
+  try { return JSON.parse(fs.readFileSync(configPath(), 'utf8').replace(/^﻿/, '')); }
   catch (e) { return {}; }
+}
+
+/* 설정 저장 — 환경설정 창만 쓴다.
+   ⚠️ **BOM 없이** 쓴다. BOM 이 붙으면 loadConfig 의 JSON.parse 가 실패해 설정 전체가
+      무시되고, 프린터 지정까지 같이 날아가 인쇄가 멈춘다. Node 의 'utf8' 은 BOM 을 붙이지 않는다.
+   ⚠️ 모르는 키(exitPinHash 등)는 **그대로 보존**한다 — 창이 다루지 않는 값을 지우면 안 된다. */
+function saveConfig(patch) {
+  const next = Object.assign(loadConfig(), patch);
+  fs.mkdirSync(path.dirname(configPath()), { recursive: true });
+  fs.writeFileSync(configPath(), JSON.stringify(next, null, 2) + '\n', 'utf8');
+  return next;
+}
+
+/* 서식 HTML 에 넘기는 값. preload 가 페이지 스크립트보다 **먼저** 이것을 창에 심는다.
+   (나중에 넣으면 늦다 — 서식은 로드 시점에 타이머를 걸어 버린다) */
+function pageConfig() {
+  const cfg = loadConfig();
+  const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0 ? v : d);
+  return {
+    idleMs: num(cfg.idleMs, DEFAULT_IDLE_MS),
+    printedMs: num(cfg.printedMs, DEFAULT_PRINTED_MS),
+    formLeft: cfg.formLeft === true,
+  };
 }
 
 /* 파일로 저장하는 프린터 판별 — `kiosk-privacy.ps1` 의 목록과 같은 것을 쓴다.
@@ -146,6 +216,12 @@ function statusText(s) {
   return (t[s] || s) + ' (' + s + ')';
 }
 
+/* 서식 HTML 이 쓰는 값(무동작 시간·인쇄 후 대기)을 페이지 스크립트보다 **먼저** 넘긴다.
+   preload 가 `sendSync` 로 받아 `window.__kioskCfg` 에 심는다 — 비동기로 넘기면
+   서식이 이미 기본값으로 타이머를 걸어 버린 뒤라 늦다.
+   개인정보는 담기지 않는다(시간 값과 배치 여부뿐). */
+ipcMain.on('kiosk:cfg', (event) => { event.returnValue = pageConfig(); });
+
 /* ── 인쇄 ────────────────────────────────────────────────────────────── */
 
 ipcMain.handle('kiosk:print', async (event) => {
@@ -252,11 +328,24 @@ function createWindow() {
       })
       .catch(() => { printHookOk = false; fatal('인쇄 보호 기능을 적용하지 못했습니다.'); });
 
-    // 겹쳐 찍기 — 미리 인쇄된 서식 용지에 값만 얹는다(kiosk.json 의 overlayPrintForms).
-    // 서식 HTML 은 건드리지 않는다. 이 모드는 키오스크 인쇄에만 걸린다.
-    if (printOptions.isOverlayForm(loadConfig(), url)) {
+    // 인쇄 보정 — 둘 다 서식 HTML 은 건드리지 않고, 키오스크 인쇄에만 걸린다.
+    //   겹쳐 찍기   미리 인쇄된 서식 용지에 값만 얹는다   (overlayPrintForms)
+    //   드롭아웃    빨간 칸선을 인쇄 단계에서 걸러낸다     (monoDropoutForms)
+    // 겹쳐 찍기가 우선이다 — 배경을 통째로 숨기므로 필터를 걸 대상이 없다.
+    // 화면 좌우 배치 — 서식이 쓰는 `body.form-left` 를 그대로 건다.
+    // 클래스만 얹으므로 화면의 「↔ 좌우 바꾸기」 버튼은 그대로 동작한다(그때그때 되돌릴 수 있다).
+    if (pageConfig().formLeft) {
+      win.webContents.executeJavaScript('document.body.classList.add("form-left");1')
+        .catch(() => {});
+    }
+
+    const printCfg = loadConfig();
+    if (printOptions.isOverlayForm(printCfg, url)) {
       win.webContents.insertCSS(printOptions.OVERLAY_PRINT_CSS)
         .catch((e) => console.error('[키오스크] 겹쳐 찍기 CSS 적용 실패:', e && e.message));
+    } else if (printOptions.isDropoutForm(printCfg, url)) {
+      win.webContents.insertCSS(printOptions.MONO_DROPOUT_CSS)
+        .catch((e) => console.error('[키오스크] 드롭아웃 CSS 적용 실패:', e && e.message));
     }
   });
 
@@ -297,11 +386,92 @@ function adminKeys(contents) {
     if (input.type !== 'keyDown' || !(input.control || input.meta) || !input.shift) return;
     const k = String(input.key || '').toUpperCase();
     if (k === 'Q') { e.preventDefault(); askPinAndQuit(); }
+    if (k === 'S') { e.preventDefault(); openSettings(); }
     if (k === 'H') {
       e.preventDefault();
       if (win && !win.isDestroyed()) win.loadFile(path.join(APP_DIR, 'index.html'));
     }
   });
+}
+
+/* ── 환경설정 창 (Ctrl+Shift+S) ──────────────────────────────────────────
+   관리자가 kiosk.json 을 손으로 고치지 않게 하려고 만들었다. 손으로 고치면
+   **BOM 하나에 설정 전체가 조용히 무시된다**(그러면 프린터 지정까지 날아가 인쇄가 멈춘다).
+
+   ⚠️ PIN 을 묻지 않는다(2026.08.13 결정). 시민이 키보드를 만질 수 있는 자리라면
+      OS 쪽에서 키보드를 막거나 PIN 을 설정하는 편이 안전하다. `--selfcheck` 가
+      PIN 미설정을 계속 보고한다.
+   ⚠️ 저장 후에는 **처음 화면으로 되돌린다.** 설정 일부(무동작 시간·좌우 배치)는
+      서식이 로드될 때 preload 로 들어가므로, 보고 있던 화면에는 적용되지 않는다. */
+function openSettings() {
+  if (adminMode) return;
+  if (!win || win.isDestroyed()) return;
+  adminMode = true;
+
+  const w = new BrowserWindow({
+    parent: win, modal: true, show: false, frame: true, resizable: true,
+    width: 720, height: 760, minWidth: 560, minHeight: 520,
+    title: '환경설정', backgroundColor: '#f4f6f9', autoHideMenuBar: true,
+    webPreferences: Object.assign(baseWebPreferences(), {
+      preload: path.join(ADMIN_DIR, 'settings-preload.js'),
+    }),
+  });
+  w.setMenu(null);
+  w.loadFile(path.join(ADMIN_DIR, 'settings.html'));
+  w.once('ready-to-show', () => w.show());
+  w.on('closed', () => {
+    adminMode = false;
+    if (win && !win.isDestroyed()) win.focus();
+  });
+
+  ipcMain.removeHandler('settings:load');
+  ipcMain.handle('settings:load', async () => {
+    const cfg = loadConfig();
+    const pc = pageConfig();
+    const printers = await win.webContents.getPrintersAsync().catch(() => []);
+    return {
+      path: configPath(),
+      exists: fs.existsSync(configPath()),
+      preserved: configIsPreserved(),
+      mode: printOptions.passportMode(cfg),
+      printerDeviceName: cfg.printerDeviceName || '',
+      idleMs: pc.idleMs,
+      printedMs: pc.printedMs,
+      formLeft: pc.formLeft,
+      printers: printers.map((p) => ({
+        name: p.name, isDefault: !!p.isDefault, virtual: VIRTUAL_NAME_RE.test(p.name),
+      })),
+    };
+  });
+
+  ipcMain.removeHandler('settings:save');
+  ipcMain.handle('settings:save', (e, v) => {
+    try {
+      v = v || {};
+      const mode = printOptions.PRINT_MODES.includes(v.mode) ? v.mode : 'color';
+      const name = String(v.printerDeviceName || '');
+      // 가상 프린터는 저장 자체를 막는다 — 고르지 못하게 해 뒀지만 여기서 한 번 더 본다.
+      if (name && VIRTUAL_NAME_RE.test(name)) {
+        return { ok: false, error: '파일로 저장하는 프린터는 지정할 수 없습니다.' };
+      }
+      const num = (x, allowed, d) => (allowed.includes(Number(x)) ? Number(x) : d);
+      saveConfig(Object.assign(printOptions.applyPassportMode(loadConfig(), mode), {
+        printerDeviceName: name,
+        formLeft: v.formLeft === true,
+        idleMs: num(v.idleMs, [60000, 180000, 300000, 600000], DEFAULT_IDLE_MS),
+        printedMs: num(v.printedMs, [0, 1000, 3000, 5000, 10000], DEFAULT_PRINTED_MS),
+      }));
+      // 바뀐 값이 실제로 걸리도록 처음 화면부터 다시 읽힌다.
+      if (win && !win.isDestroyed()) win.loadFile(path.join(APP_DIR, 'index.html'));
+      setTimeout(() => { if (!w.isDestroyed()) w.close(); }, 900);
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
+  });
+
+  ipcMain.removeAllListeners('settings:close');
+  ipcMain.on('settings:close', () => { if (!w.isDestroyed()) w.close(); });
 }
 
 /* 개발자도구·인쇄·창 닫기 단축키를 입력 단계에서 막는다.
@@ -425,14 +595,27 @@ async function runSelfCheck() {
 
   const cfg = loadConfig();
   L.push('[설정]');
-  line('설정 파일', CONFIG_PATH);
-  line('설정 파일 존재', mark(fs.existsSync(CONFIG_PATH)) + fs.existsSync(CONFIG_PATH));
+  line('설정 파일', configPath());
+  line('설정 파일 존재', mark(fs.existsSync(configPath())) + fs.existsSync(configPath()));
+  // 하드보안관이 걸린 PC 에서 %ProgramData% 에 두면 재부팅마다 설정이 사라진다(인쇄 차단).
+  line('재부팅 후 유지', (configIsPreserved() ? '[양호] 보존 영역 — 유지됨'
+       : '[확인] %ProgramData%(C:) — 하드보안관이 있으면 부팅 시 원복됨'));
   line('지정 프린터', mark(!!cfg.printerDeviceName) + (cfg.printerDeviceName || '미지정 → 인쇄 차단'));
   line('관리자 PIN', mark(!!cfg.exitPinHash) + (cfg.exitPinHash ? '설정됨' : '미설정 → PIN 없이 종료 가능'));
   // 겹쳐 찍기는 **미리 인쇄된 서식 용지가 트레이에 있어야** 한다. 검수 기록에 남긴다.
-  const ov = Array.isArray(cfg.overlayPrintForms) ? cfg.overlayPrintForms : [];
+  const ov = printOptions.overlayForms(cfg);
+  const ovSrc = Array.isArray(cfg.overlayPrintForms) ? '설정' : '기본값';
   line('겹쳐 찍기(값만 인쇄)', (ov.length ? '[확인] ' : '[양호] ') +
-       (ov.length ? ov.join(', ') + ' → 미리 인쇄된 서식 용지 필요' : '없음 (서식까지 통째로 인쇄)'));
+       (ov.length ? ov.join(', ') + ' (' + ovSrc + ') → 미리 인쇄된 서식 용지 필요'
+                  : '없음 (' + ovSrc + ') → 서식까지 통째로 인쇄'));
+  // 드롭아웃은 **실물 스캔으로 판독을 확인한 뒤에만** 켠다(하프톤 문제). 검수 기록에 남긴다.
+  const dropAll = printOptions.dropoutForms(cfg);
+  const drop = dropAll.filter((f) => !ov.map(String).map((s) => s.toLowerCase())
+                                        .includes(String(f).toLowerCase()));
+  line('적색 드롭아웃(칸선 걸러냄)', (drop.length ? '[확인] ' : '[양호] ') +
+       (drop.length ? drop.join(', ') + ' → 백지 인쇄 · 접수처 스캔 판독 확인 필수'
+                    : '없음 → 서식을 그대로 인쇄') +
+       (dropAll.length > drop.length ? '  (겹쳐 찍기와 겹친 서식은 제외됨)' : ''));
   L.push('');
 
   L.push('[프린터]');
@@ -475,8 +658,8 @@ async function runSelfCheck() {
                 String(d.getDate()).padStart(2, '0');   // 하이픈 금지(DLP가 개인정보로 오인)
   let out = '';
   try {
-    fs.mkdirSync(CONFIG_DIR, { recursive: true });
-    out = path.join(CONFIG_DIR, '점검결과_' + stamp + '.txt');
+    fs.mkdirSync(PROGRAMDATA_DIR, { recursive: true });
+    out = path.join(PROGRAMDATA_DIR, '점검결과_' + stamp + '.txt');
     fs.writeFileSync(out, text, 'utf8');
   } catch (e) { out = '(파일 저장 실패)'; }
 

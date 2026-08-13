@@ -41,24 +41,139 @@ const OVERLAY_PRINT_CSS = [
   '}',
 ].join('\n');
 
+/* ── 적색 드롭아웃 흉내내기 (2026.08.13) ─────────────────────────────────
+   **미리 인쇄된 용지 없이** 흑백 프린터로 판독 가능한 인쇄물을 내는 방법이다.
+
+   무엇이 문제였나 (㉞):
+     여권 서식의 기재칸 테두리는 빨강(255,0,0)이고, 접수처 스캐너는 빨강을 걸러내고
+     적힌 글자만 읽는다. 그런데 흑백 프린터는 빨강을 **밝기 136 의 검은 선**으로 찍는다.
+     드롭아웃이 안 되니 선이 글자로 읽힌다 — 실측으로 이진화 임계 128 에서
+     빨간 선의 **29.6%** 가 검은 선으로 살아남았다.
+
+   왜 '전체를 밝게' 로는 못 고치나:
+     밝기는 색을 구분하지 못한다. 전체를 25% 밝게 하면 빨간 선은 사라지지만(0%)
+     **「필수 기재란」·「한글성명」 같은 검은 항목명도 같이 사라진다(0%).** 실측값이다.
+
+   그래서 **빨강 채널만** 회색조로 쓴다 — 적색 드롭아웃 스캐너가 하는 연산 그대로다.
+     빨강(255,0,0) → R=255 → 흰색, 사라짐
+     살구색 기재란 배경  → R≈250 → 거의 흰색, 사라짐
+     검정 항목명(0,0,0) → R=0  → 검정, 그대로 남음
+   완전히 지우면 사람이 칸을 못 보므로 KEEP(14%)만 되살린다.
+     Out = 0.86R + 0.07G + 0.07B  — 빨강 자리 밝기 169.7 → 230.6(옅은 안내선)
+
+   실측(Electron 인쇄 경로 · 이진화 임계 128):
+     빨간 선이 남는 비율  29.6% → **1.2%**      검은 항목명 보존  100% → **83%**
+
+   ⚠️ **`color-interpolation-filters="sRGB"` 를 빼지 마라.** 기본값은 linearRGB 라
+      Chromium 이 감마를 풀고 계산해 값이 전혀 달라진다(선이 다시 진해진다).
+   ⚠️ **하프톤은 시뮬레이션으로 안 풀린다.** 흑백 레이저는 밝기 230 을 균일한 회색이 아니라
+      **띄엄띄엄한 검은 점**으로 찍는다. 스캐너가 그 점을 주울 수 있다.
+      **반드시 실물을 뽑아 접수처 스캔으로 확인하고** 켜라. 그래서 기본값이 꺼짐이다. */
+const DROPOUT_KEEP = 0.14;   // 사람 눈에 남길 정도. 0 이면 칸선이 완전히 사라진다
+const DROPOUT_R = (1 - DROPOUT_KEEP).toFixed(2);          // 0.86
+const DROPOUT_GB = (DROPOUT_KEEP / 2).toFixed(2);         // 0.07
+
+const DROPOUT_SVG =
+  '<svg xmlns="http://www.w3.org/2000/svg">' +
+  '<filter id="d" color-interpolation-filters="sRGB">' +
+  '<feColorMatrix type="matrix" values="' +
+  [DROPOUT_R, DROPOUT_GB, DROPOUT_GB, 0, 0,
+   DROPOUT_R, DROPOUT_GB, DROPOUT_GB, 0, 0,
+   DROPOUT_R, DROPOUT_GB, DROPOUT_GB, 0, 0,
+   0, 0, 0, 1, 0].join(' ') +
+  '"/></filter></svg>';
+
+const MONO_DROPOUT_CSS = [
+  '@media print{',
+  "  .stage .bg{ filter: url('data:image/svg+xml;utf8," + DROPOUT_SVG + "#d') !important; }",
+  '}',
+].join('\n');
+
 /* 서식 파일 이름에서 서식 키를 뽑는다 — `passport-helper-v1.html` → `passport` */
 function formKey(url) {
   const m = /([a-z]+)-helper-v\d+\.html/i.exec(String(url || ''));
   return m ? m[1].toLowerCase() : '';
 }
 
+/* 설정이 없을 때의 기본값.
+   여권은 드롭아웃 컬러 서식이라 흑백 프린터로 **서식까지** 찍으면 스캔 판독이 실패한다(㉞).
+   설정 파일이 없거나 초기화돼도(하드보안관 복원·재설치 등) 서식이 딸려 나오지 않도록
+   기본으로 켜 둔다 — 설정을 깜빡해서 접수가 막히는 쪽이 훨씬 나쁘다.
+   ⛔ 끄려면 kiosk.json 에 **`"overlayPrintForms": []`** 를 명시한다(키를 지우면 기본값이 다시 켜진다). */
+const DEFAULT_OVERLAY_FORMS = ['passport'];
+
+/* 이 키오스크에서 겹쳐 찍기로 인쇄할 서식 목록 */
+function overlayForms(cfg) {
+  const v = cfg && cfg.overlayPrintForms;
+  return Array.isArray(v) ? v.map(String) : DEFAULT_OVERLAY_FORMS;
+}
+
+/* 적색 드롭아웃을 흉내낼 서식 목록 — **기본값은 꺼짐**이다.
+   실물 스캔으로 판독을 확인하기 전에는 켜면 안 된다(하프톤 문제). */
+function dropoutForms(cfg) {
+  const v = cfg && cfg.monoDropoutForms;
+  return Array.isArray(v) ? v.map(String) : [];
+}
+
+function inList(list, url) {
+  if (!list.length) return false;
+  const key = formKey(url);
+  return !!key && list.map((s) => s.toLowerCase()).indexOf(key) >= 0;
+}
+
+/* ── 여권 인쇄 방식 (환경설정 창이 쓰는 3택) ──────────────────────────────
+   두 목록(overlayPrintForms · monoDropoutForms)을 직접 만지게 하면 관리자가
+   서로 모순되는 조합을 만들 수 있다. 창에서는 **하나의 방식**만 고르게 하고,
+   목록으로의 번역은 여기서 한 곳으로 모은다.
+
+     color    컬러 프린터용 — 서식과 값을 통째로 인쇄 (원래 동작)
+     overlay  흑백·겹쳐 찍기 — 미리 인쇄된 컬러 서식 용지에 값만
+     dropout  흑백·드롭아웃 — 서식도 찍되 빨간 칸선을 걸러내 인쇄(㉞-2)
+
+   ⚠️ 여권에만 적용한다. 나머지 7종은 드롭아웃 컬러 서식이 아니라 손댈 이유가 없다. */
+const PASSPORT = 'passport';
+const PRINT_MODES = ['color', 'overlay', 'dropout'];
+
+function passportMode(cfg) {
+  const url = PASSPORT + '-helper-v1.html';
+  if (inList(overlayForms(cfg), url)) return 'overlay';
+  if (inList(dropoutForms(cfg), url)) return 'dropout';
+  return 'color';
+}
+
+/* 고른 방식을 두 목록으로 되돌린다. 여권 외의 서식이 목록에 들어 있으면 그대로 둔다. */
+function applyPassportMode(cfg, mode) {
+  const keep = (list) => list.filter((s) => String(s).toLowerCase() !== PASSPORT);
+  const ov = keep(overlayForms(cfg));
+  const dp = keep(dropoutForms(cfg));
+  if (mode === 'overlay') ov.push(PASSPORT);
+  if (mode === 'dropout') dp.push(PASSPORT);
+  return { overlayPrintForms: ov, monoDropoutForms: dp };
+}
+
 module.exports = {
   PAGE_SIZE: PAGE_SIZE,
   OVERLAY_PRINT_CSS: OVERLAY_PRINT_CSS,
+  MONO_DROPOUT_CSS: MONO_DROPOUT_CSS,
+  DEFAULT_OVERLAY_FORMS: DEFAULT_OVERLAY_FORMS,
   formKey: formKey,
+  overlayForms: overlayForms,
+  dropoutForms: dropoutForms,
+  PRINT_MODES: PRINT_MODES,
+  passportMode: passportMode,
+  applyPassportMode: applyPassportMode,
 
-  /* 이 서식을 겹쳐 찍기로 인쇄해야 하는가 — kiosk.json 의 overlayPrintForms 목록으로 정한다.
-     설정에 없으면 종전대로 서식까지 통째로 인쇄한다(안전한 기본값). */
+  /* 설정에 목록이 있으면 그것을, 없으면 기본값(여권)을 쓴다. */
   isOverlayForm: function (cfg, url) {
-    const list = (cfg && cfg.overlayPrintForms) || [];
-    if (!Array.isArray(list) || !list.length) return false;
-    const key = formKey(url);
-    return !!key && list.map(String).map((s) => s.toLowerCase()).indexOf(key) >= 0;
+    return inList(overlayForms(cfg), url);
+  },
+
+  /* 드롭아웃 흉내를 낼 서식인가.
+     ⛔ 겹쳐 찍기가 켜진 서식에는 걸지 않는다 — 그쪽은 배경을 통째로 숨기므로
+        필터를 걸 대상이 없고, 둘을 같이 켜면 무엇이 적용됐는지 헷갈린다. */
+  isDropoutForm: function (cfg, url) {
+    if (inList(overlayForms(cfg), url)) return false;
+    return inList(dropoutForms(cfg), url);
   },
 
   /* webContents.print() 용 — 실제 인쇄가 쓰는 값. */

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+<title>환경설정</title>
+<style>
+  :root{ --line:#d7dce3; --blue:#1b5fc0; --ink:#1a1f26; --muted:#5a636e; }
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:"Malgun Gothic","맑은 고딕",sans-serif;color:var(--ink);
+       background:#f4f6f9;display:flex;flex-direction:column;height:100vh;}
+  header{background:var(--blue);color:#fff;padding:14px 20px;flex:0 0 auto;}
+  header h1{margin:0;font-size:18px;font-weight:800;}
+  header p{margin:4px 0 0;font-size:12.5px;opacity:.9;}
+  main{flex:1;overflow-y:auto;padding:16px 20px;}
+  footer{flex:0 0 auto;background:#fff;border-top:1px solid var(--line);
+         padding:12px 20px;display:flex;align-items:center;gap:10px;}
+  .sec{background:#fff;border:1px solid var(--line);border-radius:12px;
+       padding:14px 16px;margin-bottom:14px;}
+  .sec > h2{margin:0 0 4px;font-size:15px;font-weight:800;}
+  .sec > .why{margin:0 0 12px;font-size:12.5px;color:var(--muted);line-height:1.55;}
+  label.opt{display:flex;gap:10px;align-items:flex-start;padding:9px 11px;
+            border:1px solid var(--line);border-radius:9px;margin-bottom:7px;cursor:pointer;}
+  label.opt:hover{background:#f7f9fc;}
+  label.opt input{margin:3px 0 0;flex:0 0 auto;width:16px;height:16px;}
+  label.opt b{display:block;font-size:14px;font-weight:700;}
+  label.opt span{display:block;font-size:12.5px;color:var(--muted);line-height:1.5;margin-top:2px;}
+  .warn{font-size:12.5px;color:#8a4b00;background:#fff7e6;border:1px solid #ffdf9e;
+        border-radius:8px;padding:8px 10px;margin-top:8px;line-height:1.55;}
+  .bad{color:#a3272c;background:#fdeeee;border-color:#f3bcbc;}
+  select{width:100%;font-size:14px;padding:9px 10px;border:1px solid var(--line);
+         border-radius:9px;background:#fff;color:var(--ink);}
+  .row{display:flex;gap:10px;}
+  .row > div{flex:1;}
+  .row label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;}
+  button{font-size:14px;font-weight:700;border-radius:9px;padding:10px 20px;
+         border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;}
+  button.primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+  button:disabled{opacity:.5;cursor:default;}
+  #msg{flex:1;font-size:13px;font-weight:700;}
+  #msg.ok{color:#1b7a34;} #msg.err{color:#a3272c;}
+</style>
+</head>
+<body>
+<header>
+  <h1>환경설정 — 군포시 민원 서식 작성 도우미</h1>
+  <p id="path">설정 파일을 읽는 중…</p>
+</header>
+
+<main>
+  <div class="warn bad" id="keepWarn" hidden style="margin:0 0 14px;"></div>
+
+  <div class="sec">
+    <h2>여권 인쇄 방식</h2>
+    <p class="why">여권발급신청서는 <b>드롭아웃 컬러 서식</b>입니다. 기재칸 테두리가 빨강으로 인쇄돼
+      있고 접수처는 스캔할 때 그 빨강을 걸러내고 글자만 읽습니다. 흑백 프린터로 서식까지 찍으면
+      빨강이 검은 선이 되어 판독이 실패합니다. 이 설정은 <b>여권에만</b> 적용됩니다.</p>
+
+    <label class="opt"><input type="radio" name="mode" value="color">
+      <div><b>컬러 프린터용 — 서식과 내용을 모두 인쇄</b>
+        <span>원래 동작입니다. 컬러 프린터일 때 이것을 고르세요. 백지를 넣습니다.</span></div></label>
+
+    <label class="opt"><input type="radio" name="mode" value="overlay">
+      <div><b>흑백 프린터용 — 겹쳐 찍기 (내용만 인쇄)</b>
+        <span>미리 인쇄된 컬러 서식 용지를 트레이에 넣고 값만 얹어 찍습니다.
+          실물 서식을 쓰므로 판독이 원래대로 됩니다.</span></div></label>
+
+    <label class="opt"><input type="radio" name="mode" value="dropout">
+      <div><b>흑백 프린터용 — 드롭아웃 (서식도 찍되 칸선을 연하게)</b>
+        <span>백지에 서식까지 찍되, 빨간 칸선만 스캐너가 못 읽을 만큼 연하게 인쇄합니다.
+          미리 인쇄된 용지가 필요 없습니다.</span></div></label>
+
+    <div class="warn" id="modeWarn" hidden></div>
+  </div>
+
+  <div class="sec">
+    <h2>지정 프린터</h2>
+    <p class="why">지정된 프린터로만 인쇄합니다. 지정하지 않으면 <b>인쇄하지 않습니다</b> —
+      기본 프린터로 흘려보내면 그것이 가상 프린터일 때 개인정보가 파일로 남기 때문입니다.</p>
+    <select id="printer"><option value="">(불러오는 중…)</option></select>
+    <div class="warn bad" id="prnWarn" hidden></div>
+  </div>
+
+  <div class="sec">
+    <h2>화면 배치</h2>
+    <p class="why">입력창과 신청서 서식의 좌우 위치입니다. 화면에서 「↔ 좌우 바꾸기」로 그때그때
+      바꿀 수도 있지만, 여기서 정한 것이 <b>매번 시작할 때의 기본값</b>이 됩니다.</p>
+    <label class="opt"><input type="radio" name="layout" value="panel-left">
+      <div><b>입력창이 왼쪽</b><span>기본값입니다.</span></div></label>
+    <label class="opt"><input type="radio" name="layout" value="form-left">
+      <div><b>신청서 서식이 왼쪽</b><span>입력창이 오른쪽으로 갑니다.</span></div></label>
+  </div>
+
+  <div class="sec">
+    <h2>개인정보 보호 — 화면 초기화</h2>
+    <p class="why">화면에 남은 입력 내용은 뒷사람에게 그대로 보입니다. 두 경우에 처음 화면으로
+      되돌립니다.</p>
+    <div class="row">
+      <div>
+        <label for="idle">무동작이 이만큼 지나면</label>
+        <select id="idle">
+          <option value="60000">1분</option>
+          <option value="180000">3분 (기본)</option>
+          <option value="300000">5분</option>
+          <option value="600000">10분</option>
+        </select>
+      </div>
+      <div>
+        <label for="printed">인쇄를 보낸 뒤</label>
+        <select id="printed">
+          <option value="0">즉시</option>
+          <option value="1000">1초</option>
+          <option value="3000">3초</option>
+          <option value="5000">5초 (기본)</option>
+          <option value="10000">10초</option>
+        </select>
+      </div>
+    </div>
+    <div class="warn" id="idleWarn" hidden></div>
+  </div>
+</main>
+
+<footer>
+  <span id="msg"></span>
+  <button type="button" id="cancel">닫기</button>
+  <button type="button" id="save" class="primary">저장</button>
+</footer>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var msg = $("msg"), saveBtn = $("save");
+  var loaded = null;
+
+  function radio(name){
+    var el = document.querySelector('input[name="' + name + '"]:checked');
+    return el ? el.value : null;
+  }
+  function setRadio(name, v){
+    var el = document.querySelector('input[name="' + name + '"][value="' + v + '"]');
+    if (el) el.checked = true;
+  }
+  function say(text, cls){
+    msg.textContent = text || "";
+    msg.className = cls || "";
+  }
+
+  function modeNote(){
+    var m = radio("mode"), w = $("modeWarn");
+    var t = "";
+    if (m === "overlay")
+      t = "⚠️ 트레이에 <b>미리 인쇄된 컬러 여권발급신청서</b>를 넣어야 합니다. 백지를 넣으면 값만 " +
+          "떠 있는 종이가 나옵니다. 또 <b>미성년자·위임 신청은 2쪽</b>이 나오는데 두 번째 장" +
+          "(법정대리인 동의서)은 겹쳐 찍기가 적용되지 않아 서식째 인쇄됩니다.";
+    if (m === "dropout")
+      t = "⚠️ <b>접수처 스캔 판독을 실물로 확인한 뒤</b> 쓰세요. 흑백 레이저는 연한 회색을 " +
+          "촘촘한 점으로 찍기 때문에, 스캐너가 그 점을 주울 수 있습니다. 백지를 넣습니다.";
+    w.innerHTML = t;
+    w.hidden = !t;
+  }
+  function idleNote(){
+    var w = $("idleWarn");
+    var show = $("printed").value === "0";
+    w.innerHTML = "인쇄를 보내자마자 처음 화면으로 돌아갑니다. 「출력물을 챙겨 가세요」 안내를 " +
+                  "볼 시간이 없으므로, 창구에서 따로 안내해 주세요.";
+    w.hidden = !show;
+  }
+
+  document.addEventListener("change", function(e){
+    if (e.target.name === "mode") modeNote();
+    if (e.target.id === "printed") idleNote();
+    say("");
+  });
+
+  window.__settings.load().then(function(d){
+    loaded = d;
+    $("path").textContent = "설정 파일 : " + d.path + (d.exists ? "" : "  (아직 없음 — 저장하면 만듭니다)");
+    // 하드보안관이 걸린 PC 에서 C: 에 저장하면 재부팅에 원복돼 프린터 지정까지 사라진다.
+    if (!d.preserved) {
+      $("keepWarn").innerHTML =
+        "이 경로는 <b>C: 드라이브</b>입니다. 하드보안관 같은 복원 프로그램이 걸려 있으면 " +
+        "<b>재부팅할 때 설정이 사라지고, 지정 프린터가 비어 인쇄가 차단됩니다.</b><br>" +
+        "원복되지 않는 드라이브(D:~H:)에 <b>군포민원서식도우미</b> 폴더를 만들어 두면 " +
+        "프로그램이 그곳에 저장합니다. 폴더만 만들면 되고, 만든 뒤 이 창을 다시 열어 저장하세요.";
+      $("keepWarn").hidden = false;
+    }
+    setRadio("mode", d.mode);
+    setRadio("layout", d.formLeft ? "form-left" : "panel-left");
+    $("idle").value = String(d.idleMs);
+    $("printed").value = String(d.printedMs);
+
+    var sel = $("printer");
+    sel.innerHTML = "";
+    var none = document.createElement("option");
+    none.value = ""; none.textContent = "(지정 안 함 — 인쇄가 차단됩니다)";
+    sel.appendChild(none);
+    d.printers.forEach(function(p){
+      var o = document.createElement("option");
+      o.value = p.name;
+      o.textContent = p.name + (p.virtual ? "  ⛔ 파일로 저장하는 프린터" : "") + (p.isDefault ? "  (기본)" : "");
+      o.disabled = !!p.virtual;
+      sel.appendChild(o);
+    });
+    sel.value = d.printerDeviceName || "";
+    if (d.printerDeviceName && sel.value !== d.printerDeviceName) {
+      // 설정에 적힌 이름이 지금 이 PC 에 없다 — 지우지 말고 보이게 남긴다
+      var miss = document.createElement("option");
+      miss.value = d.printerDeviceName;
+      miss.textContent = d.printerDeviceName + "  ⛔ 이 PC 에서 찾을 수 없음";
+      sel.appendChild(miss);
+      sel.value = d.printerDeviceName;
+      $("prnWarn").textContent = "설정된 프린터를 찾을 수 없습니다. 이대로 두면 인쇄가 차단됩니다.";
+      $("prnWarn").hidden = false;
+    }
+    modeNote(); idleNote();
+  }).catch(function(err){
+    say("설정을 읽지 못했습니다: " + err, "err");
+  });
+
+  $("cancel").addEventListener("click", function(){ window.__settings.close(); });
+
+  $("save").addEventListener("click", function(){
+    saveBtn.disabled = true;
+    say("저장하는 중…");
+    window.__settings.save({
+      mode: radio("mode"),
+      formLeft: radio("layout") === "form-left",
+      printerDeviceName: $("printer").value,
+      idleMs: Number($("idle").value),
+      printedMs: Number($("printed").value)
+    }).then(function(r){
+      saveBtn.disabled = false;
+      if (r && r.ok) say("저장했습니다. 화면이 처음으로 돌아갑니다.", "ok");
+      else say("저장하지 못했습니다: " + ((r && r.error) || "알 수 없는 오류"), "err");
+    }).catch(function(err){
+      saveBtn.disabled = false;
+      say("저장하지 못했습니다: " + err, "err");
+    });
+  });
+})();
+</script>
+</body>
+</html>
