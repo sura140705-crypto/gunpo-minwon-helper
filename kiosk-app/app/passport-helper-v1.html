@@ -224,17 +224,19 @@
     .topbar,.panel-col,.screen-notice,.modal-top,.ovhl,.print-tip{display:none !important;}
     .layout{display:block;padding:0;margin:0;max-width:none;}
     .form-col{display:block !important;width:100%;position:static;max-height:none;overflow:visible;}   /* 모바일에서 숨겼어도 인쇄 시 서식 표시(화면용 고정·스크롤 해제) */
-    /* 미리보기 모달이 열려 있으면 그 안의 서식을, 아니면 좌측 서식을 인쇄 */
-    .modal-back{position:static;background:none;padding:0;display:block;}
-    .modal-box{height:auto;}
-    .modal-scroll{overflow:visible;background:none;padding:0;}
+    /* ⛔ 미리보기 모달은 **인쇄에서 제외**하고 언제나 좌측 서식을 찍는다 (나머지 7종과 같다).
+       예전에는 모달이 열려 있으면 모달 안의 사본을 찍고 좌측을 숨겼는데, 그러면 **백지가 나왔다**
+       (2026.08.13 현장 신고 — 「미리보기 → 인쇄」만 아무것도 안 나옴).
+       모달은 화면용 flex 레이아웃이다: 인쇄에서 `.modal-scroll` 이 `display:flex`·`flex-basis:0%`
+       인 채로 남는데, 그 안의 `.paper{width:100%}` 는 기댈 폭이 없어 **0 으로 붕괴**한다.
+       실측: modal-scroll h=0 · paper w=0 h=0 → 값 66개가 다 0px 안에 갇힌다.
+       미성년(2쪽) 건만 우연히 멀쩡했다 — 동의서의 글자가 내재 폭을 만들어 줘서 붕괴를 면했다.
+       모달의 값은 좌측 서식과 같은 `renderForm()` 이 채우므로, 좌측을 찍으면 내용은 동일하다. */
+    .modal-back{display:none !important;}
     .paper{box-shadow:none !important;width:100% !important;margin:0;}
     .ov{color:#000 !important;}
-    /* 모달이 열려 있으면 좌측 원본은 인쇄에서 제외(중복 방지) */
-    body.pv-open .form-col{display:none !important;}
     /* 첨부서류(동의서/위임장)는 새 쪽(2쪽)에서 시작 */
     body.needs-consent .consent-page,body.needs-proxy .proxy-page{page-break-before:always;break-before:page;}
-    .modal-scroll .consent-page,.modal-scroll .proxy-page{margin-top:0;}
   }
 
   /* ===== 어르신 가독성 강화(2026-07-09): 큰 글씨·고대비·또렷한 포커스 ===== */
