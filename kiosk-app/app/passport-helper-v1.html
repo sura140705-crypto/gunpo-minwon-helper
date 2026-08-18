@@ -239,6 +239,10 @@
     .ov{color:#000 !important;}
     /* 첨부서류(동의서/위임장)는 새 쪽(2쪽)에서 시작 */
     body.needs-consent .consent-page,body.needs-proxy .proxy-page{page-break-before:always;break-before:page;}
+    /* 창구 안내표를 인쇄할 때는 **안내표만** 찍는다. 신청서·동의서가 딸려 나가면
+       개인정보가 그대로 인쇄되고(§19 위반), 서식 용지도 낭비된다. */
+    body.print-slip .paper{display:none !important;}
+    body.print-slip .slip-page{display:block !important;page-break-before:auto;}
   }
 
   /* ===== 어르신 가독성 강화(2026-07-09): 큰 글씨·고대비·또렷한 포커스 ===== */
@@ -281,6 +285,64 @@
   .age-status.bad{color:#c0392b;font-weight:600;}
   .age-status.minor{background:#fff8e1;border:1px solid #ffdf8a;color:#6b4e00;
     border-radius:10px;padding:11px 13px;}
+
+  /* ===== 터치 키오스크 UI (2026.08.18 개편) =====
+     손가락으로 한 번에 고르게 한다. 최소 높이 96px 은 어르신이 빗나가지 않는 크기다.
+     물리 키보드는 함께 두므로 글자 입력칸은 종전 것을 그대로 쓴다. */
+  .cards{display:flex;flex-direction:column;gap:12px;margin:6px 0 14px;}
+  .card{display:flex;align-items:center;gap:16px;width:100%;min-height:96px;
+    padding:18px 20px;background:#fff;border:2px solid var(--line);border-radius:16px;
+    text-align:left;cursor:pointer;font-family:inherit;transition:border-color .12s,background .12s;}
+  .card:hover,.card:focus-visible{border-color:var(--blue);background:#f7fbff;}
+  .card.picked{border-color:var(--blue);background:#eef6ff;box-shadow:inset 0 0 0 1px var(--blue);}
+  .card-ic{font-size:40px;line-height:1;flex:0 0 auto;}
+  .card-tx{display:flex;flex-direction:column;gap:4px;min-width:0;}
+  .card-label{font-size:19px;font-weight:800;color:#16213a;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .card-rec{font-size:12px;font-weight:700;color:#fff;background:var(--blue);
+    border-radius:999px;padding:2px 9px;}
+  .card-desc{font-size:14.5px;color:var(--muted);line-height:1.45;}
+  .card-sub{display:block;width:100%;margin-top:6px;padding:14px;font-family:inherit;
+    font-size:15px;font-weight:600;color:#5a6472;background:#f4f6f9;
+    border:1px dashed #c3ccd6;border-radius:12px;cursor:pointer;}
+  .card-sub:hover{border-color:var(--blue);color:var(--blue);background:#fff;}
+  .bullets{margin:0 0 14px;padding-left:20px;font-size:15.5px;line-height:1.75;color:#2b3444;}
+  .bullets li{margin:6px 0;}
+  .big-print{width:100%;padding:18px;font-size:19px;margin-top:6px;}
+  /* 진행 막대 — 경로마다 화면 수가 달라 「N/10」 고정 표기를 버렸다 */
+  .pbar{height:6px;background:rgba(255,255,255,.35);border-radius:999px;overflow:hidden;}
+  .pbar-fill{height:100%;background:#fff;border-radius:999px;transition:width .2s;}
+  /* 빈칸의 뜻 — 일부러 비운 칸과 빠뜨린 칸을 눈으로 구별한다 */
+  .sum-row .fs-manual{color:#8a4b00;font-weight:700;}
+  .sum-row .fs-existing{color:#1b5fc0;font-weight:700;}
+  .sum-row .fs-na,.sum-row .fs-missing{color:#8a929c;}
+  .sum-row .fs-counter{color:#a3272c;font-weight:700;}
+  .manual-warn{margin:14px 0;background:#fff7e6;border:1px solid #ffdf9e;border-left:5px solid #e8a33d;
+    border-radius:12px;padding:14px 16px;font-size:15px;color:#6b4200;line-height:1.6;}
+  .manual-warn .mw-h{font-weight:800;font-size:16.5px;margin-bottom:6px;}
+  .manual-warn ul{margin:6px 0;padding-left:20px;}
+  /* 창구 전환 화면 — 사진으로 찍는 화면이라 코드를 크게, 개인정보는 한 글자도 두지 않는다 */
+  .counter-wrap{text-align:center;padding:6px 2px 2px;}
+  .counter-h{font-size:21px;font-weight:800;color:#a3272c;margin-bottom:14px;}
+  .counter-code{font-size:64px;font-weight:900;letter-spacing:2px;color:#16213a;
+    background:#f4f6f9;border:3px solid #16213a;border-radius:16px;padding:14px 8px;margin-bottom:16px;}
+  .counter-reason{font-size:18px;font-weight:700;line-height:1.6;color:#2b3444;margin-bottom:18px;}
+  .counter-how{font-size:16px;line-height:1.7;color:#3a4452;margin-bottom:14px;}
+  .counter-priv{font-size:13.5px;color:#1b7a34;background:#f1f9f3;border-radius:10px;
+    padding:10px 12px;margin-bottom:16px;}
+  .counter-btns{display:flex;gap:10px;}
+  .counter-btns .btn{flex:1;padding:16px;font-size:16px;}
+  .counter-tip{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;}
+  /* 안내표(인쇄면) — 큰 글씨 한 장. 개인정보 없음 */
+  .slip-page{display:none;}
+  .slip{padding:28mm 22mm;text-align:center;font-family:'Malgun Gothic','맑은 고딕',sans-serif;}
+  .slip-h{font-size:20pt;font-weight:800;}
+  .slip-sub{font-size:15pt;margin-top:2mm;padding-bottom:6mm;border-bottom:2px solid #000;}
+  .slip-code-k{font-size:12pt;margin-top:12mm;}
+  .slip-code{font-size:54pt;font-weight:900;letter-spacing:3pt;margin:4mm 0 10mm;}
+  .slip-reason-k{font-size:12pt;}
+  .slip-reason{font-size:19pt;font-weight:700;line-height:1.5;margin-top:4mm;}
+  .slip-foot{font-size:12pt;margin-top:16mm;line-height:1.8;}
+  .slip-priv{font-size:10pt;color:#555;margin-top:8mm;}
 
   /* ===== 법정대리인 동의서(2쪽) — 미성년자 대리 신청 시에만 표시/인쇄 ===== */
   .consent-page{display:none;}
@@ -379,6 +441,7 @@
     <div class="paper"><div class="stage"><img class="bg" alt="여권발급신청서"><div class="ovl"></div></div></div>
     <div class="paper consent-page" aria-label="법정대리인 동의서"><div class="consent-body"></div></div>
     <div class="paper proxy-page" aria-label="위임장"><div class="proxy-body"></div></div>
+    <div class="paper slip-page" aria-label="창구 확인 안내표"><div class="slip-body"></div></div>
   </section>
 
   <!-- 우측: 모바일형 입력 -->
@@ -433,6 +496,15 @@ function createEmptyState(){
     step:1,
     unsure:{},
     addr:{},
+    /* ── 화면 상태 (2026.08.18 키오스크 개편) ────────────────────────────
+       ⛔ **인쇄층은 이것을 읽지 않는다.** renderForm()·renderConsent() 는 `state.data` 와
+          좌표맵만 본다. 이 분리를 지키는 한 화면을 아무리 뒤집어도 인쇄물은 그대로다
+          (`verify-print.py` 19쪽 0px 이 계속 안전망으로 작동한다).
+       path      : 'adult'(성인 본인) | 'minor'(미성년 자녀) — 첫 화면에서 시민이 고른다
+       counter   : 창구 전환 사유 {code, internal, reason} — 값이 있으면 전환 화면만 그린다
+       status    : 필드별 빈칸 사유. 값이 없다는 사실만으로는 구별이 안 되는 것들이다
+                   'manual'(인쇄 후 직접 작성) · 'existing'(기존 여권 자료 활용) · 'na'(해당 없음) */
+    ui:{ path:null, counter:null, status:{} },
     data:{
       // 여권 선택란
       kind:"일반", travelType:"", pages:"58면", period:"10년",
@@ -492,7 +564,11 @@ const PAGES_FIXED={ "긴급":"12면(긴급여권 고정)", "여행증명서":"�
 /* 나이 규칙: 미성년은 10년 여권 불가 → 유효기간을 5년으로 '강제 선택'(제거 대신). 안내는 note가 담당 */
 function applyAgeRules(){
   var s=deriveState(state.data);
-  if(s.ageKnown && s.isMinor && state.data.period==="10년") state.data.period="5년";
+  /* 미성년 경로는 유효기간을 **5년으로 고정**한다(2026.08.18 담당자 결정).
+     화면에 10년을 아예 보여주지 않으므로, 종전처럼 「고른 값을 뒤에서 5년으로 덮어쓰는」
+     동작이 사라진다 — 시민 입장에서 내가 고른 게 바뀌어 있는 일이 없다. */
+  if(state.ui.path==="minor"){ state.data.period="5년"; }
+  else if(s.ageKnown && s.isMinor && state.data.period==="10년") state.data.period="5년";
   if(state.data.kind==="긴급") state.data.period="단수(1년)";   // 긴급여권은 1년 단수만 가능
   var fx=PAGES_FIXED[state.data.kind];
   if(fx) state.data.pages=fx;                                          // 26면·58면 체크가 찍히지 않게 고정값으로
@@ -517,8 +593,30 @@ function wonFmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g,","); }
    · 미성년자(주민번호로 판정)면 본인/대리 관계없이 → 「법정대리인 동의서」(별지 제1호의3서식)
    · 성인을 대리인이 신청하면 → 「위임장」(여권 위임장)
    미성년 대리는 그 대리인이 곧 법정대리인이므로 동의서 경로로 처리(위임장 아님). */
-function needsConsent(d){ var s=deriveState(d); return s.ageKnown && s.isMinor; }
+/* ⚠️ 2026.08.18 — 판정 근거를 **주민등록번호에서 경로 선택으로** 옮겼다.
+   개편으로 시민이 주민번호를 「인쇄 후 직접 작성」으로 비울 수 있게 됐는데, 종전처럼
+   주민번호로만 미성년을 판정하면 **그때 동의서가 통째로 안 붙는다.** 경로는 시민이 첫 화면에서
+   직접 고르므로 주민번호가 없어도 안다. 주민번호가 있으면 어긋나는지 따로 교차 검증한다
+   (juminConflict) — 조용히 보정하지 않고 알려서 고치게 한다. */
+function needsConsent(d){
+  if(state.ui && state.ui.path) return state.ui.path==="minor";
+  var s=deriveState(d); return s.ageKnown && s.isMinor;   // 경로 선택 전(작성예시 등)의 종전 동작
+}
+/* 위임장은 새 키오스크 경로에서 쓰지 않는다. 「성인 + 대리인」 조합이 발생하지 않으므로
+   이 값은 항상 false 가 되고 renderProxy() 는 호출만 되고 아무것도 그리지 않는다.
+   ⛔ 인쇄 로직은 지우지 않고 남겨 둔다 — 되살릴 때 비용이 0 이고, 지우면 좌표·서식 재현을
+      다시 만들어야 한다(2026.08.18 지시서 §15 도 보존을 허용한다). */
 function needsProxy(d){ return d.applyBy==="대리인" && !needsConsent(d); }
+/* 앞단에서 고른 경로와 주민등록번호가 어긋나는가. 2020.10 체크섬 폐지로 오탈자를 잡을 수단이
+   없어졌는데, **경로 선택이 그 역할을 대신한다.** 어긋나면 조용히 고치지 말고 알려서 고치게 한다. */
+function juminConflict(d){
+  var s=deriveState(d); if(!s.ageKnown || !state.ui.path) return "";
+  if(state.ui.path==="adult" && s.isMinor)
+    return "앞에서 「제 여권」을 선택하셨는데, 입력하신 주민등록번호는 만 "+s.ageYears+"세(미성년)입니다. 번호를 다시 확인해 주세요.";
+  if(state.ui.path==="minor" && !s.isMinor)
+    return "앞에서 「미성년 자녀」를 선택하셨는데, 입력하신 주민등록번호는 만 "+s.ageYears+"세(성인)입니다. 번호를 다시 확인해 주세요.";
+  return "";
+}
 /* 주민등록번호 → 생년월일 문자열(YYYY.MM.DD). 위임장 생년월일 자동기입용 */
 function birthFromJumin(v){
   var j=String(v||"").replace(/\D/g,""); if(j.length<7) return "";
@@ -545,222 +643,279 @@ const OFFICIAL_QA = {
 };
 
 /* =========================================================
-   3) 단계 정의 (신청인 정보를 여권 선택보다 먼저 — 나이 판정 후 옵션 제어)
-   ========================================================= */
-const STEP_DEFS = [
-  // 1. 사전 체크리스트
-  { title:"사전 체크리스트", section:"시작",
-    question:"창구 방문 전, 아래 항목을 미리 준비해 주세요",
-    why:"없는 항목이 있어도 괜찮아요. 작성 후 창구에서 도움받으세요.",
-    checklist:[
-      "신분증(주민등록증·운전면허증 등)",
-      "여권 사진 1매 (6개월 이내·흰 배경·3.5×4.5cm)",
-      "기존 여권 (소지하신 경우 반드시 지참)",
-      "수수료 (창구에서 안내)"
-    ],
-    note:{ when:function(){ return true; }, msg:OFFICIAL_QA.photo } },
+   3) 화면 정의 · 흐름  (2026.08.18 키오스크 개편)
+   ---------------------------------------------------------
+   종전 : 누구나 **10단계를 전부** 지나는 고정 배열. 분기는 뒤쪽 9단계에 몰려 있었다.
+   지금 : 첫 화면에서 고른 **경로에 따라 필요한 화면만** 지난다. 한 화면 = 한 가지 판단.
 
-  // 2. 신청인 기본정보 (여권 선택보다 먼저 — 만나이로 옵션 제어) + 입력 오류 자동 감지
-  { title:"신청인 정보", section:"신청인",
-    question:"신청인의 기본 정보를 적어 주세요",
-    why:"신분증과 한 글자도 다르지 않아야 접수됩니다. 입력값은 저장되지 않고 화면·인쇄물에만 쓰입니다.",
-    note:{ when:function(){ return true; },
-           msg:"본인 작성·신청이 원칙입니다. 미성년자(만 18세 미만)는 부모 등 법정대리인이 대신 작성·신청할 수 있고, 이때 법정대리인 동의서가 필요합니다. 그 밖의 대리 신청은 위임장과 관계 증빙이 필요합니다. (대리 여부·서류는 창구에서 확인)" },
+   키오스크가 확실히 처리하는 두 경로만 끝까지 안내한다.
+     · adult — 성인 본인 신청           → 여권발급신청서 1쪽
+     · minor — 미성년 자녀 + 법정대리인 → 신청서 + 법정대리인 동의서 2쪽
+   그 밖은 **개인정보를 더 받지 않고** 창구로 넘긴다(오류가 아니라 정상 완료 유형이다).
+   ========================================================= */
+
+/* 창구 전환 사유 — 시민에게 보여줄 짧은 코드와 내부 코드를 분리한다.
+   ⛔ 번호는 **여기 한 곳에서만** 관리한다. 화면마다 하드코딩해 흩어 놓지 마라. */
+const COUNTER_REASONS = {
+  "P-01":{ internal:"PASSPORT_ADULT_PROXY",
+           reason:"성인의 여권을 다른 분이 대신 신청하려고 합니다." },
+  "P-02":{ internal:"PASSPORT_MINOR_PROXY",
+           reason:"미성년자의 여권을 법정대리인이 아닌 분이 신청하려고 합니다." },
+  "P-03":{ internal:"PASSPORT_ROMAN_CHANGE",
+           reason:"기존 여권과 다른 로마자(영문) 성명을 쓰고 싶어 합니다." },
+  "P-04":{ internal:"PASSPORT_SPECIAL_TYPE",
+           reason:"일반 여권이 아닌 여권(관용·외교관·긴급·여행증명서)을 신청하려고 합니다." },
+  "P-05":{ internal:"PASSPORT_EXISTING_UNKNOWN",
+           reason:"기존 여권이 있는지, 그 내용이 무엇인지 확인이 필요합니다." },
+  "P-06":{ internal:"PASSPORT_EMERGENCY_CONTACT",
+           reason:"본인 외에 적을 긴급 연락처가 없습니다." },
+  "P-90":{ internal:"PASSPORT_USER_REQUEST",
+           reason:"시민이 창구 상담을 선택했습니다." },
+  "P-99":{ internal:"PASSPORT_OTHER",
+           reason:"키오스크가 신청 유형을 확실하게 판단할 수 없습니다." }
+};
+/* 창구 전환. **이 시점부터 개인정보를 더 받지 않는다.** */
+function toCounter(code){
+  var r=COUNTER_REASONS[code]||COUNTER_REASONS["P-99"];
+  state.ui.counter={ code:code, internal:r.internal, reason:r.reason };
+  renderAll(); scrollPanelTop();
+}
+
+/* ── 빈칸의 뜻 (지시서 §8) ───────────────────────────────────────────────
+   「값이 없다」 하나로 뭉뚱그리면 **일부러 비운 칸과 빠뜨린 칸을 구별할 수 없다.**
+   최종 확인 화면과 인쇄 직전 안내가 이 상태를 읽는다. */
+const FIELD_STATUS = {
+  filled  :{ tag:"",                  cls:"" },
+  manual  :{ tag:"✍ 출력 후 직접 작성", cls:"fs-manual" },
+  existing:{ tag:"기존 여권 정보 사용",  cls:"fs-existing" },
+  na      :{ tag:"해당 없음",           cls:"fs-na" },
+  counter :{ tag:"창구에서 확인",        cls:"fs-counter" },
+  missing :{ tag:"미입력",              cls:"fs-missing" }
+};
+/* 안 적어도 되는 칸 — 비어 있다고 「미입력」으로 보이면 시민이 빠뜨린 줄 알고 불안해한다.
+   이 칸들은 비어 있는 것이 정상이므로 「해당 없음」으로 표시한다. */
+const OPTIONAL_FIELDS = { guardianJumin:1, braille:1, travelType:1, mailAddr:1 };
+function fieldStatus(field){
+  var st=state.ui.status[field];
+  if(st && FIELD_STATUS[st]) return st;                  // 시민이 뜻을 정해 둔 칸
+  if(String(state.data[field]||"").trim()) return "filled";
+  return OPTIONAL_FIELDS[field] ? "na" : "missing";
+}
+/* 서식에 찍히는 값과 화면에 보여줄 말이 다른 칸 — 「희망 안 함」은 시민에게 뜻이 안 통한다 */
+const SUMMARY_VALUE_TEXT = {
+  mailService:{ "희망":"우편(등기)으로 받기", "희망 안 함":"창구에서 직접 받기" },
+  braille:{ "희망":"신청함", "희망 안 함":"신청 안 함" }
+};
+/* 「인쇄 후 직접 작성」으로 표시한 칸 목록 — 인쇄 직전에 다시 알려 준다(§22) */
+function manualFields(){
+  return SUMMARY_ROWS.filter(function(r){ return fieldStatus(r[0])==="manual"; })
+                     .map(function(r){ return r[1]; });
+}
+
+/* ── 화면 정의 ───────────────────────────────────────────────────────────
+   cards  : 큰 터치 카드(선택). act = path|counter|set|status|next
+   inputs : 글자 입력(기존 renderInput 재사용 — 물리 키보드를 함께 두므로 그대로 쓴다)
+   groups : 작은 선택지(기존 renderGroup 재사용)
+   cond   : 이 화면을 지나는 조건(없으면 항상) */
+const SCREENS = {
+
+  /* ① 첫 화면 — 아이콘 카드 2개. 여기서 경로가 갈린다. */
+  start:{ title:"여권 신청", plain:true,
+    question:"누구의 여권을 신청하시나요?",
+    cards:[
+      { icon:"👤", label:"제 여권을 신청합니다",
+        desc:"성인 본인이 직접 신청하는 경우", act:"path", val:"adult" },
+      { icon:"👨‍👩‍👧", label:"미성년 자녀의 여권을 신청합니다",
+        desc:"부모 등 법정대리인이 직접 신청하는 경우", act:"path", val:"minor" }
+    ],
+    sub:{ label:"어디에 해당하는지 모르겠어요 · 다른 경우", act:"counter", code:"P-90" } },
+
+  /* ② 미성년 경로 첫 확인 — 지금 신청하는 사람이 법정대리인인가 */
+  guardcheck:{ title:"신청하시는 분 확인",
+    question:"지금 신청하시는 분이 자녀의 법정대리인이신가요?",
+    why:"법정대리인은 부모 등 친권자를 말합니다.",
+    cards:[
+      { icon:"✅", label:"네, 제가 부모(법정대리인)입니다", desc:"신분증과 가족관계 서류가 필요합니다", act:"next" },
+      { icon:"🙋", label:"아니요, 다른 사람입니다", desc:"조부모·친척·지인 등", act:"counter", code:"P-02" }
+    ] },
+
+  /* ③ 개인정보 안내 — 읽고 넘어가는 화면 */
+  privacy:{ title:"개인정보 안내",
+    question:"입력하신 내용은 저장되지 않습니다",
+    bullets:[
+      "입력한 내용은 이 화면에서만 쓰이고, 어디에도 저장·전송되지 않습니다.",
+      "인쇄가 끝나면 화면이 저절로 지워집니다.",
+      "잠시 자리를 비우면 3분 뒤 저절로 지워집니다.",
+      "주민등록번호는 원하지 않으시면 <b>입력하지 않고</b> 인쇄 후 직접 적으셔도 됩니다."
+    ],
+    cards:[ { icon:"👉", label:"확인했습니다. 시작할게요", act:"next" } ] },
+
+  /* ④ 한글 성명 */
+  name:{ title:"성명",
+    question:function(){ return state.ui.path==="minor" ? "자녀의 한글 성명을 적어 주세요" : "신청인의 한글 성명을 적어 주세요"; },
+    why:"신분증에 적힌 대로 한 글자도 다르지 않게 적어 주세요.",
+    inputs:[ { field:"nameKor", label:"한글 성명", req:true, type:"text", ph:"예) 홍길동" } ] },
+
+  /* ⑤ 주민등록번호 — 키오스크에 넣기 싫은 시민에게 선택권을 준다(§7) */
+  jumin:{ title:"주민등록번호",
+    question:function(){ return state.ui.path==="minor" ? "자녀의 주민등록번호를 어떻게 하시겠어요?" : "주민등록번호를 어떻게 하시겠어요?"; },
+    why:"입력하시면 신청서에 자동으로 채워집니다. 공용 화면에 넣기 불편하시면 인쇄한 뒤 직접 적으셔도 됩니다.",
+    cards:[
+      { icon:"⌨️", label:"여기에 입력하겠습니다", desc:"신청서에 자동으로 채워집니다", act:"status", field:"jumin", val:"filled" },
+      { icon:"✍", label:"인쇄한 뒤 직접 쓰겠습니다", desc:"그 칸은 비워서 인쇄됩니다 — 잘못된 것이 아닙니다", act:"status", field:"jumin", val:"manual" }
+    ],
+    inputs:[ { field:"jumin", label:"주민등록번호", req:true, type:"text", mask:"jumin",
+               inputmode:"numeric", maxlength:14, ph:"숫자 13자리",
+               cond:function(){ return state.ui.status.jumin!=="manual"; } } ],
     validate:function(d){
+      if(state.ui.status.jumin==="manual") return true;
       var j=String(d.jumin||"").replace(/\D/g,"");
       if(j.length>0 && j.length<13) return "주민등록번호 13자리를 모두 입력해 주세요.";
       if(j.length===13 && !deriveState(d).ageKnown) return "주민등록번호를 다시 확인해 주세요. 생년월일 또는 뒷자리 형식이 올바르지 않습니다.";
-      var p=String(d.phone||"").replace(/\D/g,"");
-      if(p.length>0 && p.length<10) return "연락처 번호 자리수를 확인해 주세요.";
-      return true;
-    },
-    inputs:[
-      { field:"nameKor", label:"한글 성명", req:true, type:"text", ph:"예) 홍길동",
-        hint:"신분증에 적힌 대로 정확히." },
-      { field:"jumin", label:"주민등록번호", req:true, type:"text", mask:"jumin", inputmode:"numeric",
-        maxlength:14, ph:"숫자 13자리",
-        hint:"숫자만 누르면 자동으로 정리됩니다. 사용 후 꼭 초기화하세요." },
-      { field:"phone", label:"본인 연락처", req:true, type:"tel", mask:"phone", inputmode:"numeric",
-        maxlength:13, ph:"예) 휴대전화 번호",
-        hint:"만료 안내 문자를 받는 번호입니다." }
+      return juminConflict(d) || true;    // 경로와 어긋나면 알려서 고치게 한다
+    } },
+
+  /* ⑥ 본인 연락처 — 성인 경로만. 미성년은 법정대리인 연락처를 쓴다(§12) */
+  phone:{ title:"연락처", cond:function(){ return state.ui.path==="adult"; },
+    question:"연락처를 적어 주세요",
+    why:"여권이 준비되었을 때와 만료가 다가올 때 안내를 받는 번호입니다.",
+    inputs:[ { field:"phone", label:"본인 연락처", req:true, type:"tel", mask:"phone",
+               inputmode:"numeric", maxlength:13, ph:"예) 01012345678" } ] },
+
+  /* ⑦ 기존 여권 — 여기서 로마자 경로가 갈린다 */
+  oldpass:{ title:"기존 여권",
+    question:function(){ return state.ui.path==="minor" ? "자녀가 전에 쓰던 여권이 있나요?" : "전에 쓰던 여권이 있나요?"; },
+    why:"기존 여권이 있으면 영문 이름을 그 여권과 똑같이 써야 해서 먼저 여쭤봅니다. 기간이 지난 여권도 포함됩니다.",
+    cards:[
+      { icon:"📕", label:"있습니다", desc:"지금 쓰는 여권 · 기간이 지난 여권", act:"set", field:"hasPassport", val:"있음" },
+      { icon:"🆕", label:"없습니다", desc:"이번에 처음 만듭니다", act:"set", field:"hasPassport", val:"없음" },
+      { icon:"❓", label:"잘 모르겠습니다", desc:"직원이 확인해 드립니다", act:"counter", code:"P-05" }
     ] },
 
-  // 3. 여권 종류·기간·면수 (나이·종류 규칙 반영)
-  { title:"여권 선택", section:"여권",
-    question:"여권 종류·기간·면수를 골라 주세요",
-    why:"자주 신청하는 값(일반·10년·58면)을 미리 골라 두었어요. 서식에 표시가 없으면 이대로 발급됩니다.",
-    warn:{ when:function(d){ return d.kind==="외교관"||d.kind==="관용"; },
-           msg:"관용·외교관 여권은 공무 목적의 특수 여권으로, 소속 기관의 추천·확인을 거쳐야 합니다. 일반 신청 대상이 아니니 창구 직원에게 확인하세요." },
-    note:{ when:function(d){ var s=deriveState(d); return (s.ageKnown && s.isMinor) || d.kind==="긴급" || d.kind==="여행증명서"; },
-           msg:function(d){
-             if(d.kind==="긴급") return "긴급여권은 유효기간 1년의 단수여권(비전자)으로만 발급되고, 사증 면수는 12면으로 고정됩니다. 그래서 기간·면수는 선택하지 않습니다.";
-             if(d.kind==="여행증명서") return "여행증명서는 사증 면수를 선택하지 않습니다. (발급 요건은 창구에서 확인)";
-             return "만 18세 미만은 '10년' 여권을 발급할 수 없어 유효기간을 '5년'으로 맞췄습니다. (세부 기간은 창구에서 확인)";
-           } },
-    groups:[
-      { field:"kind", label:"여권 종류", req:true, options:[
-        {v:"일반", rec:true, desc:"보통의 시민이 발급받는 여권"},
-        {v:"관용", desc:"공무 목적 — 소속 기관을 통해 신청"},
-        {v:"외교관", desc:"외교관용 — 소속 기관을 통해 신청"},
-        {v:"긴급", desc:"긴급한 사유 · 1년 단수 · 12면 고정 · 창구 문의"},
-        {v:"여행증명서", desc:"여권을 대신하는 증명서"}
-      ] },
-      { field:"travelType", label:"여행증명서 구분", req:false,
-        cond:function(d){ return d.kind==="여행증명서"; },
-        options:[ {v:"왕복"}, {v:"편도"} ] },
-      { field:"period", label:"유효기간", req:true, options:[
-        {v:"10년", rec:true, desc:"만 18세 이상"},
-        {v:"단수(1년)", desc:"1회용 · 유효기간 1년(긴급여권 등)"},
-        {v:"잔여기간", desc:"기존 여권의 남은 기간(담당자 문의)"},
-        {v:"5년", desc:"만 18세 미만(미성년)"},
-        {v:"5년 미만", desc:"병역 등 특수 사유 · 창구 문의"}
-      ] },
-      { field:"pages", label:"면수(속지 수)", req:true,
-        cond:function(d){ return d.kind!=="긴급" && d.kind!=="여행증명서"; },   // 긴급·여행증명서는 면수 선택 없음
-        options:[
-        {v:"58면", rec:true, desc:"여행·출장이 잦은 분"},
-        {v:"26면", desc:"여행이 드문 분"}
-      ] }
+  /* ⑧ 기존 여권이 있을 때 — 같은 영문 이름을 쓰는가 */
+  romansame:{ title:"영문 이름", cond:function(){ return state.data.hasPassport==="있음"; },
+    question:"기존 여권과 같은 영문 이름을 쓰시나요?",
+    why:"영문 이름을 바꾸는 것은 조건이 까다로워 직원 확인이 필요합니다.",
+    cards:[
+      { icon:"✅", label:"네, 같은 이름을 씁니다", desc:"기존 여권 정보를 그대로 씁니다 — 따로 입력하지 않습니다",
+        act:"status", field:"roman", val:"existing" },
+      { icon:"🔤", label:"아니요, 다른 이름으로 바꾸고 싶습니다", desc:"직원 확인이 필요합니다", act:"counter", code:"P-03" }
     ] },
 
-  // 4. 기존 여권 여부 (로마자 분기)
-  { title:"기존 여권", section:"로마자",
-    question:"기존에 쓰던(또는 만료된) 여권이 있으신가요?",
-    why:"기존 여권이 있으면 로마자 성명을 반드시 그 여권과 똑같이 적어야 해서, 먼저 여쭤봅니다.",
-    note:{ when:function(){ return true; }, msg:OFFICIAL_QA.online },
-    groups:[
-      { field:"hasPassport", label:"기존 여권 보유", req:true, options:[
-        {v:"있음", desc:"지금 쓰는 / 기간 지난 여권이 있어요"},
-        {v:"없음", desc:"이번에 처음 만들어요"},
-        {v:"모름", desc:"잘 모르겠어요 — 직원이 확인"}
-      ] }
-    ] },
-
-  // 5. 로마자 성명
-  { title:"로마자 성명", section:"로마자",
-    question:"여권에 들어갈 로마자(영문) 이름을 정해 주세요",
-    why:"여권을 처음 신청하거나 로마자성명을 바꿀 때만 적습니다. 한 번 정하면 바꾸기 매우 어렵습니다.",
-    terms:[ { term:"로마자 표기", desc:"한글 이름을 영어 알파벳으로. 예: 홍길동 → HONG GILDONG" } ],
+  /* ⑨ 로마자 성명 — 기존 여권이 없을 때만 입력받는다 */
+  roman:{ title:"영문 이름", cond:function(){ return state.data.hasPassport!=="있음"; },
+    question:"여권에 넣을 영문 이름을 정해 주세요",
+    why:"한 번 정하면 바꾸기 매우 어렵습니다. 신중히 정해 주세요.",
     suggestRoman:true,
     inputs:[
-      { field:"romanSur", label:"로마자 성 (Surname)", req:true, type:"text", ph:"예) HONG", upper:true },
-      { field:"romanGiven", label:"로마자 이름 (Given name)", req:true, type:"text", ph:"예) GILDONG", upper:true }
+      { field:"romanSur", label:"영문 성 (Surname)", req:true, type:"text", ph:"예) HONG", upper:true },
+      { field:"romanGiven", label:"영문 이름 (Given name)", req:true, type:"text", ph:"예) GILDONG", upper:true }
     ] },
 
-  // 6. 긴급 연락처
-  { title:"긴급 연락처", section:"긴급연락처",
-    question:"긴급 연락처를 적어 주세요",
-    why:"해외에서 사고가 났을 때 연락할 사람입니다. 본인이 아닌 가족·지인의 연락처를 적습니다.",
-    warn:{ when:function(d){ return d.emgPhone && d.phone && d.emgPhone.replace(/\D/g,"")===d.phone.replace(/\D/g,""); },
-           msg:"긴급 연락처가 본인 번호와 같아요. 해외 사고 대비를 위해 다른 분(가족·지인)의 번호를 적어 주세요." },
+  /* ⑩ 여권 종류 — 일반이 아니면 창구 */
+  kind:{ title:"여권 종류",
+    question:"어떤 여권을 신청하시나요?",
+    cards:[
+      { icon:"📘", label:"일반 여권", desc:"보통 시민이 발급받는 여권입니다", act:"set", field:"kind", val:"일반" },
+      { icon:"🏛️", label:"그 밖의 여권", desc:"관용·외교관·긴급여권·여행증명서 — 직원 확인이 필요합니다", act:"counter", code:"P-04" }
+    ] },
+
+  /* ⑪ 유효기간 — 성인만. 미성년은 5년 고정이라 묻지 않는다 */
+  period:{ title:"유효기간", cond:function(){ return state.ui.path==="adult"; },
+    question:"여권을 몇 년짜리로 만드시겠어요?",
+    cards:[
+      { icon:"🔟", label:"10년", desc:"가장 많이 선택하십니다", act:"set", field:"period", val:"10년", rec:true },
+      { icon:"5️⃣", label:"5년", desc:"5년만 쓰실 경우", act:"set", field:"period", val:"5년" },
+      { icon:"❓", label:"그 밖의 기간이 필요합니다", desc:"단수·잔여기간 등 — 직원 확인이 필요합니다", act:"counter", code:"P-99" }
+    ] },
+
+  /* ⑫ 면수 */
+  pages:{ title:"여권 속지",
+    question:"여권 속지를 몇 장으로 하시겠어요?",
+    why:"도장을 찍는 면의 수입니다. 여행이 잦으면 많은 쪽이 좋습니다.",
+    cards:[
+      { icon:"📗", label:"58면", desc:"가장 많이 선택하십니다", act:"set", field:"pages", val:"58면", rec:true },
+      { icon:"📙", label:"26면", desc:"여행이 드문 경우", act:"set", field:"pages", val:"26면" }
+    ] },
+
+  /* ⑬ 법정대리인 정보 — 미성년 경로만.
+     ⚠️ 여기서 applyBy="대리인" + agentName=법정대리인 성명이 채워진다. 그러면 인쇄층이
+        서명란을 법정대리인 이름으로, 2쪽을 「법정대리인 동의서」로 알아서 낸다(코드 수정 불필요). */
+  guardian:{ title:"법정대리인 정보", cond:function(){ return state.ui.path==="minor"; },
+    question:"지금 신청하시는 법정대리인 정보를 적어 주세요",
+    why:"신청서의 서명란과 「법정대리인 동의서」에 들어갑니다. 자녀 정보가 아니라 <b>지금 오신 분</b>의 정보입니다.",
     inputs:[
-      { field:"emgName", label:"긴급연락처 성명", req:true, type:"text", ph:"예) 홍판서",
-        hint:"본인이 아닌 다른 사람(가족·지인)" },
-      { field:"emgRel", label:"신청인과의 관계", req:true, type:"text", ph:"예) 부, 모, 배우자, 자녀" },
-      { field:"emgPhone", label:"긴급연락처 전화번호", req:true, type:"tel", mask:"phone", inputmode:"numeric",
-        maxlength:13, ph:"예) 01098765432" }
-    ] },
-
-  // 7. 그 밖의 기재 (해당 시에만 · 대부분 비워 둠)
-  { title:"추가 기재", section:"추가기재",
-    question:"해당하는 것만 적어 주세요 (대부분 비워 둡니다)",
-    why:"아래는 특별한 경우에만 적는 항목이에요. 해당 사항이 없으면 그대로 [다음]을 누르시면 됩니다.",
-    inputs:[
-      { field:"regBase", label:"등록기준지", req:false, type:"text", ph:"예) ○○시 ○○구 ○○로 00",
-        hint:"담당공무원이 요청할 때만 적습니다. 보통은 비워 둬도 됩니다." },
-      { field:"spouseRoman", label:"배우자 로마자 성(姓)", req:false, type:"text", upper:true, ph:"예) KIM",
-        hint:"여권에 'spouse of ○○'(배우자의 성)를 넣고 싶을 때만. 대부분 생략합니다." }
-    ],
-    groups:[
-      { field:"braille", label:"점자여권", req:false, options:[
-        {v:"희망", desc:"시각장애인인 경우에만 선택"},
-        {v:"희망 안 함", rec:true, desc:"해당 없음 (대부분 이쪽)"}
-      ] }
-    ] },
-
-  // 8. 수령 방법 (우편)
-  { title:"수령 방법", section:"수령",
-    question:"완성된 여권을 어떻게 받으시겠어요?",
-    why:"방문 수령은 추가 요금이 없습니다. 우편(등기)을 원하시면 주소를 적어 주세요.",
-    groups:[
-      { field:"mailService", label:"수령 방법", req:false, options:[
-        {v:"희망 안 함", label:"방문 수령", rec:true, desc:"창구에서 직접 받기 · 추가 요금 없음"},
-        {v:"희망", label:"우편(등기) 수령", desc:"집·직장으로 등기 배송 · 요금 별도"}
-      ] }
-    ],
-    note:{ when:function(d){ return d.mailService==="희망"; },
-           msg:"등기우편 요금은 별도이며, 정확한 금액과 도착 예정일은 창구 직원이 안내합니다." },
-    addrInput:{ field:"mailAddr", label:"받으실 주소", req:true, cond:function(d){ return d.mailService==="희망"; } } },
-
-  // 9. 신청 방식(본인/대리) — 서명란 '신청인(또는 대리인) 성명'에 들어갈 이름
-  { title:"신청·서명", section:"서명",
-    question:"이 신청서를 작성·제출하는 분은 누구신가요?",
-    why:"신청서의 '신청인(또는 대리인) 성명' 칸에 들어갈 이름입니다. 대리로 오셨으면 대리인 성함을 적어 주세요.",
-    groups:[
-      { field:"applyBy", label:"작성·제출하는 사람", req:true, options:[
-        {v:"본인", rec:true, desc:"신청인 본인이 직접 작성·제출"},
-        {v:"대리인", desc:"가족·법정대리인 등 대리 (위임장·증빙 필요)"}
-      ] }
-    ],
-    // 입력 순서 = 서식 순서. 위임장(대리)일 때: 수임인 성명→생년월일→주소→전화→위임인과의 관계→위임인 정보(자동)
-    condInputs:[
-      { field:"agentName", label:"수임인(위임받는/법정대리인) 성명", req:true, type:"text", ph:"예) 대리인 이름",
-        cond:function(d){ return d.applyBy==="대리인"; },
-        hint:"서명란에 이 이름이 들어갑니다. 신청인 본인 이름은 위쪽 한글성명 칸에 그대로 유지됩니다." },
-      { field:"guardianName", label:"법정대리인(부모 등) 성명", req:true, type:"text", ph:"예) 부모님 성함",
-        cond:function(d){ return needsConsent(d) && d.applyBy==="본인"; },
-        hint:"미성년자 신청은 「법정대리인 동의서」가 필요합니다. 동의서에 들어갈 법정대리인(부모 등) 성함입니다." },
-      { field:"agentBirth", label:"수임인(대리인) 생년월일 (선택)", req:false, type:"text",
-        ph:"예) 1990.01.01",
-        cond:needsProxy,
-        hint:"비워 두면 인쇄 후 위임장에 손으로 적으셔도 됩니다." },
-      { field:"agentAddr", label:"수임인(위임받는 자) 주소", req:true, type:"text",
-        ph:"예) 경기도 군포시 산본로 000",
-        cond:needsProxy,
-        hint:"위임장에 들어갈 수임인(대리인)의 주소입니다." },
-      { field:"agentPhone", label:"수임인(대리인) 전화번호", req:true, type:"text",
-        mask:"phone", inputmode:"numeric", maxlength:13, ph:"예) 010-0000-0000",
-        cond:needsProxy,
-        hint:"위임장에 들어갈 수임인(대리인)의 연락처입니다." },
-      { field:"guardianRel", label:function(d){ return needsProxy(d) ? "위임인과의 관계" : "신청인과의 관계"; }, req:true, type:"text", ph:"예) 부, 모, 조부모",
-        cond:function(d){ return needsConsent(d) || needsProxy(d); },
-        hint:"대리인(수임인·법정대리인)이 신청인(위임인)과 어떤 관계인지 — 동의서·위임장에 들어갑니다." },
-      { field:"guardianJumin", label:"법정대리인 주민등록번호 (선택)", req:false, type:"text",
-        mask:"jumin", inputmode:"numeric", maxlength:14, ph:"앞 6자리 - 뒤 7자리",
-        cond:needsConsent,
-        hint:"비워 두어도 됩니다. 창구에서 신분증을 보고 직접 적으셔도 됩니다." },
-      // 위임인(신청인 본인) 성명·생년월일 = 앞 단계 입력에서 자동, 수정 불가
-      { field:"_delegatorName", label:"위임인(본인) 성명", readonly:true, cond:needsProxy,
-        value:function(d){ return d.nameKor; },
-        hint:"‘신청인 정보’ 단계의 한글 성명이 자동으로 들어갑니다. (수정 불가)" },
-      { field:"_delegatorBirth", label:"위임인(본인) 생년월일", readonly:true, cond:needsProxy,
-        value:function(d){ return birthFromJumin(d.jumin); },
-        hint:"주민등록번호로 자동 계산됩니다. (수정 불가)" },
-      { field:"applicantAddr",
-        label:function(d){ return needsProxy(d) ? "위임인(본인) 주소" : "신청인(본인) 주소"; },
-        req:function(d){ return needsConsent(d); }, type:"text",
+      { field:"agentName", label:"법정대리인 성명", req:true, type:"text", ph:"예) 홍판서" },
+      { field:"guardianRel", label:"자녀와의 관계", req:true, type:"text", ph:"예) 부, 모" },
+      { field:"phone", label:"법정대리인 연락처", req:true, type:"tel", mask:"phone",
+        inputmode:"numeric", maxlength:13, ph:"예) 01012345678",
+        hint:"자녀 번호가 아니라 지금 오신 분의 번호입니다." },
+      { field:"applicantAddr", label:"주소", req:true, type:"text",
         ph:"예) 경기도 군포시 산본로 000, 000동 000호",
-        cond:function(d){ return needsConsent(d) || needsProxy(d); },
-        fallback:function(d){ return d.mailAddr||""; },
-        hint:"앞에서 주소를 입력했다면 자동으로 들어가며, 수정할 수 있습니다. 비워 두면 인쇄 후 손으로 적으셔도 됩니다." },
-      { field:"guardianAddr", label:"법정대리인 주소 (신청인과 다를 때만 · 선택)", req:false, type:"text",
-        ph:"신청인과 주소가 같으면 비워 두세요",
-        cond:needsConsent,
-        hint:"입력하면 법정대리인 주소만 이 값으로 바뀝니다. 신청인 주소는 위 값 그대로입니다." }
-    ],
-    note:{ when:function(d){ return needsConsent(d) || needsProxy(d); },
-           msg:function(d){
-             if(needsConsent(d)) return "미성년자 여권 신청입니다. 본인이 신청하더라도 「법정대리인 동의서」가 필요하여, 인쇄하면 신청서 뒤에 동의서가 한 장 더 출력됩니다. 신청인 이름·주소·법정대리인 정보·작성일은 자동으로 채워지고, 서명란과 법정대리인 2(공동친권자)는 창구에서 손으로 적고 서명하세요.";
-             return "대리인이 신청하는 경우 「위임장」이 필요합니다. 인쇄하면 신청서 뒤에 위임장이 한 장 더 출력됩니다. 아래 순서(수임인 성명·생년월일·주소·전화번호·위임인과의 관계)대로 입력해 주세요. 위임인(신청인 본인)의 성명·생년월일은 앞 단계 입력에서 자동으로 채워지며 수정할 수 없고, 주소는 앞서 입력한 주소가 있으면 자동으로 들어가고 수정할 수 있습니다. 서명은 인쇄한 뒤 직접 하세요. (위임인 신분증 사본·관계 증빙 필요)";
-           } } },
+        hint:"「법정대리인 동의서」에 들어갑니다." },
+      { field:"guardianJumin", label:"법정대리인 주민등록번호 (선택)", req:false, type:"text",
+        mask:"jumin", inputmode:"numeric", maxlength:14, ph:"비워 두셔도 됩니다",
+        hint:"비워 두면 창구에서 신분증을 보고 적으셔도 됩니다." }
+    ] },
 
-  // 10. 확인·완료
-  { title:"확인·완료", section:"완료",
-    summary:true }
-];
-const TOTAL_STEPS = STEP_DEFS.length;
-// 스텝퍼 노드에 표시할 짧은 라벨(단계와 1:1)
-const STEP_SHORT = ["체크사항","신청인","여권","기존여권","로마자","긴급","추가","수령","서명","완료"];
+  /* ⑭ 긴급 연락처 — 본인 번호와 같으면 막는다(§14). 다만 갇히지 않게 창구 출구를 둔다. */
+  emg:{ title:"긴급 연락처",
+    question:"해외에서 사고가 났을 때 연락할 분을 적어 주세요",
+    why:"본인이 아닌 <b>다른 분</b>(가족·지인)의 연락처여야 합니다.",
+    inputs:[
+      { field:"emgName", label:"성명", req:true, type:"text", ph:"예) 홍판서" },
+      { field:"emgRel", label:"신청인과의 관계", req:true, type:"text", ph:"예) 부, 모, 배우자" },
+      { field:"emgPhone", label:"전화번호", req:true, type:"tel", mask:"phone",
+        inputmode:"numeric", maxlength:13, ph:"예) 01098765432" }
+    ],
+    validate:function(d){
+      var a=String(d.emgPhone||"").replace(/\D/g,""), b=String(d.phone||"").replace(/\D/g,"");
+      if(a && b && a===b)
+        return "앞에서 입력한 연락처와 같은 번호입니다. 해외에서 긴급상황이 생겼을 때 연락할 다른 가족·지인의 번호를 적어 주세요.";
+      return true;
+    },
+    sub:{ label:"본인 말고는 적을 번호가 없습니다", act:"counter", code:"P-06" } },
+
+  /* ⑮ 수령 방법 */
+  recv:{ title:"수령 방법",
+    question:"완성된 여권을 어떻게 받으시겠어요?",
+    cards:[
+      { icon:"🏢", label:"창구에서 직접 받겠습니다", desc:"추가 요금이 없습니다", act:"set", field:"mailService", val:"희망 안 함", rec:true },
+      { icon:"📮", label:"우편(등기)으로 받겠습니다", desc:"등기 요금이 따로 듭니다", act:"set", field:"mailService", val:"희망" }
+    ],
+    addrInput:{ field:"mailAddr", label:"받으실 주소", req:true,
+                cond:function(d){ return d.mailService==="희망"; } } },
+
+  /* ⑯ 추가 선택 — 대부분 해당 없음 */
+  extra:{ title:"추가 선택",
+    question:"특별히 필요한 것이 있으신가요?",
+    why:"대부분 해당하지 않습니다. 없으시면 아래 첫 번째를 누르세요.",
+    cards:[
+      { icon:"👉", label:"해당하는 것이 없습니다", desc:"바로 다음으로 넘어갑니다", act:"status", field:"extra", val:"na", rec:true },
+      { icon:"⠿", label:"점자 여권이 필요합니다", desc:"시각장애인인 경우", act:"set", field:"braille", val:"희망" }
+    ] },
+
+  /* ⑰ 최종 확인 */
+  confirm:{ title:"확인", summary:true }
+};
+
+/* ── 흐름 ────────────────────────────────────────────────────────────────
+   경로별 화면 순서. `cond` 가 false 인 화면은 **아예 지나지 않는다.** */
+const FLOW = {
+  adult:["start","privacy","name","jumin","phone","oldpass","romansame","roman",
+         "kind","period","pages","emg","recv","extra","confirm"],
+  minor:["start","guardcheck","privacy","name","jumin","oldpass","romansame","roman",
+         "kind","pages","guardian","emg","recv","extra","confirm"]
+};
+function flow(){
+  if(!state.ui.path) return ["start"];
+  return FLOW[state.ui.path].filter(function(id){
+    var s=SCREENS[id];
+    return !s.cond || s.cond(state.data);
+  });
+}
+function curScreenId(){ var f=flow(); return f[Math.min(state.step,f.length)-1]; }
+function curScreen(){ return SCREENS[curScreenId()]; }
 
 /* =========================================================
    4) 요약/서식 공통 필드 정의 (서식 순서)
@@ -779,22 +934,23 @@ const SUMMARY_ROWS = [
   ["hasPassport","기존 여권 보유"],
   ["romanSur","로마자 성"],
   ["romanGiven","로마자 이름"],
-  ["regBase","등록기준지"],
-  ["spouseRoman","배우자 로마자 성"],
   ["braille","점자여권"],
-  ["mailService","우편배송"],
-  ["mailAddr","우편배송 주소", function(d){ return d.mailService==="희망"; }],
-  ["applyBy","작성·제출"],
-  ["agentName","대리인 성명", function(d){ return d.applyBy==="대리인"; }],
-  ["guardianName","법정대리인 성명", function(d){ return needsConsent(d) && d.applyBy==="본인"; }],
-  ["guardianRel","대리인·법정대리인 관계", function(d){ return needsConsent(d) || needsProxy(d); }],
+  ["mailService","수령 방법"],
+  ["mailAddr","우편 받으실 주소", function(d){ return d.mailService==="희망"; }],
+  ["agentName","법정대리인 성명", needsConsent],
+  ["guardianRel","자녀와의 관계", needsConsent],
   ["guardianJumin","법정대리인 주민등록번호", needsConsent, function(v){ return formatJumin(v); }],
-  ["agentBirth","수임인 생년월일", function(d){ return needsProxy(d) && !!d.agentBirth; }, function(v){ return formatBirth(v); }],
-  ["agentAddr","수임인 주소", needsProxy],
-  ["agentPhone","수임인 전화번호", needsProxy, function(v){ return formatPhone(v); }],
-  ["applicantAddr","신청인·위임인 주소", function(d){ return needsConsent(d) || needsProxy(d); }],
-  ["guardianAddr","법정대리인 주소(다를 때)", function(d){ return needsConsent(d) && !!d.guardianAddr; }]
+  ["applicantAddr","주소", needsConsent]
 ];
+/* 화면에 보여줄 이름은 경로에 따라 달라진다 — 미성년 경로에서 「한글 성명」은 자녀의 것이고
+   「연락처」는 법정대리인의 것이다(§12). 인쇄되는 값은 그대로이고 라벨만 바뀐다. */
+const SUMMARY_LABEL_MINOR = {
+  nameKor:"자녀 한글 성명", jumin:"자녀 주민등록번호",
+  phone:"법정대리인 연락처", romanSur:"자녀 영문 성", romanGiven:"자녀 영문 이름"
+};
+function summaryLabel(field, base){
+  return (state.ui.path==="minor" && SUMMARY_LABEL_MINOR[field]) || base;
+}
 
 /* =========================================================
    5) 유틸리티
@@ -867,22 +1023,31 @@ const el={
 };
 // 이 단계에서 다루는 필드(좌측 하이라이트용)
 function getStepFieldSet(step){
-  const def=STEP_DEFS[step-1], set=new Set();
+  const f=flow(), def=SCREENS[f[Math.min(step,f.length)-1]], set=new Set();
+  if(!def) return set;
   (def.groups||[]).forEach(function(g){ set.add(g.field); });
   (def.inputs||[]).forEach(function(i){ set.add(i.field); });
-  (def.condInputs||[]).forEach(function(i){ set.add(i.field); });
   if(def.addrInput) set.add(def.addrInput.field);
-  (def.extras||[]).forEach(function(x){ set.add(x.group?x.group.field:x.field); });
+  (def.cards||[]).forEach(function(c){ if(c.act==="set") set.add(c.field); });
   return set;
 }
-// 이 단계의 필수 필드(조건 충족 항목만)
+// 이 화면의 필수 필드(조건 충족 항목만). 카드 선택은 별도로 확인한다(cardPending).
 function stepRequired(def){
   const r=[];
   (def.groups||[]).forEach(function(g){ if(g.req && (!g.cond||g.cond(state.data))) r.push(g.field); });
-  (def.inputs||[]).forEach(function(i){ if(i.req && (!i.cond||i.cond(state.data))) r.push(i.field); });
-  (def.condInputs||[]).forEach(function(i){ if(resolveField(i.req) && (!i.cond||i.cond(state.data))) r.push(i.field); });
+  (def.inputs||[]).forEach(function(i){ if(resolveField(i.req) && (!i.cond||i.cond(state.data))) r.push(i.field); });
   if(def.addrInput && def.addrInput.req && (!def.addrInput.cond||def.addrInput.cond(state.data))) r.push(def.addrInput.field);
   return r;
+}
+/* 카드로만 답하는 화면인데 아직 아무것도 고르지 않았는가.
+   카드가 `set`·`status` 로 값을 남기는 화면에서만 판단한다(`next`·`counter` 는 누르는 즉시 넘어간다). */
+function cardPending(def){
+  if(!def.cards || !def.cards.length) return false;
+  var decisive=def.cards.filter(function(c){ return c.act==="set"||c.act==="status"; });
+  if(!decisive.length) return false;
+  return !decisive.some(function(c){
+    return c.act==="set" ? state.data[c.field]===c.val : state.ui.status[c.field]===c.val;
+  });
 }
 
 /* =========================================================
@@ -1277,134 +1442,167 @@ function renderGroup(g){
   return h+"</div></div>";
 }
 // 8단계 스텝퍼: 완료(✓)·현재(강조)·예정, 지나온 단계는 눌러 되돌아가기
+/* 진행 표시 — 종전의 10칸 스텝퍼 대신, 지나는 화면 수에 맞춘 얇은 막대.
+   경로마다 화면 수가 달라 「N/10」 고정 표기가 더는 맞지 않는다. */
 function renderStepper(){
-  const cur=state.step;
-  let h="";
-  for(let n=1;n<=TOTAL_STEPS;n++){
-    const cls = n<cur ? "done nav" : (n===cur ? "cur" : "");
-    const inner = n<cur ? "✓" : String(n);
-    const nav = n<cur ? ' data-act="goto" data-step="'+n+'" tabindex="0" role="button" aria-label="'+esc(STEP_SHORT[n-1]||("" +n))+' 단계로 돌아가기"' : "";
-    h+='<div class="stp '+cls+'">'+
-       '<span class="stp-dot"'+nav+'>'+inner+"</span>"+
-       '<span class="stp-lab">'+esc(STEP_SHORT[n-1]||"")+"</span></div>";
-  }
-  el.stepper.innerHTML=h;
-  const def=STEP_DEFS[cur-1];
-  el.stepper.setAttribute("aria-valuemax",TOTAL_STEPS);
+  if(!el.stepper) return;
+  if(state.ui.counter || !state.ui.path){ el.stepper.innerHTML=""; return; }
+  var f=flow(), n=f.length, cur=Math.min(state.step,n);
+  var pct=Math.round(cur/n*100);
+  el.stepper.innerHTML='<div class="pbar"><div class="pbar-fill" style="width:'+pct+'%"></div></div>';
+  el.stepper.setAttribute("aria-valuemin",1);
+  el.stepper.setAttribute("aria-valuemax",n);
   el.stepper.setAttribute("aria-valuenow",cur);
-  el.stepper.setAttribute("aria-valuetext",(def.section?def.section+" · ":"")+cur+" / "+TOTAL_STEPS+" 단계");
+  el.stepper.setAttribute("aria-valuetext",cur+" / "+n+" 화면");
 }
+
+/* 큰 터치 카드 — 이 개편의 기본 입력 수단이다. 물리 키보드는 함께 두지만,
+   고르는 것은 손가락으로 한 번에 되게 한다(어르신·처음 쓰는 분 기준). */
+function renderCards(def){
+  var h='<div class="cards">';
+  (def.cards||[]).forEach(function(c,i){
+    var on="";
+    if(c.act==="set" && state.data[c.field]===c.val) on=" picked";
+    if(c.act==="status" && state.ui.status[c.field]===c.val) on=" picked";
+    h+='<button type="button" class="card'+on+'" data-act="card" data-i="'+i+'">'+
+       '<span class="card-ic" aria-hidden="true">'+c.icon+"</span>"+
+       '<span class="card-tx"><span class="card-label">'+esc(c.label)+
+       (c.rec?'<span class="card-rec">많이 선택</span>':"")+"</span>"+
+       (c.desc?'<span class="card-desc">'+esc(c.desc)+"</span>":"")+"</span></button>";
+  });
+  return h+"</div>";
+}
+
+/* 창구 전환 화면 — 오류 화면이 아니라 **정상 완료 유형 중 하나**다.
+   ⛔ 개인정보를 절대 표시하지 않는다. 시민이 이 화면을 그대로 사진 찍어 창구에 보여준다. */
+function renderCounter(){
+  var c=state.ui.counter;
+  var h='<div class="counter-wrap">';
+  h+='<div class="counter-h">창구 직원의 확인이 필요합니다</div>';
+  h+='<div class="counter-code">'+esc(c.code)+"</div>";
+  h+='<div class="counter-reason">'+esc(c.reason)+"</div>";
+  h+='<div class="counter-how">이 화면을 <b>창구 직원에게 보여주시거나</b><br>휴대전화로 <b>사진을 찍어</b> 보여주세요.</div>';
+  h+='<div class="counter-priv">✓ 이 화면에는 이름·주민등록번호 등 개인정보가 들어 있지 않습니다.</div>';
+  h+='<div class="counter-btns">'+
+     '<button type="button" class="btn" data-act="cprint">🖨️ 안내표 인쇄</button>'+
+     '<button type="button" class="btn primary" data-act="chome">처음으로</button></div>';
+  h+='<div class="counter-tip">안내표는 <b>일반 용지</b>에 인쇄됩니다. 서식 용지가 들어 있으면 직원에게 말씀해 주세요.</div>';
+  return h+"</div>";
+}
+
 function renderStep(){
-  const def=STEP_DEFS[state.step-1];
+  /* 창구 전환이 걸리면 다른 것은 아무것도 그리지 않는다 — 추가 질문을 멈춘다는 뜻이다. */
+  if(state.ui.counter){
+    el.wizBody.innerHTML=renderCounter();
+    el.wizTitle.textContent="창구 안내";
+    el.wizCount.textContent="여권 · 창구확인";
+    renderStepper(); updateNav(); el.stepWarn.textContent="";
+    return;
+  }
+  const def=curScreen();
   let h="";
 
   if(def.summary){ h=renderSummary(def); }
   else {
-    if(def.question) h+='<div class="coach-q">'+esc(def.question)+"</div>";
-    if(def.why) h+='<div class="why-box"><span class="ic">💡</span>'+escBr(def.why)+"</div>";
-    if(def.terms&&def.terms.length){
-      h+='<details class="terms"><summary>쉬운 말 풀이 (모르는 용어가 있나요?)</summary>';
-      def.terms.forEach(function(t){ h+='<div class="term"><b>'+esc(t.term)+"</b> — "+esc(t.desc)+"</div>"; });
-      h+="</details>";
-    }
-    if(def.checklist){
-      h+='<div class="info-box"><b>체크사항</b><ul style="margin:8px 0 0;padding-left:20px;">'+
-        def.checklist.map(function(c){ return "<li>"+esc(c)+"</li>"; }).join("")+"</ul></div>";
+    if(def.question) h+='<div class="coach-q">'+escBr(resolveField(def.question))+"</div>";
+    if(def.why) h+='<div class="why-box"><span class="ic">💡</span>'+resolveField(def.why)+"</div>";
+    if(def.bullets){
+      h+='<ul class="bullets">'+def.bullets.map(function(b){ return "<li>"+b+"</li>"; }).join("")+"</ul>";
     }
     if(def.warn && def.warn.when(state.data))
       h+='<div class="warn-strong">⚠ '+escBr(def.warn.msg)+"</div>";
-    if(state.unsure[state.step])
-      h+='<div class="unsure-note">이 단계는 ‘잘 모르겠어요’로 표시하셨어요. 비워 둔 항목은 <b>‘직원에게 여쭤볼 항목’</b>에 정리되어 창구에서 함께 확인해 드립니다.</div>';
-
+    if(def.cards) h+=renderCards(def);
     if(def.suggestRoman) h+=buildRomanSuggestion();
-    (def.inputs||[]).forEach(function(inp){ h+=renderInput(inp); });
-    if(def.section==="신청인") h+='<div class="age-status" id="ageStatus" aria-live="polite"></div>';  // 주민번호 기반 실시간 나이/미성년 표시
-    (def.groups||[]).forEach(function(g){ h+=renderGroup(g); });        // inputs → groups → condInputs 순
-    (def.condInputs||[]).forEach(function(inp){ if(!inp.cond||inp.cond(state.data)) h+=renderInput(inp); }); // 조건부 입력은 그룹 선택 뒤(예: 대리인 선택 후 성명)
+    (def.inputs||[]).forEach(function(inp){ if(!inp.cond||inp.cond(state.data)) h+=renderInput(inp); });
+    if(curScreenId()==="jumin" && state.ui.status.jumin!=="manual")
+      h+='<div class="age-status" id="ageStatus" aria-live="polite"></div>';
+    (def.groups||[]).forEach(function(g){ h+=renderGroup(g); });
     if(def.note && def.note.when(state.data)){
       var _nm=(typeof def.note.msg==="function")?def.note.msg(state.data):def.note.msg;
       h+='<div class="note-box">'+escBr(_nm)+"</div>";
     }
     if(def.addrInput && (!def.addrInput.cond||def.addrInput.cond(state.data)))
       h+=renderAddrInput(def.addrInput);
-    if(def.extras && def.extras.length){
-      h+='<details class="terms"><summary>그 외 추가 기재 (대부분 생략 — 담당자 요청 시 펼치기)</summary>';
-      def.extras.forEach(function(x){ h += x.group ? renderGroup(x.group) : renderInput(x); });
-      h+="</details>";
-    }
-
-    if(getStepFieldSet(state.step).size>0)
-      h+='<button type="button" class="dunno-btn" data-act="dunno">🤔 잘 모르겠어요 — 직원에게 여쭤볼게요</button>';
+    /* 화면별 탈출구. 「잘 모르겠어요」는 종전처럼 빈칸으로 넘기는 것이 아니라 **창구로 넘긴다** —
+       키오스크가 확실히 처리할 수 없는 것을 억지로 끌고 가지 않는다는 이번 개편의 원칙이다.
+       ⚠️ 카드가 없는 화면(긴급연락처 등)에도 반드시 그려야 한다. 탈출구가 없으면 시민이 갇힌다. */
+    if(def.sub)
+      h+='<button type="button" class="card-sub" data-act="sub">'+esc(def.sub.label)+"</button>";
+    else if(!def.plain)
+      h+='<button type="button" class="card-sub" data-act="ask">🤔 잘 모르겠어요 — 직원에게 여쭤볼게요</button>';
   }
 
   el.wizBody.innerHTML=h;
-  el.wizTitle.textContent=state.step+"단계 · "+def.title;
-  el.wizCount.textContent=(def.section?def.section+" · ":"")+"진행 "+state.step+" / "+TOTAL_STEPS;
+  el.wizTitle.textContent=def.title||"여권 신청";
+  var f=flow();
+  el.wizCount.textContent = state.ui.path ? ("진행 "+Math.min(state.step,f.length)+" / "+f.length) : "";
   renderStepper();
   updateNav();
   updateWarning();
   updateAgeStatus();
 }
 
-// 확인·완료 단계
+// 최종 확인 화면 — 값만이 아니라 **빈칸의 뜻**까지 보여준다(§8·§22)
 function renderSummary(){
-  // '잘 모르겠어요'로 표시한 단계에 속한 필드 집합 → 요약에서 표시로 연결
-  const unsureFields=new Set();
-  Object.keys(state.unsure).forEach(function(s){
-    if(state.unsure[s]) getStepFieldSet(parseInt(s,10)).forEach(function(f){ unsureFields.add(f); });
-  });
-  const blanks=[];
-  let rows="";
+  let rows="", manual=[];
   SUMMARY_ROWS.forEach(function(r){
-    const field=r[0], label=r[1], cond=r[2], fmt=r[3];
-    if(cond && !cond(state.data)) return;             // 조건 미충족 항목은 요약에서 제외
-    const raw=state.data[field];
-    const flagged=unsureFields.has(field) && !raw;   // 값이 없는 항목만 '🤔 표시함'
-    const shown=raw ? esc(fmt?fmt(raw):raw) : '<span class="v empty">미입력</span>';
-    if(!raw) blanks.push(flagged ? label+" 🤔" : label);
-    rows+='<div class="sum-row"><span class="k">'+esc(label)+(flagged?' <span class="fb fb-req">🤔 표시함</span>':"")+'</span><span class="v">'+(raw?shown:'<span class="empty">미입력</span>')+'</span></div>';
+    const field=r[0], cond=r[2], fmt=r[3];
+    if(cond && !cond(state.data)) return;
+    const label=summaryLabel(field, r[1]);
+    const st=fieldStatus(field), raw=state.data[field];
+    let shown;
+    if(st==="filled"){
+      var vt=(SUMMARY_VALUE_TEXT[field]||{})[raw] || (fmt?fmt(raw):raw);
+      shown='<span class="v">'+esc(vt)+"</span>";
+    }
+    else shown='<span class="v '+FIELD_STATUS[st].cls+'">'+esc(FIELD_STATUS[st].tag)+"</span>";
+    if(st==="manual") manual.push(label);
+    rows+='<div class="sum-row"><span class="k">'+esc(label)+"</span>"+shown+"</div>";
   });
 
   let h='<div class="coach-q">입력하신 내용을 확인해 주세요</div>';
-  h+='<div class="why-box"><span class="ic">💡</span>아래 내용이 그대로 신청서에 채워집니다. 서명·날인은 인쇄 후 손으로 하시면 됩니다.</div>';
-  h+='<div class="sum-list">'+rows+'</div>';
+  h+='<div class="why-box"><span class="ic">💡</span>아래 내용이 그대로 신청서에 채워집니다. 서명은 인쇄한 뒤 직접 하시면 됩니다.</div>';
+  h+='<div class="sum-list">'+rows+"</div>";
 
-  if(blanks.length>0){
-    h+='<div class="staff-list"><div class="st">창구 직원에게 여쭤볼 항목 ('+blanks.length+'건)</div>'+
-       '아래 항목이 비어 있어요. <b>🤔</b> 표시는 ‘잘 모르겠어요’로 넘어온 단계입니다. 창구에서 함께 확인해 드립니다.'+
-       '<ul>'+blanks.map(function(b){ return "<li>"+esc(b)+"</li>"; }).join("")+"</ul></div>";
-  } else {
-    h+='<div class="staff-list ok">✓ 모든 항목이 입력되었습니다. 창구에서 최종 확인만 받으시면 됩니다.</div>';
+  if(manual.length){
+    h+='<div class="manual-warn"><div class="mw-h">✍ 출력 후 직접 쓰실 곳이 '+manual.length+'곳 있습니다</div>'+
+       "<ul>"+manual.map(function(m){ return "<li>"+esc(m)+"</li>"; }).join("")+"</ul>"+
+       "출력된 신청서에 직접 적어 주세요.</div>";
   }
 
   var fee=estimateFee(state.data);
   h+='<div class="info-box"><b>참고 · 예상 수수료·처리기간</b>'+
      '<div style="margin-top:6px;font-size:16px;">'+
      (fee ? '예상 수수료 <b>약 '+wonFmt(fee.won)+'원</b> <span style="color:var(--muted)">('+esc(fee.note)+')</span>'
-          : '수수료는 창구에서 안내받으세요')+
+          : "수수료는 창구에서 안내받으세요")+
      ' · 처리 약 <b>7~10일</b></div>'+
-     '<div class="hint" style="margin-top:6px;">2026-03 기준(외교부 고시) · 정확한 금액·기한은 창구에서 확인하세요.</div></div>';
-  h+='<div class="note-box">서명란(신청인 성명 옆)과 동의서 서명은 <b>인쇄한 뒤 검은색 펜으로 직접 서명 또는 날인</b>하세요. 사진(3.5×4.5cm)은 창구에서 부착합니다.</div>';
+     '<div class="hint" style="margin-top:6px;">2026.03 기준(외교부 고시) · 정확한 금액·기한은 창구에서 확인하세요.</div></div>';
   if(needsConsent(state.data))
-    h+='<div class="info-box">👨‍👩‍👧 미성년자 여권 신청이라, 인쇄하면 <b>「법정대리인 동의서」가 2쪽으로 함께 출력</b>됩니다. 신청인·법정대리인 성명·주소·작성일은 자동으로 채워지고, <b>서명란과 법정대리인 2(공동친권자)</b> 칸만 창구에서 손으로 적으세요.</div>';
-  else if(needsProxy(state.data))
-    h+='<div class="info-box">🧾 대리 신청이라, 인쇄하면 <b>「위임장」이 2쪽으로 함께 출력</b>됩니다. 입력하신 수임인(대리인)·위임인(신청인) 정보와 작성일이 자동으로 채워집니다. 수임인 생년월일·주소·전화번호는 <b>비워 두면 인쇄 후 손으로 적어도 됩니다.</b> 서명은 인쇄한 뒤 직접 하세요. (위임인 신분증 사본·관계 증빙 필요)</div>';
-  h+='<div class="print-tip">🖨️ <b>인쇄할 때 꼭 확인하세요</b><br>인쇄 창에서 <b>여백 «없음»</b> · <b>배율 «100% (실제 크기)»</b>로 맞춰 주세요. 그래야 칸 위치가 정확해 여권 판독기가 제대로 읽습니다.</div>';
-  h+='<button type="button" class="btn primary" style="width:100%;padding:16px;font-size:18px;" data-act="print">🖨️ 신청서 인쇄</button>';
+    h+='<div class="info-box">👨‍👩‍👧 인쇄하면 <b>「법정대리인 동의서」가 2쪽으로 함께 출력</b>됩니다. 서명란과 법정대리인 2(공동친권자) 칸만 창구에서 손으로 적으세요.</div>';
+  h+='<div class="note-box">서명란은 <b>인쇄한 뒤 검은색 펜으로 직접 서명 또는 날인</b>하세요. 사진(3.5×4.5cm)은 창구에서 부착합니다.</div>';
+  h+='<button type="button" class="btn primary big-print" data-act="print">🖨️ 신청서 인쇄</button>';
   return h;
 }
 
 function updateNav(){
-  el.btnPrev.disabled=(state.step===1);
-  el.btnNext.disabled=(state.step===TOTAL_STEPS);
+  var f=flow();
+  el.btnPrev.disabled=(state.step===1 && !state.ui.counter);
+  el.btnNext.disabled=!!state.ui.counter || state.step>=f.length;
+  /* 카드로만 답하는 화면에서는 [다음]을 숨긴다 — 카드를 누르는 것이 곧 다음이다.
+     버튼이 둘이면 무엇을 눌러야 할지 헷갈린다(한 화면 = 한 가지 판단). */
+  var def=state.ui.counter?null:curScreen();
+  var cardsOnly = def && def.cards && !def.inputs && !def.groups && !def.addrInput && !def.summary;
+  el.btnNext.style.display = cardsOnly ? "none" : "";
 }
 function updateWarning(){
-  const def=STEP_DEFS[state.step-1];
-  if(def.validate){ var m=def.validate(state.data); if(m!==true && m){ el.stepWarn.textContent=m; return; } }  // 입력 오류 실시간 표시
+  if(state.ui.counter){ el.stepWarn.textContent=""; return; }
+  const def=curScreen();
+  if(def.validate){ var m=def.validate(state.data); if(m!==true && m){ el.stepWarn.textContent=m; return; } }
   const missing=stepRequired(def).filter(function(f){ return !state.data[f]; });
   el.stepWarn.textContent = missing.length===0 ? "" :
-    "아직 입력하지 않은 필수 항목이 있어요 (계속 진행할 수는 있습니다).";
+    "아직 입력하지 않은 항목이 있어요.";
 }
+
 /* 신청인 단계: 주민등록번호로 판정한 나이·미성년 여부를 실시간 표시(입력칸 재렌더 없이 이 요소만 갱신) */
 function updateAgeStatus(){
   var elA=document.getElementById("ageStatus"); if(!elA) return;
@@ -1419,7 +1617,45 @@ function updateAgeStatus(){
 /* =========================================================
    10) 전체 렌더 & 이벤트
    ========================================================= */
-function renderAll(){ applyAgeRules(); renderStep(); renderForm(); }
+function renderAll(){ applyAgeRules(); renderStep(); renderForm(); renderCounterSlip(); }
+
+/* 처음으로 — 입력값을 통째로 버린다. 창구 전환을 마친 뒤에도 이것을 쓴다(§20).
+   값이 메모리에만 있으므로 이 한 줄로 사라지고, **창구 코드만으로는 복원할 수 없다.** */
+function resetAll(){
+  state=createEmptyState();
+  document.body.classList.remove("print-slip");
+  renderAll(); scrollPanelTop();
+}
+
+/* ── 창구 안내표 ─────────────────────────────────────────────────────────
+   ⛔ **개인정보를 넣지 않는다**(§19). 창구에 전달할 것은 「누구인지」가 아니라
+      「왜 창구로 왔는지」다. 이름·주민번호·전화·주소·로마자 어느 것도 싣지 않는다.
+   ⚠️ 겹쳐 찍기 모드에서 트레이에 **미리 인쇄된 서식 용지**가 들어 있으면 안내표가 그 위에
+      찍힌다. 그래서 화면 제시·사진 촬영을 앞에 두고 인쇄는 보조로 안내한다. */
+function renderCounterSlip(){
+  var box=document.querySelector(".slip-body"); if(!box) return;
+  var c=state.ui.counter;
+  if(!c){ box.innerHTML=""; return; }
+  var d=new Date(), p=function(n){ return String(n).padStart(2,"0"); };
+  var stamp=d.getFullYear()+"."+p(d.getMonth()+1)+"."+p(d.getDate())+" "+p(d.getHours())+":"+p(d.getMinutes());
+  box.innerHTML=
+    '<div class="slip">'+
+      '<div class="slip-h">여권 신청 키오스크</div>'+
+      '<div class="slip-sub">창구 확인 안내</div>'+
+      '<div class="slip-code-k">창구확인 코드</div>'+
+      '<div class="slip-code">'+esc(c.code)+"</div>"+
+      '<div class="slip-reason-k">확인 사유</div>'+
+      '<div class="slip-reason">'+esc(c.reason)+"</div>"+
+      '<div class="slip-foot">창구 직원의 확인이 필요합니다.<br>출력일시 '+esc(stamp)+"</div>"+
+      '<div class="slip-priv">※ 이 안내표에는 개인정보가 포함되어 있지 않습니다.</div>'+
+    "</div>";
+}
+function printCounterSlip(){
+  document.body.classList.add("print-slip");
+  var done=function(){ document.body.classList.remove("print-slip"); window.removeEventListener("afterprint",done); };
+  window.addEventListener("afterprint",done);
+  setTimeout(function(){ window.print(); },60);
+}
 
 function bindWizardEvents(){
   function onAddr(e){
@@ -1444,8 +1680,51 @@ function bindWizardEvents(){
     else { el.btnNext.click(); }
   });
   el.wizBody.addEventListener("click", function(e){
-    const dunno=e.target.closest('[data-act="dunno"]');
-    if(dunno){ state.unsure[state.step]=true; if(state.step<TOTAL_STEPS) state.step++; renderAll(); scrollPanelTop(); return; }
+    /* 큰 터치 카드 — 이 개편의 주 입력 수단 */
+    const card=e.target.closest('[data-act="card"]');
+    if(card){
+      const c=curScreen().cards[+card.getAttribute("data-i")];
+      if(c.act==="counter"){ toCounter(c.code); return; }
+      if(c.act==="path"){
+        state.ui.path=c.val;
+        /* ⚠️ 인쇄층과 이어지는 유일한 지점이다. 미성년 경로는 **지금 오신 법정대리인이 신청자**이므로
+           applyBy="대리인" 으로 둔다. 그러면 인쇄층이 서명란을 법정대리인 이름으로 찍고
+           2쪽을 「법정대리인 동의서」로 낸다 — 인쇄 코드를 고치지 않아도 된다. */
+        state.data.applyBy = (c.val==="minor") ? "대리인" : "본인";
+        goNext(); return;
+      }
+      if(c.act==="set" || c.act==="status"){
+        if(c.act==="set") state.data[c.field]=c.val;
+        else state.ui.status[c.field]=c.val;
+        if(c.field==="mailService" && c.val!=="희망") state.data.mailAddr="";
+        if(c.field==="jumin" && c.val==="manual") state.data.jumin="";        // 직접 쓰기로 했으면 비워 인쇄
+        if(c.field==="roman" && c.val==="existing"){                          // 기존 여권 정보 사용
+          state.data.romanSur=""; state.data.romanGiven="";
+          state.ui.status.romanSur="existing"; state.ui.status.romanGiven="existing";
+        }
+        if(c.field==="extra" && c.val==="na"){ state.ui.status.braille="na"; }
+        /* 카드를 고른 결과 **그 화면에 아직 채울 칸이 남아 있으면** 넘기지 않고 다시 그린다.
+           (예: 「우편 수령」을 고르면 주소칸이 나타난다 / 「여기에 입력」을 고르면 주민번호칸이 나타난다)
+           남은 칸이 없으면 카드를 누른 것이 곧 [다음]이다 — 버튼을 한 번 더 누르게 하지 않는다. */
+        var sc=curScreen();
+        var vis=(sc.inputs||[]).filter(function(i){ return !i.cond||i.cond(state.data); }).length;
+        if(sc.addrInput && (!sc.addrInput.cond||sc.addrInput.cond(state.data))) vis++;
+        if(vis){ renderAll(); return; }
+        goNext(); return;
+      }
+      goNext(); return;                                        // act:"next"
+    }
+    /* 보조 버튼(첫 화면의 「다른 경우」, 긴급연락처의 「적을 번호가 없음」) */
+    const sub=e.target.closest('[data-act="sub"]');
+    if(sub){ toCounter(curScreen().sub.code); return; }
+    /* 「잘 모르겠어요」 — 종전에는 빈칸으로 넘겼지만 이제 창구로 넘긴다 */
+    const ask=e.target.closest('[data-act="ask"]');
+    if(ask){ toCounter("P-99"); return; }
+    /* 창구 전환 화면의 두 버튼 */
+    const cpr=e.target.closest('[data-act="cprint"]');
+    if(cpr){ printCounterSlip(); return; }
+    const chome=e.target.closest('[data-act="chome"]');
+    if(chome){ resetAll(); return; }
     const pr=e.target.closest('[data-act="print"]');
     if(pr){ doPrint(); return; }
     const sug=e.target.closest('[data-act="suggest"]');
@@ -1488,24 +1767,33 @@ function bindWizardEvents(){
 function flagWarn(msg){ el.stepWarn.textContent=msg; }
 function focusField(f){ var inp=document.getElementById("in_"+f); if(inp){ inp.focus(); inp.scrollIntoView({block:"center",behavior:"smooth"}); } }
 function tryAdvance(){
-  var def=STEP_DEFS[state.step-1];
+  var def=curScreen();
   if(def.validate){ var m=def.validate(state.data); if(m!==true && m){ flagWarn(m); return false; } }
+  if(cardPending(def)){ flagWarn("위에서 하나를 골라 주세요."); return false; }
   var missing=stepRequired(def).filter(function(f){ return !state.data[f]; });
-  if(missing.length && !state.unsure[state.step]){
-    flagWarn("아직 비어 있는 필수 항목이 있어요. 채우시거나, ‘잘 모르겠어요’를 눌러 창구에서 확인받으세요.");
+  if(missing.length){
+    flagWarn("아직 비어 있는 항목이 있어요. 채우시거나, 아래 ‘잘 모르겠어요’를 눌러 창구에서 확인받으세요.");
     focusField(missing[0]);
     return false;
   }
   return true;
 }
+/* 다음 화면으로. 화면 목록이 답에 따라 바뀌므로 **매번 flow() 를 다시 계산**한다
+   (예: 「기존 여권 있음 + 같은 이름」을 고르면 로마자 화면이 목록에서 사라진다). */
+function goNext(){
+  var f=flow();
+  if(state.step<f.length){ state.step++; renderAll(); scrollPanelTop(); }
+}
 function bindGlobalEvents(){
-  el.btnPrev.addEventListener("click", function(){ if(state.step>1){ state.step--; renderAll(); scrollPanelTop(); } });
-  el.btnNext.addEventListener("click", function(){ if(state.step<TOTAL_STEPS && tryAdvance()){ state.step++; renderAll(); scrollPanelTop(); } });
+  /* [이전] — 창구 전환 화면에서는 사유를 지우고 직전 질문으로 돌아간다 */
+  el.btnPrev.addEventListener("click", function(){
+    if(state.ui.counter){ state.ui.counter=null; renderAll(); scrollPanelTop(); return; }
+    if(state.step>1){ state.step--; renderAll(); scrollPanelTop(); }
+  });
+  el.btnNext.addEventListener("click", function(){ if(tryAdvance()) goNext(); });
   document.getElementById("btnPrint").addEventListener("click", function(){ doPrint(); });
   document.getElementById("btnReset").addEventListener("click", function(){
-    askConfirm("입력한 모든 내용을 지우고 처음부터 다시 시작할까요?", function(){
-      state=createEmptyState(); renderAll(); scrollPanelTop();
-    });
+    askConfirm("입력한 모든 내용을 지우고 처음부터 다시 시작할까요?", function(){ resetAll(); });
   });
   document.getElementById("btnSampleAdult").addEventListener("click", function(){ fillSample("adult"); renderAll(); });
   document.getElementById("btnSampleMinor").addEventListener("click", function(){ fillSample("minor"); renderAll(); });
@@ -1556,6 +1844,10 @@ function fillSample(kind){
       applyBy:"본인"
     });
   }
+  /* 작성예시는 **담당자 점검용**이다. 새 구조에서는 경로와 화면 위치까지 맞춰 두어야
+     누르자마자 최종 확인 화면이 나온다(종전에는 값만 채우고 1단계에 머물렀다). */
+  state.ui={ path:(kind==="minor")?"minor":"adult", counter:null, status:{} };
+  state.step=flow().length;
 }
 function scrollPanelTop(){
   if(window.matchMedia("(max-width:940px)").matches){
