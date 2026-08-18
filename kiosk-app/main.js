@@ -433,6 +433,8 @@ function openSettings() {
       path: configPath(),
       exists: fs.existsSync(configPath()),
       preserved: configIsPreserved(),
+      today: nowStamp(),      // 담당자가 창을 열 때마다 PC 날짜를 눈으로 확인하게 한다
+
       mode: printOptions.passportMode(cfg),
       printerDeviceName: cfg.printerDeviceName || '',
       idleMs: pc.idleMs,
@@ -549,6 +551,33 @@ async function cleanup() {
   try { fs.rmSync(path.join(RUNTIME_DIR, 'crash'), { recursive: true, force: true }); } catch (e) { /* 무시 */ }
 }
 
+/* ── 시각 점검 (2026.08.18) ──────────────────────────────────────────────
+   서식의 신청일·동의일은 이 PC 의 시계를 그대로 읽어 찍는다(`APP_TODAY=new Date()`).
+   시계가 멈춰 있으면 인쇄물의 날짜가 통째로 틀린다 — 실제로 그렇게 나갔다. */
+function nowStamp() {
+  const d = new Date();
+  const p = (n) => String(n).padStart(2, '0');
+  // 하이픈 금지(이 PC 의 DLP 가 날짜를 개인정보로 오인해 문서를 암호화한다)
+  return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) +
+         ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) +
+         ' (' + '일월화수목금토'.charAt(d.getDay()) + ')';
+}
+/* 시각 동기화 원본. ⚠️ 한글 윈도우의 `w32tm` 출력은 cp949 라 UTF-8 로 읽으면 깨진다 →
+   latin1 로 받아 **ASCII 일 때만** 그대로 싣고(서버 주소는 보통 ASCII), 아니면 비운다.
+   깨진 글자를 검수지에 남기느니 '확인 불가'로 두고 사람이 날짜를 대조하는 편이 낫다. */
+function timeSource() {
+  return new Promise((resolve) => {
+    try {
+      execFile('w32tm', ['/query', '/source'], { encoding: 'latin1', timeout: 4000 },
+        (err, stdout) => {
+          if (err) return resolve('');
+          const s = String(stdout || '').trim();
+          resolve(/^[\x20-\x7E]+$/.test(s) ? s : '');
+        });
+    } catch (e) { resolve(''); }
+  });
+}
+
 /* ── 점검 모드 ───────────────────────────────────────────────────────────
    화면을 점유하지 않고(숨은 창) 상태만 확인해 파일로 남긴다.
    보안 검토 회신에 "설정이 실제로 적용되었다"는 근거로 첨부할 수 있다. */
@@ -637,6 +666,17 @@ async function runSelfCheck() {
       line('지정 프린터 상태', '[확인] 확인 실패 (PowerShell)');
     }
   }
+  L.push('');
+
+  /* [시각] 2026.08.18 신설 — 서식의 신청일·동의일은 이 PC 의 시계를 그대로 찍는다.
+     시계가 틀리면 인쇄물의 날짜가 통째로 틀리는데, 화면 어디에도 날짜가 크게 보이지 않아
+     현장에서 나흘 뒤에야 발견됐다(하드보안관이 날짜까지 설치일로 되돌리고 있었다). */
+  L.push('[시각]');
+  line('현재 날짜·시각', nowStamp() + '  ← 오늘 날짜와 같은지 눈으로 대조하세요');
+  line('동기화 원본', (await timeSource()) || '(확인 불가 — 위 날짜를 직접 대조하세요)');
+  L.push('  ※ 날짜가 다르면 신청일·동의일이 틀리게 인쇄되어 창구에서 반려될 수 있다.');
+  L.push('    복원 프로그램(하드보안관 등)이 날짜까지 되돌리는 사례가 있다. 그런 PC 는');
+  L.push('    보호를 해제한 상태에서 시각을 맞추고 기준 상태를 다시 저장해야 유지된다.');
   L.push('');
 
   L.push('[개인정보 잔존]');

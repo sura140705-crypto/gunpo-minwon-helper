@@ -46,9 +46,11 @@
 <header>
   <h1>환경설정 — 군포시 민원 서식 작성 도우미</h1>
   <p id="path">설정 파일을 읽는 중…</p>
+  <p id="today"></p>
 </header>
 
 <main>
+  <div class="warn" id="dateWarn" style="margin:0 0 14px;"></div>
   <div class="warn bad" id="keepWarn" hidden style="margin:0 0 14px;"></div>
 
   <div class="sec">
@@ -177,6 +179,14 @@
   window.__settings.load().then(function(d){
     loaded = d;
     $("path").textContent = "설정 파일 : " + d.path + (d.exists ? "" : "  (아직 없음 — 저장하면 만듭니다)");
+    // 서식의 신청일은 이 PC 시계를 그대로 찍는다. 화면 어디에도 날짜가 안 보여
+    // 틀린 채로 나흘을 인쇄한 일이 있었다(2026.08 현장) → 창을 열 때마다 보이게 둔다.
+    $("today").textContent = "이 PC 의 날짜 : " + d.today;
+    $("dateWarn").innerHTML =
+      "⏰ 이 PC 의 날짜는 <b>" + d.today + "</b> 입니다. <b>오늘과 다르면 지금 고치세요.</b><br>" +
+      "신청서·동의서의 <b>신청일이 이 날짜 그대로 인쇄</b>되어 창구에서 반려될 수 있습니다. " +
+      "하드보안관 같은 복원 프로그램은 <b>날짜까지 설치일로 되돌립니다</b> — 그런 PC 는 " +
+      "보호를 해제한 상태에서 시각을 맞추고 <b>기준 상태를 다시 저장</b>해야 유지됩니다.";
     // 하드보안관이 걸린 PC 에서 C: 에 저장하면 재부팅에 원복돼 프린터 지정까지 사라진다.
     if (!d.preserved) {
       $("keepWarn").innerHTML =
