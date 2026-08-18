@@ -205,9 +205,11 @@
     .m-preview{display:block;}                /* 모바일 전용 미리보기 버튼 노출 */
     /* 상단바 간결화 */
     .brand h1{font-size:17px;}
-    #btnSampleAdult,#btnSampleMinor,#btnFlip{display:none;}   /* 테스트용 작성예시·좌우버튼은 모바일에서 숨김 */
+    #btnSampleAdult,#btnSampleMinor{display:none;}   /* 테스트용 작성예시는 모바일에서 숨김 */
   }
-  /* 넓은 화면 좌우 배치: 기본=입력란 좌측(서식 우측), [좌우 바꾸기] 시 서식 좌측 */
+  /* 넓은 화면 좌우 배치: 기본=입력란 좌측(서식 우측), body.form-left 면 서식 좌측.
+     ⚠️ form-left 는 키오스크 환경설정(Ctrl+Shift+S)이 로드 시 body 에 얹는다 — 지우지 마라.
+     화면의 「↔ 좌우 바꾸기」 버튼은 2026.08.15 에 없앴다(시민이 눌러 뒤집으면 뒷사람이 혼란). */
   @media (min-width:861px){
     .layout{flex-direction:row-reverse;}           /* 기본: 코치(입력란) 왼쪽 */
     body.form-left .layout{flex-direction:row;}     /* 반전: 서식 왼쪽 */
@@ -366,7 +368,6 @@
     <button class="btn ghost" id="btnSampleAdult">작성예시(성인)<span class="test-tag">테스트용</span></button>
     <button class="btn ghost" id="btnSampleMinor">작성예시(미성년자)<span class="test-tag">테스트용</span></button>
     <button class="btn ghost" id="btnReset">초기화</button>
-    <button class="btn ghost" id="btnFlip" title="입력란과 신청서의 좌우 위치를 바꿉니다">↔ 좌우 바꾸기</button>
     <button class="btn" id="btnPreview">미리보기</button>
     <button class="btn primary" id="btnPrint">🖨️ 인쇄</button>
   </div>
@@ -1510,9 +1511,6 @@ function bindGlobalEvents(){
   document.getElementById("btnSampleMinor").addEventListener("click", function(){ fillSample("minor"); renderAll(); });
   document.getElementById("btnPreview").addEventListener("click", openPreview);
   var bpm=document.getElementById("btnPreviewMobile"); if(bpm) bpm.addEventListener("click", openPreview);
-  document.getElementById("btnFlip").addEventListener("click", function(){
-    document.body.classList.toggle("form-left");   // 좌우 반전(무저장, 새로고침 시 기본으로)
-  });
   function gotoStep(d){
     var n=parseInt(d.getAttribute("data-step"),10);
     if(n>=1 && n<state.step){ state.step=n; renderAll(); scrollPanelTop(); }  // 되돌아가기만 허용(검증 우회 없음)

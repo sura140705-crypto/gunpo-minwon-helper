@@ -333,7 +333,7 @@ function createWindow() {
     //   드롭아웃    빨간 칸선을 인쇄 단계에서 걸러낸다     (monoDropoutForms)
     // 겹쳐 찍기가 우선이다 — 배경을 통째로 숨기므로 필터를 걸 대상이 없다.
     // 화면 좌우 배치 — 서식이 쓰는 `body.form-left` 를 그대로 건다.
-    // 클래스만 얹으므로 화면의 「↔ 좌우 바꾸기」 버튼은 그대로 동작한다(그때그때 되돌릴 수 있다).
+    // 2026.08.15 부터 화면에는 「↔ 좌우 바꾸기」 버튼이 없다 — 배치를 정하는 곳은 여기뿐이다.
     if (pageConfig().formLeft) {
       win.webContents.executeJavaScript('document.body.classList.add("form-left");1')
         .catch(() => {});
