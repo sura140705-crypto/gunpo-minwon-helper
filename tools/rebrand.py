@@ -31,7 +31,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # 손댈 파일(생성물 사본·서식 원본·기준선·아카이브는 제외)
 TARGETS = [
-    "index.html", "CLAUDE.md", "README.md",
+    "index.html", "AGENTS.md", "README.md",
     "birth-helper-v1.html", "cert-helper-v1.html", "death-helper-v1.html",
     "divorce-helper-v1.html", "marriage-helper-v1.html", "naming-helper-v1.html",
     "passport-helper-v1.html", "realestate-helper-v1.html",

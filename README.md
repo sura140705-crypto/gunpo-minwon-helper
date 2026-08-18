@@ -50,7 +50,8 @@
 
 ```
 gunpo_minwon/
-├─ CLAUDE.md         ☞ 작업 지침(원본·생성물 구분, 필수 검증, 금지사항) — 고치기 전에 읽는다
+├─ AGENTS.md         ☞ 작업 지침(원본·생성물 구분, 필수 검증, 금지사항) — 고치기 전에 읽는다
+│                     Claude Code·Codex·사람 공용. CLAUDE.md 는 이 파일을 불러오는 한 줄짜리다
 ├─ index.html, *-helper-v1.html (8종)   배포 원본 ★루트 고정(상대경로·file:// 실행)
 ├─ engine/          공통 엔진 — base.html(골격·CSS) · engine.js · assets/*.b64(배경, 재생성물)
 │   └─ README.md    ☞ 새 서식 만들기 · FORM(config) 인터페이스 · 좌표 잡는 법
