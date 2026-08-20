@@ -38,6 +38,8 @@
 | `kiosk-app/app/` 안의 HTML | **루트의 같은 파일** | 루트 수정 → `bash tools/sync-kiosk.sh` |
 | 키오스크 동작·보안·인쇄 통제 | **`kiosk-app/main.js`·`preload.js`** | 직접 수정 → `--selfcheck` 로 확인 |
 | 인쇄 조판(용지·여백·배율) | **`kiosk-app/print-options.js`** | 수정 → `verify-print.py --electron` |
+| 기관별 설정 적용(SITE-CONFIG 블록) | **`engine/base.html`** 의 `<!--SITE-CONFIG v1-->` | 수정 → 5종 재빌드 → `python tools/check-site-block.py --fix` |
+| 환경설정 창의 항목 | **`kiosk-app/admin/settings.html`** + `main.js` 의 `ORG_KEYS`·`POLICY_KEYS`·`FORM_KEYS` | 양쪽 이름이 같아야 한다 |
 
 > ⛔ **엔진 5종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
 > ⛔ **`kiosk-app/app/` 안의 파일을 직접 고치지 마라.** 원본은 루트다.
@@ -48,8 +50,15 @@
 python tools/verify-print.py            # 인쇄물 회귀 — 8종×예시2 = 19쪽, "전부 0px"가 기본값
 python tools/verify-print.py --electron # 키오스크와 같은 Electron 조판 + 용지(A4) 검사
 bash tools/sync-kiosk.sh --check        # 루트 → kiosk-app/app 드리프트 — 다르면 exit 1
+python tools/check-site-block.py        # 기관별 설정 블록이 9개 화면에서 같은지 — 다르면 exit 1
+python tools/verify-site-config.py      # 환경설정 값이 화면에 걸리는지(6가지 조합) — 다르면 exit 1
 node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 ```
+
+`verify-print.py` 가 **인쇄물**을 지키고, `verify-site-config.py` 가 **화면**을 지킨다.
+기관별 설정(기관표기·대표색·취급 서식·여권 접수 기준)을 건드렸으면 뒤엣것을 돌려라 —
+설정 하나가 화면 흐름을 통째로 바꿀 수 있는데 인쇄물은 그대로라서 `verify-print.py` 가 아무 말도 하지 않는다.
+색·로고를 눈으로 볼 때는 `--preview` 를 쓴다(`--preview index.html --color "#0f6b4f"`).
 
 `--electron` 은 **인쇄 옵션(`kiosk-app/print-options.js`)·Electron 버전·인쇄 CSS** 를 건드렸을 때 필수다.
 기본값(크롬)만으로는 **실제 인쇄가 지나가는 경로를 못 본다** — 2026.08.12 의 용지 사고가 그 틈으로 빠져나갔다
