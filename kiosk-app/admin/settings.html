@@ -2,8 +2,10 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<!-- img-src data: 는 로고 미리보기 때문이다. 파일에서 읽은 PNG 를 data URI 로 받아 보여준다.
+     원격 주소는 여전히 전부 막혀 있다(default-src 'none'). -->
 <meta http-equiv="Content-Security-Policy"
-      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline';">
+      content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:;">
 <title>환경설정</title>
 <style>
   :root{ --line:#d7dce3; --blue:#1b5fc0; --ink:#1a1f26; --muted:#5a636e; }
@@ -13,6 +15,11 @@
   header{background:var(--blue);color:#fff;padding:14px 20px;flex:0 0 auto;}
   header h1{margin:0;font-size:18px;font-weight:800;}
   header p{margin:4px 0 0;font-size:12.5px;opacity:.9;}
+  nav{flex:0 0 auto;display:flex;gap:6px;background:#fff;border-bottom:1px solid var(--line);
+      padding:0 14px;}
+  nav button{border:0;border-bottom:3px solid transparent;background:none;border-radius:0;
+      font-size:14px;font-weight:700;color:var(--muted);padding:12px 14px;cursor:pointer;}
+  nav button.on{color:var(--blue);border-bottom-color:var(--blue);}
   main{flex:1;overflow-y:auto;padding:16px 20px;}
   footer{flex:0 0 auto;background:#fff;border-top:1px solid var(--line);
          padding:12px 20px;display:flex;align-items:center;gap:10px;}
@@ -29,30 +36,64 @@
   .warn{font-size:12.5px;color:#8a4b00;background:#fff7e6;border:1px solid #ffdf9e;
         border-radius:8px;padding:8px 10px;margin-top:8px;line-height:1.55;}
   .bad{color:#a3272c;background:#fdeeee;border-color:#f3bcbc;}
-  select{width:100%;font-size:14px;padding:9px 10px;border:1px solid var(--line);
-         border-radius:9px;background:#fff;color:var(--ink);}
+  select,input[type=text]{width:100%;font-size:14px;padding:9px 10px;border:1px solid var(--line);
+         border-radius:9px;background:#fff;color:var(--ink);font-family:inherit;}
   .row{display:flex;gap:10px;}
   .row > div{flex:1;}
   .row label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;}
+  .fld{margin-bottom:10px;}
+  .fld > label{display:block;font-size:12.5px;color:var(--muted);margin-bottom:5px;}
+  .fld .hint{font-size:12px;color:var(--muted);margin-top:4px;line-height:1.5;}
   button{font-size:14px;font-weight:700;border-radius:9px;padding:10px 20px;
-         border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;}
+         border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;
+         font-family:inherit;}
   button.primary{background:var(--blue);border-color:var(--blue);color:#fff;}
+  button.small{font-size:13px;padding:8px 12px;}
   button:disabled{opacity:.5;cursor:default;}
   #msg{flex:1;font-size:13px;font-weight:700;}
   #msg.ok{color:#1b7a34;} #msg.err{color:#a3272c;}
+  /* 대표색 */
+  .theme-row{display:flex;gap:12px;align-items:center;flex-wrap:wrap;}
+  input[type=color]{width:56px;height:40px;padding:2px;border:1px solid var(--line);
+    border-radius:9px;background:#fff;cursor:pointer;}
+  .presets{display:flex;gap:6px;flex-wrap:wrap;}
+  .presets button{width:30px;height:30px;padding:0;border-radius:8px;border:1px solid #0002;}
+  .preview{margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
+  .preview .pv-bar{height:38px;display:flex;align-items:center;padding:0 12px;
+    color:#fff;font-size:13px;font-weight:800;}
+  .preview .pv-body{padding:10px 12px;display:flex;gap:8px;align-items:center;background:#fff;}
+  .preview .pv-btn{font-size:13px;font-weight:700;color:#fff;border-radius:9px;padding:8px 14px;}
+  .preview .pv-tint{font-size:12.5px;border-radius:9px;padding:8px 12px;}
+  /* 로고 */
+  .logo-row{display:flex;gap:12px;align-items:center;}
+  .logo-box{width:150px;height:52px;border:1px dashed var(--line);border-radius:9px;
+    display:flex;align-items:center;justify-content:center;background:#fff;font-size:12px;color:var(--muted);}
+  .logo-box img{max-width:100%;max-height:100%;}
+  /* 체크 목록 */
+  .checks{display:grid;grid-template-columns:1fr 1fr;gap:7px;}
+  @media (max-width:620px){ .checks{grid-template-columns:1fr;} }
+  .checks label.opt{margin-bottom:0;}
 </style>
 </head>
 <body>
 <header>
-  <h1>환경설정 — 군포시 민원 서식 작성 도우미</h1>
+  <h1>환경설정 — 민원 서식 작성 도우미</h1>
   <p id="path">설정 파일을 읽는 중…</p>
   <p id="today"></p>
 </header>
+
+<nav>
+  <button type="button" data-tab="pc" class="on">이 PC (인쇄·화면)</button>
+  <button type="button" data-tab="org">기관 설정</button>
+  <button type="button" data-tab="work">업무 방식</button>
+</nav>
 
 <main>
   <div class="warn" id="dateWarn" style="margin:0 0 14px;"></div>
   <div class="warn bad" id="keepWarn" hidden style="margin:0 0 14px;"></div>
 
+  <!-- ══════════ 이 PC ══════════ -->
+  <div data-panel="pc">
   <div class="sec">
     <h2>여권 인쇄 방식</h2>
     <p class="why">여권발급신청서는 <b>드롭아웃 컬러 서식</b>입니다. 기재칸 테두리가 빨강으로 인쇄돼
@@ -122,6 +163,100 @@
     </div>
     <div class="warn" id="idleWarn" hidden></div>
   </div>
+  </div>
+
+  <!-- ══════════ 기관 설정 ══════════ -->
+  <div data-panel="org" hidden>
+  <div class="sec">
+    <h2>기관 표기</h2>
+    <p class="why">화면 위쪽과 안내 문구에 나오는 이름입니다. <b>인쇄물에는 나오지 않습니다</b> —
+      신청서에 찍히는 값은 시민이 입력한 내용뿐입니다. 비워 두면 프로그램에 들어 있는
+      기본값(군포시)이 그대로 나옵니다.</p>
+    <div class="fld"><label for="orgName">기관명</label>
+      <input type="text" id="orgName" placeholder="예) 경기도 안양시" maxlength="40"></div>
+    <div class="fld"><label for="officeName">부서·창구 이름</label>
+      <input type="text" id="officeName" placeholder="예) 안양시청 민원여권과" maxlength="40"></div>
+    <div class="fld"><label for="windowName">여권 접수창구 이름</label>
+      <input type="text" id="windowName" placeholder="예) 여권 접수창구" maxlength="40">
+      <div class="hint">여권 도우미의 안내 문구에만 쓰입니다.</div></div>
+    <div class="row">
+      <div class="fld"><label for="phone">문의 전화</label>
+        <input type="text" id="phone" placeholder="예) 031-000-0000" maxlength="20"></div>
+      <div class="fld"><label for="address">기관 소재지</label>
+        <input type="text" id="address" placeholder="예) 경기도 안양시" maxlength="60"></div>
+    </div>
+    <div class="fld"><label for="notice">안내 문구</label>
+      <input type="text" id="notice" placeholder="신청인의 상황에 따라 추가 서류가 필요할 수 있습니다." maxlength="120"></div>
+  </div>
+
+  <div class="sec">
+    <h2>기관 로고</h2>
+    <p class="why">화면 위쪽에 나오는 로고입니다. <b>인쇄물에는 나오지 않습니다.</b>
+      투명 배경 PNG 를 권합니다(가로로 긴 것이 잘 맞습니다). 512KB 이하만 받습니다.</p>
+    <div class="logo-row">
+      <div class="logo-box" id="logoBox">기본 로고</div>
+      <div>
+        <button type="button" class="small" id="logoPick">PNG 파일 고르기…</button>
+        <button type="button" class="small" id="logoClear">기본 로고로</button>
+        <div class="hint" id="logoHint">고른 그림은 설정 폴더에 <b>logo.png</b> 로 복사됩니다.</div>
+      </div>
+    </div>
+    <div class="warn" id="logoWarn" hidden></div>
+  </div>
+
+  <div class="sec">
+    <h2>대표색</h2>
+    <p class="why">기관 대표색 <b>하나</b>만 고르면 밝은 색·어두운 색·그라데이션을 알아서 만듭니다.
+      화면 색만 바뀌고 <b>인쇄물은 그대로</b>입니다.</p>
+    <div class="theme-row">
+      <input type="color" id="themeColor" value="#1b5fc0">
+      <div class="presets" id="presets"></div>
+      <button type="button" class="small" id="themeReset">기본 파랑으로</button>
+    </div>
+    <div class="preview" id="themePv">
+      <div class="pv-bar" id="pvBar">민원 서식 작성 도우미</div>
+      <div class="pv-body">
+        <span class="pv-btn" id="pvBtn">🖨️ 인쇄</span>
+        <span class="pv-tint" id="pvTint">고른 색이 이렇게 보입니다</span>
+      </div>
+    </div>
+    <div class="warn" id="themeWarn" hidden></div>
+  </div>
+  </div>
+
+  <!-- ══════════ 업무 방식 ══════════ -->
+  <div data-panel="work" hidden>
+  <div class="sec">
+    <h2>취급하는 서식</h2>
+    <p class="why">그 기관에서 <b>접수하지 않는 민원</b>은 첫 화면에서 아예 빼 둡니다.
+      눌러 들어가 다 작성한 뒤 창구에서 취급하지 않는다는 말을 듣는 것이 가장 나쁩니다.</p>
+    <div class="checks" id="formChecks"></div>
+  </div>
+
+  <div class="sec">
+    <h2>여권 접수 기준</h2>
+    <p class="why">기관마다 접수 기준이 달라, 같은 상황에서도 <b>키오스크가 끝까지 안내할지
+      창구로 보낼지</b>가 갈립니다. 확실하지 않으면 <b>그대로 두세요</b> — 기본값은 창구로
+      보내는 쪽(안전한 쪽)입니다.</p>
+    <div id="policyChecks"></div>
+    <div class="warn" id="policyWarn" hidden></div>
+  </div>
+
+  <div class="sec">
+    <h2>입력 장치</h2>
+    <p class="why">시민 자리에 <b>물리 키보드</b>가 있는지에 따라 안내가 달라집니다.
+      이름·주소처럼 글자를 치는 칸이 있어, 키보드가 없으면 그 자리에서 막힙니다.</p>
+    <label class="opt"><input type="radio" name="kb" value="yes">
+      <div><b>키보드와 마우스가 있습니다</b>
+        <span>기본값입니다. 메뉴는 터치로 고르고 글자는 키보드로 칩니다.</span></div></label>
+    <label class="opt"><input type="radio" name="kb" value="no">
+      <div><b>터치 화면만 있습니다</b>
+        <span>글자를 치는 칸에 <b>창구 직원에게 도움을 청하라는 안내</b>가 함께 나옵니다.
+          관리자 단축키(설정·종료)도 잠깁니다 — 키보드가 없으면 눌릴 일이 없지만,
+          나중에 키보드를 꽂았을 때 시민이 만지는 것을 막습니다.</span></div></label>
+    <div class="warn" id="kbWarn" hidden></div>
+  </div>
+  </div>
 </main>
 
 <footer>
@@ -135,6 +270,65 @@
   var $ = function(id){ return document.getElementById(id); };
   var msg = $("msg"), saveBtn = $("save");
   var loaded = null;
+  var logoState = null;   // null=그대로 · {uri}=새로 고름 · "clear"=기본 로고로
+
+  /* 취급 서식·업무 정책 목록. 이름(key)은 main.js 의 FORM_KEYS·POLICY_KEYS 와 같아야 한다. */
+  var FORMS = [
+    ["passport","여권발급신청서"], ["marriage","혼인신고서"], ["birth","출생신고서"],
+    ["death","사망신고서"], ["naming","개명신고서"], ["divorce","이혼(친권자 지정)신고서"],
+    ["cert","증명서 발급신청"], ["realestate","부동산거래계약 신고서"]
+  ];
+  var POLICIES = [
+    ["allowProxy","대리 신청을 키오스크에서 끝까지 받는다",
+     "성인을 대신해 오신 분에게 신청서와 <b>위임장</b>을 함께 인쇄해 드립니다. 끄면 그 자리에서 창구로 안내합니다.",
+     false],
+    ["allowRomanBlank","기존 여권이 있으면 영문 이름 칸을 비워 인쇄한다",
+     "기존 여권과 같은 이름을 쓸 때 그 칸을 비워 냅니다. <b>빈칸을 접수하지 않는 기관은 끄세요</b> — 끄면 영문 이름을 다시 입력받습니다.",
+     true],
+    ["minorPeriodFixed","미성년자는 유효기간을 5년으로 고정한다",
+     "묻지 않고 5년으로 인쇄합니다. 끄면 미성년자에게도 기간을 물어봅니다(10년은 법으로 발급되지 않아 나오지 않습니다).",
+     true],
+    ["requireEmergency","긴급연락처를 반드시 받는다",
+     "끄면 「적을 번호가 없다」는 시민이 그 칸을 비우고 넘어갈 수 있습니다. 켜 두면 창구로 안내합니다.",
+     true],
+    ["showCounterCode","창구 안내 화면에 사유 코드(P-01…)를 띄운다",
+     "코드로 사유를 주고받는 기관에서 켭니다. 끄면 사유 문장만 보입니다.",
+     true]
+  ];
+
+  /* ⚠️ 아래 색 계산은 서식 쪽 `engine/base.html` 의 SITE-CONFIG 블록과 **같은 식**이다.
+        한쪽만 고치면 미리보기와 실제 화면이 달라진다 — 고칠 때 둘 다 고쳐라. */
+  function toHsl(hex){
+    var r=parseInt(hex.substr(1,2),16)/255, g=parseInt(hex.substr(3,2),16)/255, b=parseInt(hex.substr(5,2),16)/255;
+    var mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn, h=0, l=(mx+mn)/2;
+    var s=d===0?0:d/(1-Math.abs(2*l-1));
+    if(d!==0){
+      if(mx===r) h=60*(((g-b)/d)%6);
+      else if(mx===g) h=60*((b-r)/d+2);
+      else h=60*((r-g)/d+4);
+    }
+    return [Math.round((h+360)%360), Math.round(s*100), Math.round(l*100)];
+  }
+  function derive(hex){
+    var t=toHsl(hex), H=t[0], S=Math.max(8,t[1]), L=Math.min(55,Math.max(30,t[2]));
+    var c=function(s,l){ return "hsl("+H+","+s+"%,"+l+"%)"; };
+    var base=c(S,L), dark=c(Math.min(100,S+4),Math.max(18,L-11));
+    return { base:base, dark:dark, light:c(Math.min(90,S),95),
+             grad:"linear-gradient(135deg,"+c(S,Math.min(70,L+9))+" 0%,"+base+" 52%,"+dark+" 100%)",
+             adjusted:(t[2]>55 || t[2]<30) };
+  }
+  function paintTheme(){
+    var hex=$("themeColor").value, d=derive(hex);
+    $("pvBar").style.background=d.grad;
+    $("pvBtn").style.background=d.grad;
+    $("pvTint").style.background=d.light;
+    $("pvTint").style.color=d.dark;
+    var w=$("themeWarn");
+    w.innerHTML = d.adjusted
+      ? "고르신 색이 너무 밝거나 어두워, <b>글자가 읽히도록 진하기를 조정</b>했습니다. 위 미리보기가 실제 화면 색입니다."
+      : "";
+    w.hidden = !d.adjusted;
+  }
 
   function radio(name){
     var el = document.querySelector('input[name="' + name + '"]:checked');
@@ -147,6 +341,52 @@
   function say(text, cls){
     msg.textContent = text || "";
     msg.className = cls || "";
+  }
+  function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+
+  /* 탭 */
+  document.querySelector("nav").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-tab]"); if(!b) return;
+    document.querySelectorAll("nav button").forEach(function(x){ x.classList.toggle("on", x===b); });
+    document.querySelectorAll("[data-panel]").forEach(function(p){
+      p.hidden = p.getAttribute("data-panel") !== b.getAttribute("data-tab");
+    });
+  });
+
+  /* 체크 목록 그리기 */
+  function buildChecks(){
+    $("formChecks").innerHTML = FORMS.map(function(f){
+      return '<label class="opt"><input type="checkbox" data-form="'+f[0]+'" checked>'+
+             '<div><b>'+esc(f[1])+'</b></div></label>';
+    }).join("");
+    $("policyChecks").innerHTML = POLICIES.map(function(p){
+      return '<label class="opt"><input type="checkbox" data-policy="'+p[0]+'">'+
+             '<div><b>'+esc(p[1])+'</b><span>'+p[2]+'</span></div></label>';
+    }).join("");
+  }
+
+  function formsWarn(){
+    var on=0;
+    document.querySelectorAll("[data-form]").forEach(function(c){ if(c.checked) on++; });
+    saveBtn.disabled = (on===0);
+    if(on===0) say("서식을 하나도 켜지 않으면 첫 화면이 비어 버립니다.", "err");
+    else say("");
+  }
+  function policyNote(){
+    var w=$("policyWarn"), t="";
+    var px=document.querySelector('[data-policy="allowProxy"]');
+    if(px && px.checked)
+      t = "⚠️ 대리 신청을 받으면 <b>2쪽(신청서+위임장)</b>이 인쇄됩니다. 겹쳐 찍기 방식에서는 " +
+          "두 번째 장이 서식째 인쇄되니, 트레이 용지와 함께 확인하세요.";
+    w.innerHTML=t; w.hidden=!t;
+  }
+  function kbNote(){
+    var w=$("kbWarn");
+    var show = radio("kb")==="no";
+    w.innerHTML = "터치만 있는 자리에서는 이름·주소를 시민이 직접 칠 수 없습니다. " +
+                  "<b>창구 직원의 도움</b>을 전제로 운영하시거나, 키보드를 함께 두시기 바랍니다.";
+    w.hidden = !show;
   }
 
   function modeNote(){
@@ -173,8 +413,49 @@
   document.addEventListener("change", function(e){
     if (e.target.name === "mode") modeNote();
     if (e.target.id === "printed") idleNote();
-    say("");
+    if (e.target.name === "kb") kbNote();
+    if (e.target.hasAttribute && e.target.hasAttribute("data-form")) formsWarn();
+    if (e.target.hasAttribute && e.target.hasAttribute("data-policy")) policyNote();
+    if (e.target.id === "themeColor") paintTheme();
+    if (msg.className !== "err") say("");
   });
+  $("themeColor").addEventListener("input", paintTheme);
+
+  /* 대표색 프리셋 — 기관에서 흔히 쓰는 색 계열 */
+  var PRESETS = ["#1b5fc0","#0f6b4f","#1d4e89","#7a2f6d","#a3452a","#2f5d3a","#3c4a63","#8a1f2c"];
+  $("presets").innerHTML = PRESETS.map(function(c){
+    return '<button type="button" data-color="'+c+'" style="background:'+c+'" title="'+c+'"></button>';
+  }).join("");
+  $("presets").addEventListener("click", function(e){
+    var b=e.target.closest("button[data-color]"); if(!b) return;
+    $("themeColor").value=b.getAttribute("data-color"); paintTheme();
+  });
+  $("themeReset").addEventListener("click", function(){
+    $("themeColor").value="#1b5fc0"; paintTheme();
+  });
+
+  /* 로고 */
+  function showLogo(uri){
+    var box=$("logoBox");
+    if(uri){ box.innerHTML=""; var im=document.createElement("img"); im.src=uri; box.appendChild(im); }
+    else box.textContent="기본 로고";
+  }
+  $("logoPick").addEventListener("click", function(){
+    $("logoWarn").hidden = true;
+    window.__settings.pickLogo().then(function(r){
+      if(!r) return;                                  // 취소
+      if(!r.ok){ $("logoWarn").textContent=r.error||"그림을 읽지 못했습니다."; $("logoWarn").hidden=false; return; }
+      logoState={ uri:r.uri };
+      showLogo(r.uri);
+      $("logoHint").innerHTML="<b>저장</b>을 눌러야 적용됩니다.";
+    });
+  });
+  $("logoClear").addEventListener("click", function(){
+    logoState="clear"; showLogo(null);
+    $("logoHint").innerHTML="<b>저장</b>을 누르면 프로그램 기본 로고로 돌아갑니다.";
+  });
+
+  buildChecks();
 
   window.__settings.load().then(function(d){
     loaded = d;
@@ -201,6 +482,27 @@
     $("idle").value = String(d.idleMs);
     $("printed").value = String(d.printedMs);
 
+    // 기관 표기 — 값이 없으면 비워 둔다(비움 = 프로그램 기본값)
+    ["orgName","officeName","windowName","phone","address","notice"].forEach(function(k){
+      $(k).value = (d.org && d.org[k]) || "";
+    });
+    $("themeColor").value = d.themeColor || "#1b5fc0";
+    paintTheme();
+    showLogo(d.logo || null);
+
+    // 취급 서식 — 설정에 없으면 켜진 것으로 본다
+    document.querySelectorAll("[data-form]").forEach(function(c){
+      var k=c.getAttribute("data-form");
+      c.checked = !(d.forms && d.forms[k] === false);
+    });
+    // 업무 정책 — 설정에 없으면 목록에 적힌 기본값
+    POLICIES.forEach(function(p){
+      var c=document.querySelector('[data-policy="'+p[0]+'"]');
+      if(!c) return;
+      c.checked = (d.policy && typeof d.policy[p[0]]==="boolean") ? d.policy[p[0]] : p[3];
+    });
+    setRadio("kb", d.hasKeyboard === false ? "no" : "yes");
+
     var sel = $("printer");
     sel.innerHTML = "";
     var none = document.createElement("option");
@@ -224,7 +526,7 @@
       $("prnWarn").textContent = "설정된 프린터를 찾을 수 없습니다. 이대로 두면 인쇄가 차단됩니다.";
       $("prnWarn").hidden = false;
     }
-    modeNote(); idleNote();
+    modeNote(); idleNote(); policyNote(); kbNote(); formsWarn();
   }).catch(function(err){
     say("설정을 읽지 못했습니다: " + err, "err");
   });
@@ -234,12 +536,28 @@
   $("save").addEventListener("click", function(){
     saveBtn.disabled = true;
     say("저장하는 중…");
+    var org={}, forms={}, policy={};
+    ["orgName","officeName","windowName","phone","address","notice"].forEach(function(k){
+      org[k] = $(k).value.trim();
+    });
+    document.querySelectorAll("[data-form]").forEach(function(c){
+      forms[c.getAttribute("data-form")] = c.checked;
+    });
+    document.querySelectorAll("[data-policy]").forEach(function(c){
+      policy[c.getAttribute("data-policy")] = c.checked;
+    });
     window.__settings.save({
       mode: radio("mode"),
       formLeft: radio("layout") === "form-left",
       printerDeviceName: $("printer").value,
       idleMs: Number($("idle").value),
-      printedMs: Number($("printed").value)
+      printedMs: Number($("printed").value),
+      org: org,
+      themeColor: $("themeColor").value,
+      forms: forms,
+      policy: policy,
+      hasKeyboard: radio("kb") !== "no",
+      logo: logoState        // null=그대로 · {uri} · "clear"
     }).then(function(r){
       saveBtn.disabled = false;
       if (r && r.ok) say("저장했습니다. 화면이 처음으로 돌아갑니다.", "ok");

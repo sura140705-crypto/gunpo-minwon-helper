@@ -92,15 +92,85 @@ function saveConfig(patch) {
   return next;
 }
 
+/* ── 기관별 설정 (2026.08.19 확산 대응) ─────────────────────────────────
+   같은 설치본을 다른 기관이 그대로 쓰게 하려고, 코드에 박혀 있던 기관 고유값을
+   **환경설정 창에서 바꿀 수 있게** 뺐다. 값은 `kiosk.json` 에 함께 저장된다.
+
+   ⛔ **인쇄물에 영향이 가는 값은 여기에 넣지 마라.** 기관명·로고·색상은 `.topbar` 안에
+      있거나 화면 전용 CSS 라서 인쇄 CSS 가 전부 숨긴다 → `verify-print.py` 기준선이
+      흔들리지 않는다. 이 경계를 깨는 값을 추가하면 그 순간 안전망이 무너진다.
+   ⚠️ **빈 값은 '서식의 기본값을 쓴다'는 뜻이다.** 기본값을 여기에 또 적지 않는다 —
+      두 벌이 되면 갈라진다. 웹(GitHub Pages) 배포본에는 preload 가 없어 설정 자체가
+      없고, 그때도 서식이 자기 기본값으로 멀쩡히 동작해야 한다.
+
+   ORG_KEYS  기관 표기. 서식 HTML 의 `ORG_CONFIG` 를 같은 이름으로 덮는다.
+   POLICY_KEYS 여권 업무 정책. 기관마다 접수 기준이 달라 창구 전환 여부가 갈린다.
+   FORM_KEYS 취급 서식. 여권은 시·군·구청만 취급하는 식으로 기관마다 다르다. */
+const ORG_KEYS = ['orgName', 'officeName', 'windowName', 'phone', 'address', 'notice'];
+const POLICY_KEYS = [
+  'allowProxy',        // 대리 신청을 키오스크에서 끝까지 받는가 (false → 창구 전환)
+  'allowRomanBlank',   // 기존 여권이 있을 때 로마자 칸을 비워 접수하는가
+  'minorPeriodFixed',  // 미성년 유효기간을 5년으로 고정하는가 (false → 물어본다)
+  'requireEmergency',  // 긴급연락처를 필수로 받는가
+  'showCounterCode',   // 창구 전환 화면에 사유 코드(P-01…)를 띄우는가
+];
+const FORM_KEYS = ['passport', 'marriage', 'birth', 'death', 'naming', 'divorce', 'cert', 'realestate'];
+
+/* 로고는 설정 폴더(보존 영역)의 `logo.png` 를 쓴다. 파일이 없으면 서식에 박힌
+   기본 로고가 그대로 나온다. 페이지마다 다시 읽지 않도록 캐시한다 —
+   `pageConfig()` 는 **sendSync** 로 불려서 페이지 로드를 붙잡고 있다. */
+const LOGO_MAX_BYTES = 512 * 1024;
+let logoCache = null;                 // { mtimeMs, size, uri } | { missing:true }
+function logoDataUri() {
+  const p = path.join(configDir(), 'logo.png');
+  let st = null;
+  try { st = fs.statSync(p); } catch (e) { logoCache = null; return ''; }
+  if (st.size > LOGO_MAX_BYTES) return '';          // 너무 크면 무시 — 창에서 미리 막는다
+  if (logoCache && logoCache.mtimeMs === st.mtimeMs && logoCache.size === st.size) return logoCache.uri;
+  try {
+    const uri = 'data:image/png;base64,' + fs.readFileSync(p).toString('base64');
+    logoCache = { mtimeMs: st.mtimeMs, size: st.size, uri };
+    return uri;
+  } catch (e) { return ''; }
+}
+
+/* 대표색 — `#rrggbb` 만 받는다. 명암·그라데이션은 서식 쪽에서 이 한 색에서 만든다
+   (같은 규칙을 두 곳에 두지 않으려고 계산을 화면 쪽에 몰아 뒀다). */
+function normHex(v) {
+  const s = String(v || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(s) ? s.toLowerCase() : '';
+}
+
 /* 서식 HTML 에 넘기는 값. preload 가 페이지 스크립트보다 **먼저** 이것을 창에 심는다.
    (나중에 넣으면 늦다 — 서식은 로드 시점에 타이머를 걸어 버린다) */
 function pageConfig() {
   const cfg = loadConfig();
   const num = (v, d) => (typeof v === 'number' && isFinite(v) && v >= 0 ? v : d);
+
+  const org = {};
+  for (const k of ORG_KEYS) {
+    const v = String((cfg.org && cfg.org[k]) || '').trim();
+    if (v) org[k] = v;                    // 빈 값은 넘기지 않는다 = 서식 기본값 유지
+  }
+  const policy = {};
+  for (const k of POLICY_KEYS) {
+    if (cfg.policy && typeof cfg.policy[k] === 'boolean') policy[k] = cfg.policy[k];
+  }
+  const forms = {};
+  for (const k of FORM_KEYS) {
+    if (cfg.forms && cfg.forms[k] === false) forms[k] = false;   // 끈 것만 넘긴다
+  }
+
   return {
     idleMs: num(cfg.idleMs, DEFAULT_IDLE_MS),
     printedMs: num(cfg.printedMs, DEFAULT_PRINTED_MS),
     formLeft: cfg.formLeft === true,
+    org,
+    themeColor: normHex(cfg.themeColor),
+    logo: logoDataUri(),
+    forms,
+    policy,
+    hasKeyboard: cfg.hasKeyboard !== false,   // 기본은 '키보드 있음'(현재 현장 구성)
   };
 }
 
@@ -386,7 +456,14 @@ function adminKeys(contents) {
     if (input.type !== 'keyDown' || !(input.control || input.meta) || !input.shift) return;
     const k = String(input.key || '').toUpperCase();
     if (k === 'Q') { e.preventDefault(); askPinAndQuit(); }
-    if (k === 'S') { e.preventDefault(); openSettings(); }
+    /* 터치 전용으로 설정한 자리에서는 환경설정도 PIN 뒤에 둔다 — 그런 자리에 나중에
+       키보드를 꽂았을 때 시민이 설정을 열어 버리는 것을 막는다. PIN 이 없으면
+       종전대로 그냥 열린다(잠글 수단만 만들고 열 수단을 없애지 않는다). */
+    if (k === 'S') {
+      e.preventDefault();
+      if (loadConfig().hasKeyboard === false) askPin(openSettings);
+      else openSettings();
+    }
     if (k === 'H') {
       e.preventDefault();
       if (win && !win.isDestroyed()) win.loadFile(path.join(APP_DIR, 'index.html'));
@@ -440,10 +517,44 @@ function openSettings() {
       idleMs: pc.idleMs,
       printedMs: pc.printedMs,
       formLeft: pc.formLeft,
+      // 기관별 설정 — 저장된 값만 넘긴다. 비어 있으면 창이 빈칸으로 보여 주고,
+      // 그 빈칸이 곧 '프로그램 기본값을 쓴다'는 뜻이다.
+      org: pc.org,
+      themeColor: pc.themeColor,
+      logo: pc.logo,
+      forms: cfg.forms || {},
+      policy: cfg.policy || {},
+      hasKeyboard: pc.hasKeyboard,
       printers: printers.map((p) => ({
         name: p.name, isDefault: !!p.isDefault, virtual: VIRTUAL_NAME_RE.test(p.name),
       })),
     };
+  });
+
+  /* 로고 PNG 고르기. 창은 경로를 다루지 않는다 — 대화상자를 여기서 열고 **내용만** 넘긴다.
+     실제 복사는 [저장]을 눌렀을 때 한다(고르기만 하고 닫으면 아무것도 바뀌지 않아야 한다). */
+  ipcMain.removeHandler('settings:pickLogo');
+  ipcMain.handle('settings:pickLogo', async () => {
+    const r = await dialog.showOpenDialog(w, {
+      title: '기관 로고 PNG 고르기',
+      properties: ['openFile'],
+      filters: [{ name: 'PNG 그림', extensions: ['png'] }],
+    }).catch(() => null);
+    if (!r || r.canceled || !r.filePaths || !r.filePaths.length) return null;
+    try {
+      const buf = fs.readFileSync(r.filePaths[0]);
+      if (buf.length > LOGO_MAX_BYTES) {
+        return { ok: false, error: '그림이 너무 큽니다(512KB 이하만 됩니다). 크기를 줄여 주세요.' };
+      }
+      // PNG 서명(‰PNG\r\n\x1a\n) 확인 — 확장자만 바꾼 파일을 걸러낸다.
+      const sig = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+      if (buf.length < 8 || !buf.slice(0, 8).equals(sig)) {
+        return { ok: false, error: 'PNG 그림이 아닙니다. 확장자만 바꾼 파일일 수 있습니다.' };
+      }
+      return { ok: true, uri: 'data:image/png;base64,' + buf.toString('base64') };
+    } catch (err) {
+      return { ok: false, error: String((err && err.message) || err) };
+    }
   });
 
   ipcMain.removeHandler('settings:save');
@@ -457,11 +568,44 @@ function openSettings() {
         return { ok: false, error: '파일로 저장하는 프린터는 지정할 수 없습니다.' };
       }
       const num = (x, allowed, d) => (allowed.includes(Number(x)) ? Number(x) : d);
+
+      /* 기관별 설정 — **아는 키만** 받아 넣는다. 창이 보내 준 것을 그대로 저장하면
+         엉뚱한 키가 설정 파일에 쌓이고, 그것이 다음 판에서 뜻을 갖게 될 수 있다. */
+      const org = {};
+      for (const k of ORG_KEYS) org[k] = String((v.org && v.org[k]) || '').trim().slice(0, 120);
+      const forms = {};
+      for (const k of FORM_KEYS) forms[k] = !(v.forms && v.forms[k] === false);
+      if (!FORM_KEYS.some((k) => forms[k])) {
+        return { ok: false, error: '서식을 하나도 켜지 않으면 첫 화면이 비어 버립니다.' };
+      }
+      const policy = {};
+      for (const k of POLICY_KEYS) if (v.policy && typeof v.policy[k] === 'boolean') policy[k] = v.policy[k];
+
+      /* 로고 — 고른 그림을 설정 폴더에 `logo.png` 로 복사한다. 설정 폴더에 두는 이유는
+         하드보안관이 걸린 PC 에서도 살아남는 자리이기 때문이다(설정 파일과 같은 곳). */
+      const logoPath = path.join(configDir(), 'logo.png');
+      if (v.logo === 'clear') {
+        try { fs.unlinkSync(logoPath); } catch (err) { /* 없으면 그만 */ }
+        logoCache = null;
+      } else if (v.logo && typeof v.logo.uri === 'string') {
+        const b64 = v.logo.uri.replace(/^data:image\/png;base64,/, '');
+        const buf = Buffer.from(b64, 'base64');
+        if (buf.length > LOGO_MAX_BYTES) return { ok: false, error: '로고 그림이 너무 큽니다.' };
+        fs.mkdirSync(path.dirname(logoPath), { recursive: true });
+        fs.writeFileSync(logoPath, buf);
+        logoCache = null;
+      }
+
       saveConfig(Object.assign(printOptions.applyPassportMode(loadConfig(), mode), {
         printerDeviceName: name,
         formLeft: v.formLeft === true,
         idleMs: num(v.idleMs, [60000, 180000, 300000, 600000], DEFAULT_IDLE_MS),
         printedMs: num(v.printedMs, [0, 1000, 3000, 5000, 10000], DEFAULT_PRINTED_MS),
+        org,
+        themeColor: normHex(v.themeColor),
+        forms,
+        policy,
+        hasKeyboard: v.hasKeyboard !== false,
       }));
       // 바뀐 값이 실제로 걸리도록 처음 화면부터 다시 읽힌다.
       if (win && !win.isDestroyed()) win.loadFile(path.join(APP_DIR, 'index.html'));
@@ -502,16 +646,21 @@ function fatal(message) {
 
 const sha256 = (s) => crypto.createHash('sha256').update(String(s), 'utf8').digest('hex');
 
-function askPinAndQuit() {
+function askPinAndQuit() { askPin(quitNow); }
+
+/* 관리자 PIN 을 묻고 맞으면 `onOk()` 를 실행한다. 종료(Ctrl+Shift+Q)와, 터치 전용으로
+   설정한 자리의 환경설정(Ctrl+Shift+S)이 이것을 쓴다. */
+function askPin(onOk) {
   if (adminMode) return;
-  if (!win || win.isDestroyed()) { quitNow(); return; }   // 물어볼 창이 없으면 매달리지 않는다
+  if (!win || win.isDestroyed()) { onOk(); return; }   // 물어볼 창이 없으면 매달리지 않는다
   const cfg = loadConfig();
 
-  // PIN 이 설정돼 있지 않으면 종료를 막지 않는다 — 잠긴 키오스크를 열 수단이 없어지면
+  // PIN 이 설정돼 있지 않으면 막지 않는다 — 잠긴 키오스크를 열 수단이 없어지면
   // 복구가 불가능해지기 때문이다. 대신 `--selfcheck` 가 '미설정'으로 보고한다.
-  if (!cfg.exitPinHash) { quitNow(); return; }
+  if (!cfg.exitPinHash) { onOk(); return; }
 
   adminMode = true;
+  let handedOff = false;      // PIN 이 맞아 다음 창으로 넘긴 뒤에는 adminMode 를 건드리지 않는다
   const pin = new BrowserWindow({
     parent: win, modal: true, show: false, frame: false, resizable: false,
     width: 420, height: 240, backgroundColor: '#ffffff',
@@ -522,14 +671,19 @@ function askPinAndQuit() {
   pin.loadFile(path.join(ADMIN_DIR, 'pin.html'));
   pin.once('ready-to-show', () => pin.show());
   pin.on('closed', () => {
-    adminMode = false;
+    if (!handedOff) adminMode = false;
     if (!allowQuit && win && !win.isDestroyed()) win.focus();
   });
 
   ipcMain.removeHandler('admin:pin');
   ipcMain.handle('admin:pin', (e, value) => {
     const ok = sha256(value) === String(cfg.exitPinHash).toLowerCase();
-    if (ok) { if (!pin.isDestroyed()) pin.close(); quitNow(); }
+    if (ok) {
+      handedOff = true;
+      adminMode = false;              // onOk 가 새 창을 열 수 있게 **먼저** 푼다
+      if (!pin.isDestroyed()) pin.close();
+      onOk();
+    }
     return ok;
   });
   ipcMain.removeAllListeners('admin:cancel');

@@ -8,4 +8,7 @@ contextBridge.exposeInMainWorld('__settings', {
   load: () => ipcRenderer.invoke('settings:load'),     // 현재 설정 + 프린터 목록
   save: (v) => ipcRenderer.invoke('settings:save', v), // { ok } 또는 { ok:false, error }
   close: () => ipcRenderer.send('settings:close'),
+  // 로고 PNG 고르기 — 파일 대화상자는 **메인 프로세스가 연다**(창은 경로를 모른다).
+  // 돌려주는 값은 null(취소) · { ok:true, uri } · { ok:false, error }
+  pickLogo: () => ipcRenderer.invoke('settings:pickLogo'),
 });

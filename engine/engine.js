@@ -338,7 +338,7 @@ function askConfirm(message, onYes){
   var no=document.createElement("button");
   no.textContent="아니요"; no.style.cssText=bs+"background:#e9edf3;color:#333;";
   var yes=document.createElement("button");
-  yes.textContent="예"; yes.style.cssText=bs+"background:#1b5fc0;color:#fff;";
+  yes.textContent="예"; yes.style.cssText=bs+"background:var(--blue);color:#fff;";
   function close(){ back.remove(); document.removeEventListener("keydown", onKey, true); }
   function onKey(e){ if(e.key==="Escape"){ e.preventDefault(); close(); } }
   no.addEventListener("click", close);
@@ -413,7 +413,11 @@ function init(){
     var nl=document.getElementById("noticeList");
     if(nl) nl.innerHTML=FORM.noticeItems.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
+  /* 기관 표기 — config 의 값이 기본이고, 키오스크 환경설정에 기관명이 들어 있으면
+     그것이 이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. base.html 의 SITE-CONFIG 참조).
+     설정이 없는 웹 배포본에서는 `__site` 자체가 없으므로 config 값이 그대로 쓰인다. */
   var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
+  if(typeof window!=="undefined" && window.__site) org=window.__site.org(org);
   setText("orgName", org.orgName);
   setText("today", formatDate(APP_TODAY));
   document.querySelectorAll(".bg").forEach(function(img){ img.src=FORM_IMG; });
