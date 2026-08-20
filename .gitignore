@@ -12,6 +12,7 @@ _*.json
 _*.py
 _*.b64
 _*.txt
+_*.zip
 _hwpx/
 _hwpx_consent/
 
