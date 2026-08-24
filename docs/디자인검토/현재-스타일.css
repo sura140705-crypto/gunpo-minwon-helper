@@ -137,8 +137,11 @@
   --fs-question: 34px;    /* 시민에게 말하는 큰 질문 */
   --fs-lead:     21px;    /* 입력칸에 치는 글자 */
   --fs-label:    18px;    /* 항목 라벨 */
+  --fs-card:     20px;    /* 선택 카드 제목 */
+  --fs-card-sub: 15px;    /* 선택 카드 설명 */
   --fs-body:     17px;    /* 본문 기본 */
-  --fs-help:   16.5px;    /* 「왜 묻는지」 */
+  --fs-help:     17px;    /* 「왜 묻는지」 */
+  --fs-sum:    16.5px;    /* 최종 확인 요약 줄 */
   --fs-small:  13.5px;    /* 행정적 보조 설명 */
   /* Context Rail(§10)은 구조와 폭을 고정하고 **글자만** 크게 보기를 따른다 */
   --fs-rail-num:   33px;  /* 진행 큰 숫자 */
@@ -157,6 +160,7 @@
   --touch-card:  132px;   /* 큰 선택 카드 최소 높이 */
   --touch-field:  64px;   /* 글자 입력칸 높이 */
   --touch-min:    48px;   /* 그 밖의 누를 수 있는 것의 최소 변 */
+  --btn-h:        62px;   /* [이전]·[다음] 높이 */
 
   /* ── Layout (§2 LEFT / CENTER / RIGHT) ─────────────────────────────*/
   --topbar-h:      74px;
@@ -184,8 +188,11 @@ html.big{
   --fs-question:  40px;
   --fs-lead:      24px;
   --fs-label:     21px;
+  --fs-card:      23px;
+  --fs-card-sub:  17px;
   --fs-body:      19px;
   --fs-help:      19px;
+  --fs-sum:     18.5px;
   --fs-small:     15px;
   --fs-rail-num:  38px;
   --fs-rail-head: 17px;
@@ -194,6 +201,7 @@ html.big{
   --touch-card:  150px;
   --touch-field:  72px;
   --touch-min:    56px;
+  --btn-h:        72px;
   --question-max:780px;
   --cards-max:   820px;
   /* LEFT 를 넓힌다 — CENTER Paper 는 남은 폭에 스스로 맞춰 줄어든다(fit-to-area).
@@ -659,7 +667,7 @@ html.big{
 
   /* 글자 칸 — 물리 키보드로 친다. 키가 큰 편이라 칸도 크게 잡는다(높이 64px). */
   .text-input{width:100%;font-family:inherit;font-size:var(--fs-lead);font-weight:var(--fw-bold);
-    height:64px;padding:0 17px;
+    height:var(--touch-field);padding:0 17px;
     border:1.5px solid var(--line-strong);border-radius:12px;background:#fff;}
   .text-input:focus{outline:none;border-color:var(--blue);}
   select.text-input{font-weight:700;}
@@ -717,7 +725,7 @@ html.big{
   /* 이전은 작게·다음은 넓게. 크기가 곧 「어느 쪽이 앞으로 가는 길인지」를 말해 준다. */
   .wiz-nav{flex:0 0 auto;display:grid;grid-template-columns:150px minmax(0,1fr);gap:12px;
     padding:20px 0 0;margin-top:auto;max-width:var(--question-max);}
-  .wiz-nav .btn{padding:0;height:62px;font-size:var(--fs-label);font-weight:var(--fw-heavy);border-radius:11px;}
+  .wiz-nav .btn{padding:0;height:var(--btn-h);font-size:var(--fs-label);font-weight:var(--fw-heavy);border-radius:11px;}
 
   /* 이용 안내 — 레일 맨 아래. 늘 읽는 글이 아니라 조용히 둔다. */
   .screen-notice{margin-top:18px;background:none;border:0;border-top:1px solid var(--line-warm);
@@ -850,7 +858,7 @@ html.big{
   /* ===== 어르신 가독성 강화(2026-07-09): 큰 글씨·고대비·또렷한 포커스 ===== */
   :root{ --muted:#495059; }                     /* 보조텍스트 대비 강화(회색을 더 진하게) */
   .wiz-count{font-size:15.5px;}
-  .why-box{font-size:17px;}
+  .why-box{font-size:var(--fs-help);}
   .q-help{font-size:16px;}
   .opt-label{font-size:19px;}
   .opt-desc{font-size:16px;}
@@ -861,7 +869,7 @@ html.big{
   .note-box{font-size:15.5px;}
   .unsure-note{font-size:15px;}
   .step-warn{font-size:15px;}
-  .sum-row{font-size:var(--fs-help);}
+  .sum-row{font-size:var(--fs-sum);}
   .staff-list{font-size:15px;}
   details.terms summary{font-size:15.5px;}
   details.terms .term{font-size:15.5px;}
@@ -907,11 +915,11 @@ html.big{
     box-shadow:inset 0 0 0 1px var(--blue);}
   .card-ic{font-size:30px;line-height:1;flex:0 0 auto;}
   .card-tx{display:flex;flex-direction:column;gap:7px;min-width:0;}
-  .card-label{font-size:20px;font-weight:800;color:var(--ink);line-height:1.28;
+  .card-label{font-size:var(--fs-card);font-weight:var(--fw-heavy);color:var(--ink);line-height:1.28;
     display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
   .card-rec{font-size:12px;font-weight:700;color:#fff;background:var(--blue);
     border-radius:999px;padding:2px 9px;}
-  .card-desc{font-size:15px;color:var(--muted);line-height:1.5;}
+  .card-desc{font-size:var(--fs-card-sub);color:var(--muted);line-height:1.5;}
   /* 준비물 판 — 카드와 같은 격자에 놓되 **누르는 것이 아님**이 드러나게 결을 달리한다
      (테두리 없음 · 흰 바탕 아님 · 커서 그대로). */
   .ready-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:2px 0 20px;max-width:700px;}
