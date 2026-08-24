@@ -287,7 +287,9 @@ Red로 만들지는 않는다.
 -   Input / Choice / Button을 함께 키운다
 -   RIGHT Context Rail의 **구조와 폭은 유지**하고 Typography만 키운다
 -   CENTER Paper는 **바뀐 영역 안에서 가능한 최대 크기**를 유지한다(fit-to-area).
-    고정 배율을 먼저 정하지 않는다
+    고정 배율을 먼저 정하지 않는다.
+    LEFT가 넓어진 만큼 **Paper는 오히려 작아질 수 있으며 이는 의도된 결과다** —
+    서식을 크게 보는 길은 Paper 확대·스크롤과 미리보기로 따로 있다
 -   기존 Paper 확대·스크롤 기능은 그대로 둔다
 -   자유로운 Panel Drag / Resize는 제공하지 않는다
 
