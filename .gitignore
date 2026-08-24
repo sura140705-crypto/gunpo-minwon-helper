@@ -13,6 +13,9 @@ _*.py
 _*.b64
 _*.txt
 _*.zip
+# ⚠️ 파일뿐 아니라 **폴더**도 막는다. 2026.08.24 에 검증용 기준선 폴더(`_base/`)가
+#    `git add -A` 로 딸려 들어갔다 — 위 규칙이 파일 패턴뿐이었기 때문이다.
+_*/
 _hwpx/
 _hwpx_consent/
 # 밖에 넘길 디자인 자료 묶음 (원본은 docs/디자인검토/ — 재생성: python tools/design-bundle.py)

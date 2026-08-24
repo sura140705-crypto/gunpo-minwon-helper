@@ -103,28 +103,35 @@ SCENARIOS = [
      {"org": {"orgName": "경기도 안양시"}, "themeColor": "#7a2f6d",
       "forms": {"passport": False, "death": False}},
      '''
+     /* ⚠️ 2026.08.24 — 허브가 배치 1 로 바뀌면서 마크업이 달라졌다.
+        종전에는 `.card .title`·`.sec-head h3` 를 봤는데, 그 선택자가 아무것도 못 찾아
+        **「끈서식숨음」·「빈섹션사라짐」이 빈 배열로 거짓 통과**하고 있었다.
+        이제 시민의 말(`.card-label`)과 행정명칭(`.card-formal`) 둘 다 본다. */
      var cs=getComputedStyle(document.documentElement);
-     var t=[].map.call(document.querySelectorAll(".card .title"),function(n){return n.textContent;});
-     var heads=[].map.call(document.querySelectorAll(".sec-head h3"),function(n){return n.textContent;});
+     var L=[].map.call(document.querySelectorAll(".card .card-label"),function(n){return n.textContent;});
+     var F=[].map.call(document.querySelectorAll(".card .card-formal"),function(n){return n.textContent;});
      return {
        기관명바뀜: document.getElementById("orgName").textContent==="경기도 안양시",
        대표색바뀜: cs.getPropertyValue("--blue").indexOf("310")>=0,
        그라데이션생김: cs.getPropertyValue("--grad").indexOf("gradient")>=0,
-       끈서식숨음: t.indexOf("여권발급신청서")<0 && t.indexOf("사망신고서")<0,
-       켠서식보임: t.indexOf("혼인신고서")>=0,
-       빈섹션사라짐: heads.indexOf("여권")<0,
+       끈서식숨음: L.indexOf("여권 만들기")<0 && F.indexOf("여권발급신청서")<0
+                && L.indexOf("사망 신고하기")<0 && F.indexOf("사망신고서")<0,
+       켠서식보임: L.indexOf("혼인 신고하기")>=0 && F.indexOf("혼인신고서")>=0,
+       카드가여섯장: L.length===6 && F.length===6,
+       시민의말이큰글씨: L.length>0 && F.length===L.length,
        참고_대표색: cs.getPropertyValue("--blue").trim(),
-       참고_남은카드: t.length
+       참고_남은카드: L.join(" · ")
      };'''),
 
     ("허브 — 설정이 없을 때 (웹 배포본)",
      "index.html", {},
      '''
-     var t=[].map.call(document.querySelectorAll(".card .title"),function(n){return n.textContent;});
+     var L=[].map.call(document.querySelectorAll(".card .card-label"),function(n){return n.textContent;});
      return {
        기본기관명: document.getElementById("orgName").textContent==="경기도 군포시",
        기본대표색: getComputedStyle(document.documentElement).getPropertyValue("--blue").trim()==="#1b5fc0",
-       서식전부보임: t.length===8
+       서식전부보임: L.length===8,
+       참고_카드: L.join(" · ")
      };'''),
 
     ("여권 — 기본값(대리 신청은 창구로)",

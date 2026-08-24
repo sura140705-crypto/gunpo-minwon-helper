@@ -1108,91 +1108,177 @@ html.big{
    ══════════════════════════════════════════════════════════ */
 :root{
     /* 대표색 3종 + 그라데이션. 기관 대표색을 환경설정에서 넣으면 아래 SITE-CONFIG
-       블록이 이 네 값을 **한 색에서 계산해** 덮어쓴다. 기본값은 군포시 파랑이고,
-       그라데이션도 같은 색에서 뽑은 것이라 종전 화면과 거의 같아 보인다. */
+       블록이 이 네 값을 **한 색에서 계산해** 덮어쓴다.
+       ⛔ 이 네 이름은 **바꾸지 마라.** SITE-CONFIG 가 이 이름으로 값을 넣는다. */
     --blue:#1b5fc0; --blue-dark:#164e9e; --blue-light:#eaf1fb;
     --grad:linear-gradient(135deg,hsl(215,75%,52%) 0%,hsl(215,75%,43%) 52%,hsl(215,79%,32%) 100%);
     --line:#d5d9df; --bg:#f2f4f7; --muted:#5b626c; --ink:#1a1c1f;
-    --ok:#1a7f4b; --ok-bg:#e7f6ee; --ok-line:#b4e0c6;
-    --soon:#8a6d1f; --soon-bg:#fff6e0; --soon-line:#f0d79a;
   }
   *{box-sizing:border-box;}
   html,body{
-    margin:0;padding:0;background:var(--bg);color:var(--ink);
-    font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
-    font-size:17px;line-height:1.55;
+    margin:0;padding:0;background:var(--surface-zone);color:var(--ink);
+    font-family:var(--ff);font-size:var(--fs-body);line-height:1.55;
   }
 
-  /* ===== 상단 바 ===== */
+  /* ═══════════════════════════════════════════════════════════════════
+     MAIN — 배치 1 (구조 동결 v1.1 §2·§3-2)
+
+     BAR / [ASK 위 · PAPER 아래] / RAIL 네 구역. 여권 Reference UI 와 **같은 어휘**를
+     쓴다(`.topbar`·`.card`·`.rail`…). 값은 전부 디자인 토큰에서 온다.
+
+     ⛔ 네 구역은 상태가 바뀌어도 생성·삭제되지 않는다. 지금은 MAIN 하나뿐이지만
+        단계 3~5 에서 START·IDLE 이 같은 골격 안에서 열린다.
+     ⚠️ Stitch 시안에서 가져온 것은 **비례·여백·정렬·ASK↔PAPER 시각 관계**뿐이다.
+        메뉴 형태·카드 구조·아이콘·BAR/RAIL 구성·버튼은 시안을 근거로 바꾸지 않았다.
+     ═══════════════════════════════════════════════════════════════════ */
+
+  /* ── BAR ─────────────────────────────────────────────────────────────
+     ⚠️ 도구 칸을 `auto`(제 너비)로 두어 **기관명이 먼저 줄어들게** 한다.
+        버튼 폭을 깎아 맞추면 기관명이 긴 곳에서 두 줄로 접힌다(여권에서 겪었다). */
   .topbar{
-    display:flex;flex-wrap:wrap;align-items:center;gap:12px 20px;
-    padding:14px 22px;background:#fff;border-bottom:0;
+    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) auto;
+    align-items:center;gap:12px 20px;
+    padding:0 24px;min-height:var(--topbar-h);background:var(--surface-head);
     position:sticky;top:0;z-index:20;
   }
-  /* 아래 선을 대표색 그라데이션 띠로 — 단색 2px 보다 기관 색이 살아난다.
-     `.topbar` 는 인쇄에서 통째로 숨겨지므로 인쇄물과 무관하다. */
   .topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
     background:var(--grad);}
-  .brand{display:flex;flex-direction:column;margin-right:auto;}
-  .brand h1{margin:0;font-size:21px;color:var(--blue-dark);}
-  .brand .meta{font-size:14px;color:var(--muted);margin-top:2px;}
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .brand-tx{min-width:0;}
+  .brand b{display:block;font-size:17px;color:var(--blue-dark);letter-spacing:-.02em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand h1{margin:0;font-size:13px;font-weight:400;color:var(--ink-muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    justify-content:flex-end;padding:10px 0;}
+  .today{font-size:13.5px;color:var(--ink-muted);white-space:nowrap;}
+  .btn{font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
+    border:1.5px solid var(--blue);background:var(--paper);color:var(--blue);
+    border-radius:var(--r-md);padding:10px 15px;cursor:pointer;}
+  .btn:hover{background:var(--blue-light);}
+  .btn.ghost{border-color:var(--border);color:var(--ink-muted);}
+  .btn.ghost:hover{background:var(--surface-work);border-color:var(--border-strong);}
+  .topbar .btn{font-size:14.5px;padding:9px 12px;white-space:nowrap;}
 
-  /* ===== 본문 ===== */
-  .wrap{max-width:1080px;margin:0 auto;padding:26px 22px 60px;}
-  .hero{background:#fff;border:1px solid var(--line);border-radius:16px;
-    padding:22px 24px;margin-bottom:26px;box-shadow:0 3px 14px rgba(0,0,0,.05);}
-  .hero h2{margin:0 0 8px;font-size:24px;color:var(--ink);line-height:1.35;}
-  .hero p{margin:0;font-size:17px;color:var(--muted);line-height:1.65;}
+  /* ── 배치 1 골격 ─────────────────────────────────────────────────────
+     ⚠️ 높이·스크롤은 **화면 전용**이다. 허브는 인쇄하지 않지만, 공통 블록이
+        인쇄 CSS 를 함께 갖고 있으므로 규칙을 여권과 같은 자리에 둔다. */
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) var(--rail-w);}
+  @media screen and (min-width:861px){
+    body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+    /* ⚠️ `static` 으로만 두면 아래 대표색 띠(`::after`)가 기댈 곳을 잃고
+       **화면 맨 아래**로 빠져나간다. `relative` 로 자리를 잡아 준다. */
+    .topbar{flex:0 0 auto;position:relative;}
+    .layout{flex:1 1 auto;min-height:0;}
+    .main-col,.rail-col{height:100%;min-height:0;}
+  }
+  .main-col{display:flex;flex-direction:column;min-width:0;overflow:auto;
+    background:var(--surface-work);}
+  .rail-col{min-width:0;background:var(--surface-rail);}
 
-  .sec{margin-bottom:30px;}
-  .sec-head{display:flex;align-items:baseline;gap:10px;margin:0 0 14px;padding-bottom:8px;
-    border-bottom:2px solid var(--blue-light);}
-  .sec-head h3{margin:0;font-size:20px;color:var(--blue-dark);}
-  .sec-head .sec-sub{font-size:14px;color:var(--muted);}
+  /* ── ASK ─────────────────────────────────────────────────────────────*/
+  .ask{padding:34px 40px 8px;}
+  .ask-q{margin:0 0 22px;font-size:var(--fs-question);font-weight:var(--fw-heavy);
+    line-height:1.28;letter-spacing:var(--ls-tight);}
 
-  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px;}
+  /* 카드 4열 2행 (동결 §3-2). 기관이 4종만 취급하면 1행으로 줄고
+     아래 PAPER 띠가 그만큼 올라온다 — 골격은 그대로다. */
+  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;
+    margin:0 0 16px;}
+  @media (max-width:1500px){ .cards{grid-template-columns:repeat(3,minmax(0,1fr));} }
+  @media (max-width:1160px){ .cards{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  @media (max-width:860px){  .cards{grid-template-columns:1fr;} }
 
-  /* ===== 서비스 카드 ===== */
-  .card{display:flex;gap:16px;align-items:flex-start;text-decoration:none;color:inherit;
-    background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:20px;
-    box-shadow:0 2px 8px rgba(0,0,0,.04);transition:transform .12s,box-shadow .12s,border-color .12s;}
-  a.card:hover{transform:translateY(-3px);box-shadow:0 8px 22px rgba(27,95,192,.16);
-    border-color:var(--blue);}
-  a.card:focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
-  .card.soon{cursor:default;opacity:.82;}
-  .card .icon{flex:none;width:54px;height:54px;border-radius:12px;display:flex;
-    align-items:center;justify-content:center;font-size:30px;background:var(--blue-light);}
-  .card.soon .icon{background:#eef1f5;filter:grayscale(.35);}
-  .card .body{min-width:0;flex:1;}
-  .card .title{font-size:19px;font-weight:800;margin:0 0 4px;line-height:1.3;}
-  .card .desc{font-size:15px;color:var(--muted);line-height:1.55;margin:0;}
-  .card .foot{margin-top:12px;display:flex;align-items:center;gap:8px;}
-  .badge{font-size:12.5px;font-weight:700;border-radius:20px;padding:3px 11px;white-space:nowrap;}
-  .badge.ok{color:var(--ok);background:var(--ok-bg);border:1px solid var(--ok-line);}
-  .badge.soon{color:var(--soon);background:var(--soon-bg);border:1px solid var(--soon-line);}
-  .go{margin-left:auto;font-size:15px;font-weight:700;color:var(--blue);}
-  .card.soon .go{display:none;}
+  /* 여권의 `.card` 와 같은 규칙. **큰 글씨 = 시민이 하려는 일 / 작은 글씨 = 행정명칭**
+     (철학 §3 Ask, Don't Form). ⚠️ 크기는 터치 기준을 유지한다(`--touch-card`). */
+  .card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;width:100%;
+    min-height:var(--touch-card);padding:20px 22px;background:var(--paper);
+    border:1.5px solid var(--border-strong);border-radius:var(--r-lg);
+    text-align:left;cursor:pointer;font-family:inherit;color:inherit;
+    transition:border-color .12s,background .12s;}
+  .card:hover,.card:focus-visible{border-color:var(--blue);background:var(--blue-light);}
+  .card-ic{font-size:30px;line-height:1;flex:0 0 auto;}
+  .card-tx{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  .card-label{font-size:var(--fs-card);font-weight:var(--fw-heavy);color:var(--ink);
+    line-height:1.28;letter-spacing:-.02em;}
+  .card-formal{font-size:var(--fs-card-sub);color:var(--ink-muted);line-height:1.45;}
 
-  /* ===== 개인정보 강조 띠 (화면 상단) ===== */
-  .privacy-bar{display:flex;gap:14px;align-items:flex-start;
-    background:#fff5f5;border:1.5px solid #f0b4b4;border-left:7px solid #c0392b;
-    border-radius:12px;padding:16px 20px;margin:0 0 22px;}
-  .privacy-bar .pb-ic{flex:none;font-size:26px;line-height:1.25;}
-  .privacy-bar p{margin:0;font-size:17.5px;color:#333;line-height:1.65;}
-  .privacy-bar p + p{margin-top:6px;}
-  .key{color:#c0392b;font-weight:800;}
+  /* Human Handoff (철학 §8) — 여기 없으면 시민이 갇힌다.
+     ⚠️ 여권과 달리 창구 전환 화면이 없으므로 **그 자리에서 조용히 안내**한다. */
+  .card-sub{display:block;width:100%;margin:2px 0 0;padding:15px;
+    font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
+    color:var(--ink-muted);background:var(--surface-work);
+    border:1.5px dashed var(--border);border-radius:var(--r-lg);cursor:pointer;}
+  .card-sub:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--paper);}
+  .staff-note{margin:12px 0 0;padding:14px 16px;font-size:16px;line-height:1.6;
+    color:var(--notice);background:var(--notice-face);
+    border:1px solid var(--notice-line);border-radius:var(--r-md);}
+  .staff-note:empty{display:none;}
 
-  /* ===== 하단 안내 ===== */
-  .notice{background:#fff;border:1px solid var(--line);border-radius:14px;
-    padding:18px 22px;margin-top:8px;}
-  .notice h3{margin:0 0 10px;font-size:17px;color:var(--blue-dark);}
-  .notice ul{margin:0;padding-left:20px;}
-  .notice li{font-size:15.5px;color:#333;line-height:1.7;}
+  /* ── PAPER 하단 띠 (동결 §4·§6) ───────────────────────────────────────
+     Generic Paper 는 **특정 실제 서식을 모사하지 않는다.** 제목 + 필드 4개뿐이고
+     값은 비어 있다. MAIN 에서는 **움직이지 않는다** — 선택 UI 와 경쟁시키지 않는다.
+     ⚠️ 종이의 **윗부분만** 보인다. 「책상 위에 놓인 종이」다. */
+  .paper-band{flex:0 0 auto;margin-top:auto;overflow:hidden;
+    background:var(--surface-zone);padding:22px 40px 0;
+    height:clamp(230px,36vh,440px);position:relative;}
+  /* 서식이 놓인 자리를 가리키는 모서리 선 — 여권 `.form-col::before` 와 같은 표시 */
+  .paper-band::before{content:"";position:absolute;left:39px;top:21px;width:94px;height:94px;
+    border-left:1px solid var(--hair);border-top:1px solid var(--hair);pointer-events:none;}
+  /* ⚠️ A4 비례를 준다. 그래야 띠가 종이를 잘라 **윗부분만** 보인다 —
+     「책상 위에 놓인 종이」다. 비례가 없으면 내용 높이만큼만 그려져
+     바닥이 보이고, 종이가 아니라 떠 있는 카드로 읽힌다. */
+  .gpaper{width:min(210mm,100%);aspect-ratio:210/297;margin:0 auto;
+    background:var(--paper);box-shadow:var(--paper-shadow);padding:30px 44px 40px;}
+  .gp-title{text-align:center;font-size:21px;font-weight:var(--fw-heavy);
+    letter-spacing:.24em;color:var(--ink);}
+  .gp-rule{height:2px;background:var(--ink);margin:14px 0 22px;}
+  .gp-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;
+    align-items:center;padding:9px 0;border-bottom:1px solid var(--border);}
+  .gp-k{font-size:14.5px;color:var(--ink-muted);}
+  .gp-v{height:26px;border-radius:2px;background:var(--surface-work);}
+
+  /* ── RAIL (동결 §7) ───────────────────────────────────────────────────
+     ⛔ 영역을 생성·삭제하지 않는다. 상태에 따라 **내용과 가시 표현만** 바뀐다.
+     ⚠️ 「안심하고 작성하세요」는 `margin-top:auto` 로 **바닥에 고정**된다 —
+        어떤 상태에서도 같은 자리에 있어야 한다. */
+  .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
+    padding:26px 20px 20px;}
+  .rail-info{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+  .rail-sec{margin-bottom:20px;}
+  .rail-head{display:flex;align-items:center;gap:8px;
+    font-size:var(--fs-rail-head);font-weight:900;margin-bottom:11px;}
+  .rail-items{display:grid;gap:11px;}
+  .rail-item{display:grid;grid-template-columns:16px 1fr;gap:8px;
+    font-size:var(--fs-rail-item);line-height:1.45;color:#7b7f7d;}
+  .rail-item .check{color:#b7b5af;font-weight:900;}
+  .rail-item.req{color:var(--ink);font-weight:var(--fw-bold);}
+  .rail-item.req .check{color:var(--blue);}
+  .rail-item small{display:block;color:var(--ink-muted);font-size:11.5px;
+    margin-top:2px;font-weight:400;}
+  .rail-safe{margin-top:auto;border-top:1px solid var(--border);padding-top:16px;}
+  .rail-safe .rail-head{font-size:var(--fs-rail-item);margin-bottom:7px;}
+  .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:#5f6667;margin:6px 0;}
+  /* 이용 안내 — 레일 맨 아래. 늘 읽는 글이 아니라 조용히 둔다. */
+  .screen-notice{flex:0 0 auto;border-top:1px solid var(--border);
+    margin-top:16px;padding-top:14px;}
+  .screen-notice h3{margin:0 0 7px;font-size:12.5px;font-weight:900;color:var(--ink-muted);}
+  .screen-notice ul{margin:0;padding-left:16px;}
+  .screen-notice li{font-size:12px;color:#6a706d;line-height:1.6;}
 
   :focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
 
-  @media (max-width:640px){
-    .brand h1{font-size:18px;}
-    .hero h2{font-size:20px;}
-    .grid{grid-template-columns:1fr;}
+  /* 세로 화면·좁은 화면 — 질문 위 / PAPER 아래는 그대로 두고 RAIL 을 머리맡 띠로
+     (동결 ⑧: 세로도 같은 Mental Model). */
+  @media screen and (max-width:860px){
+    .layout{grid-template-columns:1fr;}
+    .rail-col{order:1;} .main-col{order:2;}
+    .rail{flex-direction:row;align-items:flex-start;gap:24px;
+      padding:12px 20px;overflow-x:auto;}
+    .rail-info{flex-direction:row;gap:24px;}
+    .rail-safe{margin-top:0;border-top:0;padding-top:0;}
+    .screen-notice{display:none;}
+    .ask{padding:24px 20px 8px;}
+    .paper-band{padding:16px 20px 0;height:clamp(160px,24vh,320px);}
+    .paper-band::before{display:none;}
   }
