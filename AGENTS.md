@@ -39,6 +39,7 @@
 | 키오스크 동작·보안·인쇄 통제 | **`kiosk-app/main.js`·`preload.js`** | 직접 수정 → `--selfcheck` 로 확인 |
 | 인쇄 조판(용지·여백·배율) | **`kiosk-app/print-options.js`** | 수정 → `verify-print.py --electron` |
 | 기관별 설정 적용(SITE-CONFIG 블록) | **`engine/base.html`** 의 `<!--SITE-CONFIG v1-->` | 수정 → 5종 재빌드 → `python tools/check-site-block.py --fix` |
+| 디자인 값 — 색·반경·간격·글자 크기 | **`engine/base.html`** 의 `<!--DESIGN-TOKENS v1-->` | 수정 → 5종 재빌드 → `python tools/check-design-tokens.py --fix` |
 | 환경설정 창의 항목 | **`kiosk-app/admin/settings.html`** + `main.js` 의 `ORG_KEYS`·`POLICY_KEYS`·`FORM_KEYS` | 양쪽 이름이 같아야 한다 |
 
 > ⛔ **엔진 5종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
@@ -51,6 +52,7 @@ python tools/verify-print.py            # 인쇄물 회귀 — 8종×예시2 = 1
 python tools/verify-print.py --electron # 키오스크와 같은 Electron 조판 + 용지(A4) 검사
 bash tools/sync-kiosk.sh --check        # 루트 → kiosk-app/app 드리프트 — 다르면 exit 1
 python tools/check-site-block.py        # 기관별 설정 블록이 9개 화면에서 같은지 — 다르면 exit 1
+python tools/check-design-tokens.py     # 디자인 토큰 블록이 9개 화면에서 같은지 — 다르면 exit 1
 python tools/verify-site-config.py      # 환경설정 값이 화면에 걸리는지(6가지 조합) — 다르면 exit 1
 node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 ```

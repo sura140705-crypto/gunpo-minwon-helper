@@ -11,6 +11,224 @@
   - 입력값을 다루지 않는 안내·이동 전용 페이지 (개별 도우미가 메모리 전용으로 처리)
   - 각 서식 도우미로 이동하는 카드 목록
 -->
+<!--DESIGN-TOKENS v1-->
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   디자인 토큰 (2026.08.24 신설) — `docs/디자인검토/DESIGN_PHILOSOPHY.md` §21
+
+   「새로운 서식을 만들 때 새로운 디자인을 발명하지 않는다」를 지키려면 값이 한 곳에
+   있어야 한다. 종전에는 색·반경·간격·글자 크기가 **다섯 원본에 흩어져 하드코딩**돼
+   있었다(engine/base.html · passport · marriage · divorce · index). 한 곳을 고치면
+   나머지 넷이 조용히 갈라진다 — 초기화 코드가 아홉 곳에 복제된 것과 같은 뿌리다.
+
+   ⚠️ 이 블록은 **5개 원본에 글자까지 똑같이** 들어간다.
+      고칠 때는 `engine/base.html` 을 고치고 →
+        `node tools/build-form.js <이름>` 으로 엔진 5종 재빌드
+        `python tools/check-design-tokens.py --fix` 로 손작성 3종·허브 반영
+      확인은 `python tools/check-design-tokens.py` (다르면 exit 1).
+
+   ⛔ **인쇄물에 나가는 값을 이 블록에 얹지 마라.** 여기 있는 것은 전부 화면 전용이다.
+      서식 위 값의 위치·크기·글꼴은 절대좌표라 `verify-print.py` 19쪽 0px 가 지킨다.
+      예외는 `--sign-hl` 하나이고, 왜 예외인지 그 자리에 적어 두었다.
+
+   ⚠️ **신설 시점에는 아무도 이 토큰을 쓰지 않는다.** 값이 지금 화면과 똑같도록
+      맞춰 두었을 뿐이다(화면 무변경이 이 단계의 합격 조건이었다). 하드코딩을
+      토큰으로 바꾸는 일은 영역별로 나누어 진행한다 — 한꺼번에 바꾸면 무엇이
+      화면을 바꿨는지 짚을 수 없다.
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+
+  /* ── Institution Accent ────────────────────────────────────────────
+     기관 대표색. **값을 여기에 적지 않는다** — `--blue` 계열은 SITE-CONFIG 블록이
+     `documentElement.style` 로 주입하는 이름이고, 그 네 이름은 계약이다.
+     새 CSS 는 아래 별칭을 쓴다. 그래야 나중에 `--blue` 라는 이름을 버리더라도
+     화면 쪽 코드를 건드리지 않는다.
+     ⛔ `--blue`·`--blue-dark`·`--blue-light`·`--grad` 를 **이름째 바꾸지 마라.**
+        SITE-CONFIG·환경설정 창(main.js)이 그 이름으로 값을 넣는다. */
+  --accent:        var(--blue);
+  --accent-strong: var(--blue-dark);
+  --accent-soft:   var(--blue-light);
+  /* --grad(135° 그라데이션) — DESIGN_PHILOSOPHY §1 DON'T 는 **큰 면적의 장식적**
+     Gradient 를 금하는 것으로 읽는다(2026.08.24 결정 §4). 지금 쓰이는 곳은 상단 바
+     아래 3px 띠처럼 좁은 Accent 뿐이라 **당장 걷어내지 않는다.** 단색화 여부는
+     최종 Visual Design 단계에서 다시 판단한다. */
+
+  /* ── Surface (§1 Quiet Paper Desk · §2 세 영역) ─────────────────────
+     대표색과 **무관한** 따뜻한 무채색. 기관이 대표색을 무엇으로 바꾸든 이 값들은
+     그대로여서 색을 갈아 끼워도 화면이 무너지지 않는다.
+     세 면의 명도를 조금씩 달리해 **선을 긋지 않고도 영역이 갈리게** 한다. */
+  --surface-work: #f7f6f3;   /* LEFT   질문하고 입력하는 곳 */
+  --surface-zone: #e4e1db;   /* CENTER 서식이 놓이는 바닥 */
+  --surface-rail: #f1f0ec;   /* RIGHT  Context Rail */
+  --surface-head: #fbfaf7;   /* 상단 바 */
+  --surface-cool: #f2f4f7;   /* 옛 배경색(허브·7종). 세 영역으로 옮기면 사라진다 */
+
+  /* ── Paper (§2 Paper First) ────────────────────────────────────────
+     종이 자체는 언제나 흰색이다. 그림자로만 바닥에서 띄운다. */
+  --paper:        #fff;
+  --paper-shadow: 0 2px 6px rgba(0,0,0,.06), 0 14px 34px rgba(0,0,0,.10);
+
+  /* ── Ink (§16 Typography is the Voice) ─────────────────────────────
+     ⚠️ `--ink-muted` 를 더 옅게 하지 마라. §15 「가독성을 해칠 정도로 대비를
+        낮추지 않는다」. 여권은 이미 한 번 진하게 올렸다(#5b626c → #495059). */
+  --ink:       #1a1c1f;
+  --ink-muted: #5b626c;
+
+  /* ── Border ────────────────────────────────────────────────────────*/
+  --border:        #d2cfc9;              /* 따뜻한 기본선 */
+  --border-strong: #b9b6b0;              /* 입력칸·카드 테두리 */
+  --border-cool:   #d5d9df;              /* 옛 회색선(허브·7종) */
+  --hair:          rgba(27,95,192,.16);  /* 기하학적 포인트 선 */
+  /* ⚠️ `--hair` 는 기본 파랑이 **박혀 있다.** 기관이 대표색을 초록으로 바꿔도
+        이 선만 파랑으로 남는다 — 알려진 결함이고, 대표색에서 계산하도록
+        SITE-CONFIG 에서 함께 주입하는 것이 옳다. 다음 단계로 미뤄 둔다. */
+
+  /* ── Current Focus (§5 Show Where It Goes) ─────────────────────────
+     **지금 작성 중인 Paper 위치.** 화면 전용이고, 기관 대표색에서 파생한 저채도다.
+     ⛔ 노랑/Amber 로 바꾸지 마라. 그 색은 아래 **Print Marker** 의 것이고,
+        한 색이 「지금 적는 칸」과 「여기 서명하세요」 두 뜻을 갖게 된다.
+        (DESIGN_PHILOSOPHY §15 는 Muted Amber 를 제안했으나 이 충돌 때문에
+         대표색 파생을 유지하기로 했다 — 2026.08.24 결정 §1.)
+     ⚠️ 대표색에서 파생하므로 기관이 색을 바꾸면 Focus 도 따라온다. */
+  --focus-face: var(--blue-light);
+  --focus-line: var(--blue);
+
+  /* ── Print Marker ──────────────────────────────────────────────────
+     **출력 후 시민이 직접 서명·날인·기재할 위치.** Current Focus 와 섞지 마라 —
+     이쪽은 사람이 펜을 댈 자리를 종이 위에서 가리키는 것이다.
+     ⛔⛔ 이 토큰 하나만 **인쇄물이다.** 색·투명도·좌표를 바꾸면 인쇄 결과가 달라져
+        `verify-print.py` 기준선을 갱신해야 한다. */
+  --marker-sign: rgba(255,232,0,.55);
+
+  /* ── Warning (§11 Privacy without Fear) ────────────────────────────
+     > Warning color is semantic, not decorative.
+     ⚠️ 빨강은 **실제 오류·위험·즉각적인 주의**에만 쓴다. 개인정보 안내처럼
+        「중요하지만 위험은 아닌」 문장은 아래 `--notice-*`(갈색 계열)를 쓴다.
+        지금 화면에는 이 규칙을 어긴 곳이 남아 있다(허브 빨간 띠, 인쇄 전 안내
+        빨간 상자, 아무것도 틀리지 않았는데 뜨는 `.step-warn`). 다음 단계 과제다. */
+  --warn:      #a12727;
+  --warn-face: #fdecec;
+  --warn-line: #f5b5b5;
+  --notice:      #7a5600;   /* 중요하지만 위험이 아닌 안내 — 짙은 갈색 */
+  --notice-face: #fff8e6;
+  --notice-line: #ffe19a;
+
+  /* ── Radius ────────────────────────────────────────────────────────
+     ⚠️ 지금 여권 한 파일에만 반경이 **13가지** 흩어져 있다(2·3·4·6·8·10·11·12·
+        14·16·18·20·999). 아래 여섯 단계로 모으는 것이 목표다. */
+  --r-xs:   4px;
+  --r-sm:   8px;
+  --r-md:  10px;    /* 가장 많이 쓰이는 값 */
+  --r-lg:  12px;
+  --r-xl:  18px;
+  --r-pill: 999px;
+
+  /* ── Shadow (§1 DON'T 강한 그림자) ─────────────────────────────────*/
+  --shadow-lift:  0 4px 20px rgba(0,0,0,.4);
+  --shadow-modal: 0 20px 60px rgba(0,0,0,.35);
+
+  /* ── Spacing ───────────────────────────────────────────────────────*/
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 22px;
+  --sp-6: 30px;
+
+  /* ── Typography (§16) ──────────────────────────────────────────────
+     글꼴은 하나만 쓴다. 관공서 PC 에 반드시 있는 것이어야 하고, 오프라인
+     설치본이라 웹폰트를 받을 수 없다. */
+  --ff: "Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
+  --fs-question: 34px;    /* 시민에게 말하는 큰 질문 */
+  --fs-lead:     21px;    /* 입력칸에 치는 글자 */
+  --fs-label:    18px;    /* 항목 라벨 */
+  --fs-body:     17px;    /* 본문 기본 */
+  --fs-help:   16.5px;    /* 「왜 묻는지」 */
+  --fs-small:  13.5px;    /* 행정적 보조 설명 */
+  /* Context Rail(§10)은 구조와 폭을 고정하고 **글자만** 크게 보기를 따른다 */
+  --fs-rail-num:   33px;  /* 진행 큰 숫자 */
+  --fs-rail-head:  15px;  /* 「준비하셨나요?」 같은 머리 */
+  --fs-rail-item:13.5px;  /* 목록 항목 */
+  --fs-rail-note:12.5px;  /* 안심 안내 본문 */
+  --fw-bold:   700;
+  --fw-heavy:  800;
+  --ls-tight: -.035em;    /* 큰 질문에만 */
+
+  /* ── Touch target — Input-Agnostic, Touch-Friendly ─────────────────
+     터치·마우스·물리키보드에서 **모두** 쓸 수 있어야 한다(2026.08.24 결정 §2).
+     ⚠️ **크기는 터치 기준을 유지한다.** 큰 표적은 마우스에서도 문제가 없지만
+        그 반대는 성립하지 않는다.
+     ⛔ hover 는 보조 효과로만 쓴다. **hover 에만 의존하는 정보·기능은 금지.** */
+  --touch-card:  132px;   /* 큰 선택 카드 최소 높이 */
+  --touch-field:  64px;   /* 글자 입력칸 높이 */
+  --touch-min:    48px;   /* 그 밖의 누를 수 있는 것의 최소 변 */
+
+  /* ── Layout (§2 LEFT / CENTER / RIGHT) ─────────────────────────────*/
+  --topbar-h:      74px;
+  --rail-w:       252px;
+  --rail-w-narrow:214px;  /* 1600px 이하 */
+  --question-max: 640px;  /* 질문 한 줄이 길어지지 않게 */
+  --cards-max:    700px;
+  /* 세 영역의 가로 배분. **1920×1080 실물을 보고 미세조정**할 수 있게 토큰으로 뺐다.
+     ⛔ 비율만 숫자로 빼서 `calc(var(--x)*1fr)` 로 쓰지 마라 — **`fr` 은 `calc()` 안에서
+        쓸 수 없다.** 선언 전체가 무효가 되어 3단이 한 줄로 무너진다(2026.08.24 에 실제로
+        그렇게 깨졌고 갈무리 용량이 절반으로 줄어 들통났다). 트랙 목록을 통째로 담는다. */
+  --cols:             minmax(0,1fr) minmax(0,1.08fr) var(--rail-w);
+  --cols-narrow:      minmax(0,1fr) minmax(0,1.02fr) var(--rail-w-narrow);
+  --cols-narrow-left: minmax(0,1.02fr) minmax(0,1fr) var(--rail-w-narrow);
+}
+
+/* ── 크게 보기 (§13) — Responsive Layout Mode ─────────────────────────
+   ⛔ **전체 화면 Zoom 이 아니다.** Paper 를 통째로 확대하는 기능도 아니다.
+      목적은 질문·입력·조작 UI 의 읽기와 조작 편의이고, CENTER Paper 는
+      **바뀐 영역 안에서 가능한 최대 크기**를 유지한다(fit-to-area).
+   ⚠️ RIGHT Context Rail 은 **구조와 폭을 그대로 두고 글자만** 키운다.
+      자유 Drag/Resize 는 만들지 않는다.
+   ⚠️ 아래는 전부 토큰이다 — 실물 화면을 보고 이 값만 만지면 된다. */
+html.big{
+  --fs-question:  40px;
+  --fs-lead:      24px;
+  --fs-label:     21px;
+  --fs-body:      19px;
+  --fs-help:      19px;
+  --fs-small:     15px;
+  --fs-rail-num:  38px;
+  --fs-rail-head: 17px;
+  --fs-rail-item:15.5px;
+  --fs-rail-note: 14px;
+  --touch-card:  150px;
+  --touch-field:  72px;
+  --touch-min:    56px;
+  --question-max:780px;
+  --cards-max:   820px;
+  /* LEFT 를 넓힌다 — CENTER Paper 는 남은 폭에 스스로 맞춰 줄어든다(fit-to-area).
+     RIGHT 는 폭 그대로다(글자만 커진다). */
+  --cols:             minmax(0,1.35fr) minmax(0,1fr) var(--rail-w);
+  --cols-narrow:      minmax(0,1.35fr) minmax(0,1fr) var(--rail-w-narrow);
+  --cols-narrow-left: minmax(0,1fr) minmax(0,1.35fr) var(--rail-w-narrow);
+}
+
+/* ── 공통 UI 규칙 ─────────────────────────────────────────────────────
+   9개 화면이 함께 지켜야 하는 것. 값이 아니라 규칙이라 `:root` 밖에 둔다. */
+
+/* §17 Interaction — 움직임은 상태를 설명할 때만. 줄여 달라고 한 사용자에게는 끈다.
+   ⚠️ JS 의 `scrollIntoView({behavior:"smooth"})` 는 CSS 로 꺼지지 않는다.
+      그쪽은 각 서식이 `matchMedia` 로 따로 본다. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* 개인정보 덮개·안내 모달은 **화면 전용**이다. 인쇄 CSS 가 숨기지 않으면 실수로
+   인쇄될 때 새까만 페이지가 나간다 — 덮개를 완전 불투명으로 올린 2026.08.24 에
+   함께 막았다(그전에는 `.985` 라 티가 덜 났을 뿐 같은 문제였다). */
+@media print{ #idleGuard,#printGuard,#printNotice{display:none !important;} }
+</style>
+<!--/DESIGN-TOKENS-->
 <style>
   :root{
     /* 대표색 3종 + 그라데이션. 기관 대표색을 환경설정에서 넣으면 아래 SITE-CONFIG
