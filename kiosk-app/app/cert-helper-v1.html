@@ -186,9 +186,18 @@
      ⛔ 비율만 숫자로 빼서 `calc(var(--x)*1fr)` 로 쓰지 마라 — **`fr` 은 `calc()` 안에서
         쓸 수 없다.** 선언 전체가 무효가 되어 3단이 한 줄로 무너진다(2026.08.24 에 실제로
         그렇게 깨졌고 갈무리 용량이 절반으로 줄어 들통났다). 트랙 목록을 통째로 담는다. */
-  --cols:             minmax(0,1fr) minmax(0,1.08fr) var(--rail-w);
-  --cols-narrow:      minmax(0,1fr) minmax(0,1.02fr) var(--rail-w-narrow);
-  --cols-narrow-left: minmax(0,1.02fr) minmax(0,1fr) var(--rail-w-narrow);
+  /* ⚠️ 2026.08.24 — 고정폭 RAIL 을 버리고 **비율**로 바꿨다. 종전 값(1 : 1.08 : 252px)은
+     1920 에서 794 : 858 : 252 = 약 3 : 3 : 1 이 되어 **질문면이 너무 넓고 종이가 좁았다.**
+     이제 세 칸 전부 `fr` 이라 화면이 커지든 작아지든 비율이 유지된다.
+       일반 보기  2 : 3 : 1   → 1920 에서 640 : 960 : 320
+       크게 보기  5 : 5 : 2   → 1920 에서 800 : 800 : 320  (아래 html.big)
+     RAIL 은 두 경우 모두 화면의 1/6 이라 폭이 변하지 않는다 — 「크게 보기에서 RAIL 은
+     구조와 폭을 그대로 두고 글자만 키운다」(동결 §3-3)가 이렇게 지켜진다. */
+  --cols:             minmax(0,2fr) minmax(0,3fr) minmax(0,1fr);
+  /* 좁은 화면에서도 비율이 같다 — 고정폭이 아니라 `fr` 이므로 저절로 줄어든다.
+     이름은 남겨 둔다(각 화면의 미디어 쿼리가 이 이름으로 참조한다). */
+  --cols-narrow:      minmax(0,2fr) minmax(0,3fr) minmax(0,1fr);
+  --cols-narrow-left: minmax(0,3fr) minmax(0,2fr) minmax(0,1fr);
 }
 
 /* ── 크게 보기 (§13) — Responsive Layout Mode ─────────────────────────
@@ -224,9 +233,9 @@ html.big{
   --cards-max:   820px;
   /* LEFT 를 넓힌다 — CENTER Paper 는 남은 폭에 스스로 맞춰 줄어든다(fit-to-area).
      RIGHT 는 폭 그대로다(글자만 커진다). */
-  --cols:             minmax(0,1.35fr) minmax(0,1fr) var(--rail-w);
-  --cols-narrow:      minmax(0,1.35fr) minmax(0,1fr) var(--rail-w-narrow);
-  --cols-narrow-left: minmax(0,1fr) minmax(0,1.35fr) var(--rail-w-narrow);
+  --cols:             minmax(0,5fr) minmax(0,5fr) minmax(0,2fr);
+  --cols-narrow:      minmax(0,5fr) minmax(0,5fr) minmax(0,2fr);
+  --cols-narrow-left: minmax(0,5fr) minmax(0,5fr) minmax(0,2fr);
 }
 
 /* ── 공통 UI 규칙 ─────────────────────────────────────────────────────
