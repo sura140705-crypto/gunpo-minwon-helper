@@ -250,34 +250,37 @@ html.big{
 <!--/DESIGN-TOKENS-->
 <style>
   :root{
-    /* 대표색 3종 + 그라데이션. 기관 대표색을 환경설정에서 넣으면 아래 SITE-CONFIG
-       블록이 이 네 값을 **한 색에서 계산해** 덮어쓴다.
-       ⛔ 이 네 이름은 **바꾸지 마라.** SITE-CONFIG 가 이 이름으로 값을 넣는다. */
+    /* 대표색 3종 + 그라데이션. SITE-CONFIG 가 이 이름으로 값을 넣는다.
+       ⛔ 네 이름을 바꾸지 마라. */
     --blue:#1b5fc0; --blue-dark:#164e9e; --blue-light:#eaf1fb;
     --grad:linear-gradient(135deg,hsl(215,75%,52%) 0%,hsl(215,75%,43%) 52%,hsl(215,79%,32%) 100%);
     --line:#d5d9df; --bg:#f2f4f7; --muted:#5b626c; --ink:#1a1c1f;
+    /* 세로로 늘어선 목록 카드의 최소 높이. 여권의 `--touch-card`(132px)는 두 칸
+       격자용이라 8개를 세로로 세우면 화면을 넘는다. 폭이 700px 가까이 되므로
+       표적 넓이는 충분하다(터치 최소 변 `--touch-min` 48px 을 크게 넘는다). */
+    --row-h:86px;
   }
   *{box-sizing:border-box;}
   html,body{
     margin:0;padding:0;background:var(--surface-zone);color:var(--ink);
     font-family:var(--ff);font-size:var(--fs-body);line-height:1.55;
   }
+  html.big{ --row-h:100px; }
 
   /* ═══════════════════════════════════════════════════════════════════
-     MAIN — 배치 1 (구조 동결 v1.1 §2·§3-2)
+     MAIN — Writing 과 **같은 세 영역**(`--cols`) 을 쓴다.
 
-     BAR / [ASK 위 · PAPER 아래] / RAIL 네 구역. 여권 Reference UI 와 **같은 어휘**를
-     쓴다(`.topbar`·`.card`·`.rail`…). 값은 전부 디자인 토큰에서 온다.
+     Start 화면을 두지 않기로 했으므로(2026.08.24) MAIN 다음이 곧 Writing 이다.
+     둘의 기하가 같으면 페이지가 바뀌어도 화면이 움직이지 않는다 —
+     ASK 는 질문·목록에서 질문·입력으로, PAPER 는 빈 서식에서 채워지는 서식으로
+     내용만 바뀐다.
 
-     ⛔ 네 구역은 상태가 바뀌어도 생성·삭제되지 않는다. 지금은 MAIN 하나뿐이지만
-        단계 3~5 에서 START·IDLE 이 같은 골격 안에서 열린다.
-     ⚠️ Stitch 시안에서 가져온 것은 **비례·여백·정렬·ASK↔PAPER 시각 관계**뿐이다.
-        메뉴 형태·카드 구조·아이콘·BAR/RAIL 구성·버튼은 시안을 근거로 바꾸지 않았다.
+     ⚠️ Stitch 시안에서 가져온 것은 **비례·여백·정렬·ASK↔PAPER 시각 관계**다.
+     ⛔ hover 에만 의존하는 정보를 만들지 않는다 — 첫 서식이 **처음부터** 떠 있고
+        hover·포커스는 그것을 바꿀 뿐이다. 터치에서도 종이가 늘 보인다.
      ═══════════════════════════════════════════════════════════════════ */
 
-  /* ── BAR ─────────────────────────────────────────────────────────────
-     ⚠️ 도구 칸을 `auto`(제 너비)로 두어 **기관명이 먼저 줄어들게** 한다.
-        버튼 폭을 깎아 맞추면 기관명이 긴 곳에서 두 줄로 접힌다(여권에서 겪었다). */
+  /* ── BAR ─────────────────────────────────────────────────────────────*/
   .topbar{
     display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) auto;
     align-items:center;gap:12px 20px;
@@ -303,88 +306,80 @@ html.big{
   .btn.ghost:hover{background:var(--surface-work);border-color:var(--border-strong);}
   .topbar .btn{font-size:14.5px;padding:9px 12px;white-space:nowrap;}
 
-  /* ── 배치 1 골격 ─────────────────────────────────────────────────────
-     ⚠️ 높이·스크롤은 **화면 전용**이다. 허브는 인쇄하지 않지만, 공통 블록이
-        인쇄 CSS 를 함께 갖고 있으므로 규칙을 여권과 같은 자리에 둔다. */
-  .layout{display:grid;grid-template-columns:minmax(0,1fr) var(--rail-w);}
+  /* ── 세 영역 골격 — Writing 과 같은 토큰 ─────────────────────────────*/
+  .layout{display:grid;grid-template-columns:var(--cols);}
   @media screen and (min-width:861px){
     body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
-    /* ⚠️ `static` 으로만 두면 아래 대표색 띠(`::after`)가 기댈 곳을 잃고
-       **화면 맨 아래**로 빠져나간다. `relative` 로 자리를 잡아 준다. */
     .topbar{flex:0 0 auto;position:relative;}
     .layout{flex:1 1 auto;min-height:0;}
-    .main-col,.rail-col{height:100%;min-height:0;}
+    .task-col,.form-col,.rail-col{height:100%;min-height:0;}
   }
-  .main-col{display:flex;flex-direction:column;min-width:0;overflow:auto;
-    background:var(--surface-work);}
+  .task-col{display:flex;flex-direction:column;min-width:0;overflow:auto;
+    background:var(--surface-work);padding:30px 34px 24px;}
+  .form-col{min-width:0;overflow:auto;background:var(--surface-zone);
+    padding:26px 26px 12px;position:relative;
+    display:flex;flex-direction:column;}
+  /* 서식이 놓인 자리를 가리키는 모서리 선 — 여권과 같은 표시 */
+  .form-col::before{content:"";position:absolute;left:25px;top:25px;width:94px;height:94px;
+    border-left:1px solid var(--hair);border-top:1px solid var(--hair);pointer-events:none;}
   .rail-col{min-width:0;background:var(--surface-rail);}
 
   /* ── ASK ─────────────────────────────────────────────────────────────*/
-  .ask{padding:34px 40px 8px;}
-  .ask-q{margin:0 0 22px;font-size:var(--fs-question);font-weight:var(--fw-heavy);
+  .ask-q{margin:0 0 6px;font-size:var(--fs-question);font-weight:var(--fw-heavy);
     line-height:1.28;letter-spacing:var(--ls-tight);}
+  .ask-sub{margin:0 0 20px;font-size:var(--fs-help);color:var(--ink-muted);}
 
-  /* 카드 4열 2행 (동결 §3-2). 기관이 4종만 취급하면 1행으로 줄고
-     아래 PAPER 띠가 그만큼 올라온다 — 골격은 그대로다. */
-  .cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;
-    margin:0 0 16px;}
-  @media (max-width:1500px){ .cards{grid-template-columns:repeat(3,minmax(0,1fr));} }
-  @media (max-width:1160px){ .cards{grid-template-columns:repeat(2,minmax(0,1fr));} }
-  @media (max-width:860px){  .cards{grid-template-columns:1fr;} }
-
-  /* 여권의 `.card` 와 같은 규칙. **큰 글씨 = 시민이 하려는 일 / 작은 글씨 = 행정명칭**
-     (철학 §3 Ask, Don't Form). ⚠️ 크기는 터치 기준을 유지한다(`--touch-card`). */
-  .card{display:flex;flex-direction:column;align-items:flex-start;gap:10px;width:100%;
-    min-height:var(--touch-card);padding:20px 22px;background:var(--paper);
+  /* 목록 카드 — **큰 글씨 = 시민이 하려는 일 / 작은 글씨 = 행정명칭**(철학 §3) */
+  .cards{display:grid;gap:10px;margin:0 0 14px;}
+  .card{display:flex;align-items:center;gap:14px;width:100%;
+    min-height:var(--row-h);padding:14px 18px;background:var(--paper);
     border:1.5px solid var(--border-strong);border-radius:var(--r-lg);
     text-align:left;cursor:pointer;font-family:inherit;color:inherit;
     transition:border-color .12s,background .12s;}
   .card:hover,.card:focus-visible{border-color:var(--blue);background:var(--blue-light);}
-  .card-ic{font-size:30px;line-height:1;flex:0 0 auto;}
-  .card-tx{display:flex;flex-direction:column;gap:5px;min-width:0;}
+  /* 지금 오른쪽에 떠 있는 서식 — hover 가 없는 터치에서도 **무엇이 보이는지** 알린다 */
+  .card.picked{border-color:var(--blue);background:var(--blue-light);
+    box-shadow:inset 3px 0 0 var(--blue);}
+  .card-ic{font-size:26px;line-height:1;flex:0 0 auto;}
+  .card-tx{display:flex;flex-direction:column;gap:3px;min-width:0;}
   .card-label{font-size:var(--fs-card);font-weight:var(--fw-heavy);color:var(--ink);
-    line-height:1.28;letter-spacing:-.02em;}
-  .card-formal{font-size:var(--fs-card-sub);color:var(--ink-muted);line-height:1.45;}
+    line-height:1.25;letter-spacing:-.02em;}
+  .card-formal{font-size:var(--fs-card-sub);color:var(--ink-muted);line-height:1.4;}
 
-  /* Human Handoff (철학 §8) — 여기 없으면 시민이 갇힌다.
-     ⚠️ 여권과 달리 창구 전환 화면이 없으므로 **그 자리에서 조용히 안내**한다. */
-  .card-sub{display:block;width:100%;margin:2px 0 0;padding:15px;
-    font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
+  /* Human Handoff (철학 §8) — 여기 없으면 시민이 갇힌다 */
+  .card-sub{display:block;width:100%;margin:auto 0 0;padding:14px;
+    font-family:inherit;font-size:15px;font-weight:var(--fw-bold);
     color:var(--ink-muted);background:var(--surface-work);
     border:1.5px dashed var(--border);border-radius:var(--r-lg);cursor:pointer;}
   .card-sub:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--paper);}
-  .staff-note{margin:12px 0 0;padding:14px 16px;font-size:16px;line-height:1.6;
+  .staff-note{margin:10px 0 0;padding:13px 15px;font-size:15px;line-height:1.6;
     color:var(--notice);background:var(--notice-face);
     border:1px solid var(--notice-line);border-radius:var(--r-md);}
   .staff-note:empty{display:none;}
 
-  /* ── PAPER 하단 띠 (동결 §4·§6) ───────────────────────────────────────
-     Generic Paper 는 **특정 실제 서식을 모사하지 않는다.** 제목 + 필드 4개뿐이고
-     값은 비어 있다. MAIN 에서는 **움직이지 않는다** — 선택 UI 와 경쟁시키지 않는다.
-     ⚠️ 종이의 **윗부분만** 보인다. 「책상 위에 놓인 종이」다. */
-  .paper-band{flex:0 0 auto;margin-top:auto;overflow:hidden;
-    background:var(--surface-zone);padding:22px 40px 0;
-    height:clamp(230px,36vh,440px);position:relative;}
-  /* 서식이 놓인 자리를 가리키는 모서리 선 — 여권 `.form-col::before` 와 같은 표시 */
-  .paper-band::before{content:"";position:absolute;left:39px;top:21px;width:94px;height:94px;
-    border-left:1px solid var(--hair);border-top:1px solid var(--hair);pointer-events:none;}
-  /* ⚠️ A4 비례를 준다. 그래야 띠가 종이를 잘라 **윗부분만** 보인다 —
-     「책상 위에 놓인 종이」다. 비례가 없으면 내용 높이만큼만 그려져
-     바닥이 보이고, 종이가 아니라 떠 있는 카드로 읽힌다. */
-  .gpaper{width:min(210mm,100%);aspect-ratio:210/297;margin:0 auto;
-    background:var(--paper);box-shadow:var(--paper-shadow);padding:30px 44px 40px;}
-  .gp-title{text-align:center;font-size:21px;font-weight:var(--fw-heavy);
-    letter-spacing:.24em;color:var(--ink);}
-  .gp-rule{height:2px;background:var(--ink);margin:14px 0 22px;}
-  .gp-row{display:grid;grid-template-columns:110px minmax(0,1fr);gap:16px;
-    align-items:center;padding:9px 0;border-bottom:1px solid var(--border);}
-  .gp-k{font-size:14.5px;color:var(--ink-muted);}
-  .gp-v{height:26px;border-radius:2px;background:var(--surface-work);}
+  /* ── PAPER — 고른 서식의 빈 신청서 ───────────────────────────────────
+     ⛔ 8종 실제 서식 배경을 허브에 싣지 않는다(범용·저사양 원칙 §19).
+        같은 컴포넌트가 제목과 항목만 바꿔 그린다.
+     ⚠️ 실제 개인정보가 입력된 것처럼 보이게 하지 않는다 — 칸은 비어 있다. */
+  .gpaper{width:min(210mm,100%);margin:0 auto;background:var(--paper);
+    box-shadow:var(--paper-shadow);padding:38px 46px 44px;flex:1 1 auto;}
+  .gp-title{text-align:center;font-size:23px;font-weight:var(--fw-heavy);
+    letter-spacing:.14em;color:var(--ink);}
+  .gp-rule{height:2px;background:var(--ink);margin:16px 0 26px;}
+  .gp-row{display:grid;grid-template-columns:132px minmax(0,1fr);gap:18px;
+    align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
+  .gp-k{font-size:15px;color:var(--ink-muted);}
+  .gp-v{height:30px;border-radius:2px;background:var(--surface-work);}
+  /* 서명란 — 한 줄로 둔다. 접히면 종이가 아니라 표처럼 읽힌다. */
+  .gp-sign{display:flex;justify-content:flex-end;align-items:flex-end;gap:10px;
+    margin-top:40px;white-space:nowrap;}
+  .gp-sign span{font-size:14.5px;color:var(--ink-muted);}
+  .gp-sign i{display:inline-block;font-style:normal;
+    border-bottom:1px solid var(--ink);width:150px;height:22px;}
+  .gp-note{flex:0 0 auto;margin:10px auto 0;width:min(210mm,100%);font-size:12.5px;
+    color:var(--ink-muted);text-align:center;}
 
-  /* ── RAIL (동결 §7) ───────────────────────────────────────────────────
-     ⛔ 영역을 생성·삭제하지 않는다. 상태에 따라 **내용과 가시 표현만** 바뀐다.
-     ⚠️ 「안심하고 작성하세요」는 `margin-top:auto` 로 **바닥에 고정**된다 —
-        어떤 상태에서도 같은 자리에 있어야 한다. */
+  /* ── RAIL ────────────────────────────────────────────────────────────*/
   .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
     padding:26px 20px 20px;}
   .rail-info{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
@@ -395,14 +390,11 @@ html.big{
   .rail-item{display:grid;grid-template-columns:16px 1fr;gap:8px;
     font-size:var(--fs-rail-item);line-height:1.45;color:#7b7f7d;}
   .rail-item .check{color:#b7b5af;font-weight:900;}
-  .rail-item.req{color:var(--ink);font-weight:var(--fw-bold);}
-  .rail-item.req .check{color:var(--blue);}
   .rail-item small{display:block;color:var(--ink-muted);font-size:11.5px;
     margin-top:2px;font-weight:400;}
   .rail-safe{margin-top:auto;border-top:1px solid var(--border);padding-top:16px;}
   .rail-safe .rail-head{font-size:var(--fs-rail-item);margin-bottom:7px;}
   .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:#5f6667;margin:6px 0;}
-  /* 이용 안내 — 레일 맨 아래. 늘 읽는 글이 아니라 조용히 둔다. */
   .screen-notice{flex:0 0 auto;border-top:1px solid var(--border);
     margin-top:16px;padding-top:14px;}
   .screen-notice h3{margin:0 0 7px;font-size:12.5px;font-weight:900;color:var(--ink-muted);}
@@ -411,19 +403,21 @@ html.big{
 
   :focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
 
-  /* 세로 화면·좁은 화면 — 질문 위 / PAPER 아래는 그대로 두고 RAIL 을 머리맡 띠로
-     (동결 ⑧: 세로도 같은 Mental Model). */
+  @media screen and (max-width:1600px){ .layout{grid-template-columns:var(--cols-narrow);} }
+
+  /* 세로 화면 — 질문·목록 위 / 종이 아래. RAIL 은 머리맡 가로 띠(동결 ⑧) */
   @media screen and (max-width:860px){
     .layout{grid-template-columns:1fr;}
-    .rail-col{order:1;} .main-col{order:2;}
+    .rail-col{order:1;} .task-col{order:2;} .form-col{order:3;}
     .rail{flex-direction:row;align-items:flex-start;gap:24px;
       padding:12px 20px;overflow-x:auto;}
     .rail-info{flex-direction:row;gap:24px;}
     .rail-safe{margin-top:0;border-top:0;padding-top:0;}
     .screen-notice{display:none;}
-    .ask{padding:24px 20px 8px;}
-    .paper-band{padding:16px 20px 0;height:clamp(160px,24vh,320px);}
-    .paper-band::before{display:none;}
+    .task-col{padding:22px 20px 16px;}
+    .form-col{padding:16px 20px 24px;}
+    .form-col::before{display:none;}
+    .card-sub{margin-top:12px;}
   }
 </style>
 <!--GUNPO-LOGO-->
@@ -533,7 +527,7 @@ html.big{
 <!--/SITE-CONFIG--></head>
 <body>
 
-<!-- ═══ BAR — 네 구역 중 하나. 어떤 상태에서도 사라지지 않는다(동결 §8) ═══ -->
+<!-- ═══ BAR — 어떤 상태에서도 사라지지 않는다 ═══ -->
 <header class="topbar">
   <div class="brand">
     <!--GUNPO-LOGO--><img class="gunpo-logo" src="data:image/png;base64,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" alt="군포시"><!--/GUNPO-LOGO-->
@@ -545,40 +539,32 @@ html.big{
   <div></div>
   <div class="actions">
     <span class="today" id="today"></span>
-    <!-- 크게 보기 — 고령자를 위한 별도 UI 가 아니라 누구나 쓰는 보기 방식이다(§13).
-         ⚠️ 저장하지 않는다. 다음 시민이 앞사람이 켜 둔 화면을 물려받지 않게 한다. -->
     <button class="btn ghost" id="btnBig" aria-pressed="false"
             title="질문과 글자를 크게 봅니다">🔍 크게 보기</button>
   </div>
 </header>
 
+<!-- ═══ Writing 과 같은 세 영역 (--cols) ═══ -->
 <div class="layout">
-  <!-- ═══ ASK 위 / PAPER 아래 ═══ -->
-  <main class="main-col">
-    <section class="ask">
-      <h2 class="ask-q">무엇을 하러 오셨나요?</h2>
-      <div class="cards" id="cards"></div>
-      <!-- Human Handoff — 여기 없으면 시민이 갇힌다(철학 §8) -->
-      <button type="button" class="card-sub" id="btnStaff">🤔 어느 것인지 모르겠어요 — 직원에게 여쭤볼게요</button>
-      <div class="staff-note" id="staffNote" role="status"></div>
-    </section>
 
-    <!-- ═══ PAPER — Generic Paper (동결 §4). 값은 비어 있고 움직이지 않는다 ═══
-         ⛔ 특정 실제 민원서식을 모사하지 않는다. 제목 + 필드 4개뿐이다.
-         ⛔ 실제 개인정보가 입력된 것처럼 보이게 하지 않는다. -->
-    <div class="paper-band">
-      <div class="gpaper" id="gpaper" aria-hidden="true">
-        <div class="gp-title">○ ○ ○ 신 청 서</div>
-        <div class="gp-rule"></div>
-        <div class="gp-row"><span class="gp-k">성명</span><span class="gp-v" data-gp="0"></span></div>
-        <div class="gp-row"><span class="gp-k">생년월일</span><span class="gp-v" data-gp="1"></span></div>
-        <div class="gp-row"><span class="gp-k">연락처</span><span class="gp-v" data-gp="2"></span></div>
-        <div class="gp-row"><span class="gp-k">주소</span><span class="gp-v" data-gp="3"></span></div>
-      </div>
-    </div>
+  <!-- ASK — 무엇을 하러 왔는지 묻고 고르게 한다 -->
+  <main class="task-col">
+    <h2 class="ask-q">무엇을 하러 오셨나요?</h2>
+    <p class="ask-sub">고르시면 오른쪽에 그 신청서가 나타납니다.</p>
+    <div class="cards" id="cards" role="list"></div>
+    <!-- Human Handoff — 여기 없으면 시민이 갇힌다(철학 §8) -->
+    <button type="button" class="card-sub" id="btnStaff">🤔 어느 것인지 모르겠어요 — 직원에게 여쭤볼게요</button>
+    <div class="staff-note" id="staffNote" role="status"></div>
   </main>
 
-  <!-- ═══ RAIL — 영역은 어떤 상태에서도 유지된다(동결 §7) ═══ -->
+  <!-- PAPER — 고른 서식의 빈 신청서.
+       ⛔ 실제 서식 배경을 싣지 않는다. 같은 컴포넌트가 제목·항목만 바꿔 그린다. -->
+  <section class="form-col" aria-live="polite">
+    <div class="gpaper" id="gpaper"></div>
+    <p class="gp-note">미리보기입니다. 실제 서식과 항목·배치가 다를 수 있습니다.</p>
+  </section>
+
+  <!-- RAIL — 영역은 어떤 상태에서도 유지된다 -->
   <aside class="rail-col">
     <div class="rail">
       <div class="rail-info" id="railInfo"></div>
@@ -639,6 +625,9 @@ var FORM_CATALOG = [
             { t:"수수료", s:"창구에서 결제합니다" },
             { t:"기존 여권", s:"가지고 계시면 함께 준비해 주세요", opt:true } ],
     scale:{ steps:15, minutes:5 },
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["한글 성명","주민등록번호","로마자 성명","본인 연락처","긴급 연락처"] },
     href:"passport-helper-v1.html" },
 
   { key:"birth", category:"family", icon:"\uD83D\uDC76",
@@ -646,6 +635,9 @@ var FORM_CATALOG = [
     keywords:["출생","아기","아이","태어","신고"], aliases:["출생신고"],
     desc:"출생자·부모·신고인 정보와 등록기준지 안내.",
     ready:[], scale:null,
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["출생자 성명","출생 일시","출생 장소","부·모 성명","신고인"] },
     href:"birth-helper-v1.html" },
 
   { key:"marriage", category:"family", icon:"\uD83D\uDC8D",
@@ -653,6 +645,9 @@ var FORM_CATALOG = [
     keywords:["결혼","혼인","신고"], aliases:["혼인신고"],
     desc:"혼인당사자·증인 2인·부모 정보 등 혼인신고서 작성 안내.",
     ready:[], scale:null,
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["남편 성명","아내 성명","등록기준지","증인 2인","신고인"] },
     href:"marriage-helper-v1.html" },
 
   { key:"death", category:"family", icon:"\uD83D\uDD4A\uFE0F",
@@ -660,6 +655,9 @@ var FORM_CATALOG = [
     keywords:["사망","돌아가","장례","신고"], aliases:["사망신고"],
     desc:"사망자·신고인·사망 일시와 장소 안내.",
     ready:[], scale:null,
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["사망자 성명","주민등록번호","사망 일시","사망 장소","신고인"] },
     href:"death-helper-v1.html" },
 
   { key:"naming", category:"family", icon:"\u270D\uFE0F",
@@ -667,6 +665,9 @@ var FORM_CATALOG = [
     keywords:["개명","이름","바꾸","신고"], aliases:["개명신고","이름변경"],
     desc:"개명 전·후 이름, 개명허가일자·법원, 신고인 안내.",
     ready:[], scale:null,
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["개명 전 이름","개명 후 이름","주민등록번호","허가일자·법원","신고인"] },
     href:"naming-helper-v1.html" },
 
   { key:"divorce", category:"family", icon:"\uD83D\uDCC4",
@@ -674,6 +675,9 @@ var FORM_CATALOG = [
     keywords:["이혼","친권","양육"], aliases:["이혼신고","친권자지정"],
     desc:"협의·재판상 이혼 구분, 친권자 지정 안내.",
     ready:[], scale:null,
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["남편 성명","아내 성명","이혼 구분","친권자 지정","신고인"] },
     href:"divorce-helper-v1.html" },
 
   /* ⚠️ 이 서식이 다루는 것은 **가족관계·기본·혼인관계·입양·친양자 5종**이다.
@@ -685,6 +689,9 @@ var FORM_CATALOG = [
     aliases:["가족관계증명서","기본증명서","혼인관계증명서","입양관계증명서","친양자입양관계증명서"],
     desc:"가족관계·기본·혼인관계·입양·친양자 증명서 발급을 한 곳에서 신청.",
     ready:[], scale:null,
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["신청인 성명","주민등록번호","증명서 종류","통수","사용 목적"] },
     href:"cert-helper-v1.html" },
 
   { key:"realestate", category:"property", icon:"\uD83C\uDFE0",
@@ -692,6 +699,9 @@ var FORM_CATALOG = [
     keywords:["부동산","집","매매","거래","계약"], aliases:["부동산거래신고","실거래신고"],
     desc:"매도인·매수인, 거래대상과 실제 거래가격 작성 안내. 계약 체결일부터 30일 이내에 신고해야 합니다.",
     ready:[], scale:null,
+    /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
+       화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
+    preview:{ fields:["매도인","매수인","소재지","실제 거래가격","계약 체결일"] },
     href:"realestate-helper-v1.html" }
 ];
 
@@ -737,17 +747,41 @@ function formatDate(d){
   return y+"년 "+m+"월 "+day+"일 ("+w+")";
 }
 
-/* 화면에 그려지는 서식 목록. **그리는 쪽과 누른 것을 읽는 쪽이 같은 목록을 봐야 한다** —
-   기관이 취급하지 않는 서식은 여기서 이미 빠진다(여권의 `cardsOf` 와 같은 규칙). */
+/* 그 기관이 취급하는 서식만. **그리는 쪽과 누른 것을 읽는 쪽이 같은 목록을 봐야 한다.** */
 function visibleForms(){
   return FORM_CATALOG.filter(function(f){ return formOn(f.key); });
 }
 
-/* MAIN 카드 — **큰 글씨 = 시민이 하려는 일 / 작은 글씨 = 정확한 행정명칭**
-   (철학 §3 Ask, Don't Form · 동결 §3-2).
-   ⛔ 「이용 가능 / 준비 중」 배지는 쓰지 않는다. 전부 같은 값이면 정보가 아니라 소음이다(§14). */
+/* ── 지금 오른쪽에 떠 있는 서식 ──────────────────────────────────────────
+   ⛔ **hover 에만 의존하지 않는다**(2026.08.24 결정 §2). 화면에 들어오면 첫 서식이
+      이미 떠 있고, hover·키보드 포커스는 그것을 잠깐 바꿀 뿐이다. 터치에는 hover 가
+      없으므로, 이렇게 해야 터치에서도 종이가 늘 보인다.
+   `picked` = 눌러서 고른 것(터치 기준) · `shown` = 지금 그려진 것(hover 포함) */
+var picked = null;
+
+function renderPaper(f){
+  if(!f) return;
+  var rows=(f.preview&&f.preview.fields||[]).map(function(k){
+    return '<div class="gp-row"><span class="gp-k">'+esc(k)+'</span><span class="gp-v"></span></div>';
+  }).join("");
+  document.getElementById("gpaper").innerHTML =
+    '<div class="gp-title">'+esc(f.formal)+'</div><div class="gp-rule"></div>'+rows+
+    '<div class="gp-sign"><span></span><span>신청인 <i></i> (서명 또는 인)</span></div>';
+}
+
+function showPaper(key){ renderPaper(formByKey(key)); }
+
+function pick(key){
+  picked=key;
+  [].forEach.call(document.querySelectorAll(".card"),function(n){
+    n.classList.toggle("picked", n.getAttribute("data-key")===key);
+    n.setAttribute("aria-current", n.getAttribute("data-key")===key ? "true" : "false");
+  });
+  showPaper(key);
+}
+
 function cardHtml(f){
-  return '<button type="button" class="card" data-key="'+esc(f.key)+'">'
+  return '<button type="button" class="card" role="listitem" data-key="'+esc(f.key)+'">'
     + '<span class="card-ic" aria-hidden="true">'+f.icon+'</span>'
     + '<span class="card-tx">'
     +   '<span class="card-label">'+esc(f.citizen)+'</span>'
@@ -760,9 +794,7 @@ function renderCards(){
   document.getElementById("cards").innerHTML = visibleForms().map(cardHtml).join("");
 }
 
-/* RAIL 내용 — MAIN 상태.
-   ⚠️ 위쪽은 상태가 바뀔 때만 바뀌고, 아래 「안심하고 작성하세요」는 **바닥 고정**이다.
-      단계 3 에서 START 가 열리면 위쪽만 「준비하셨나요?」로 바뀐다(동결 §7). */
+/* RAIL — MAIN 상태. 아래 「안심하고 작성하세요」는 바닥 고정이다(동결 §7). */
 function renderRailInfo(){
   var help=[["1","왜 묻는지 알려 드립니다","그 칸이 왜 필요한지 함께 적어 둡니다."],
             ["2","쉬운 말로 여쭤봅니다","서식의 용어 대신 평소 쓰는 말로 묻습니다."],
@@ -773,8 +805,7 @@ function renderRailInfo(){
       esc(r[1])+'<small>'+esc(r[2])+'</small></div></div>'; }).join("")+
     '</div></div>'+
     /* 종전에는 이 내용이 화면 상단의 **빨간 띠**였다. 개인정보 안내는 중요하지만
-       위험이 아니다 — Red 는 실제 오류·진행불가·임박한 파괴적 상태에만 쓴다(철학 §11).
-       자리도 여권과 같은 곳(레일 바닥)으로 옮겨 8종과 어휘를 맞췄다. */
+       위험이 아니다 — Red 는 실제 오류·진행불가·임박한 파괴적 상태에만(철학 §11). */
     '<div class="rail-safe"><div class="rail-head">안심하고 작성하세요</div>'+
     '<p>적으신 내용은 이 화면에서만 쓰이고 어디에도 저장·전송되지 않습니다.</p>'+
     '<p>작성이 끝나면 종이로 인쇄해 창구에 내시면 됩니다. 접수·전송은 하지 않습니다.</p>'+
@@ -782,20 +813,25 @@ function renderRailInfo(){
     '<p>공용 PC 입니다. 사용 후에는 창을 닫아 개인정보가 남지 않게 해 주세요.</p></div>';
 }
 
-/* 서식을 골랐을 때. ⚠️ 단계 3 에서 여기가 **START 상태 전환**으로 바뀐다 —
-   지금은 곧바로 그 서식으로 간다(허브가 계속 동작해야 하므로). */
 function chooseForm(key){
   var f=formByKey(key);
   if(f && f.href) location.href=f.href;
 }
 
 function bindEvents(){
-  document.getElementById("cards").addEventListener("click", function(e){
-    var b=e.target.closest("[data-key]");
-    if(b) chooseForm(b.getAttribute("data-key"));
+  var list=document.getElementById("cards");
+  list.addEventListener("click", function(e){
+    var b=e.target.closest("[data-key]"); if(b) chooseForm(b.getAttribute("data-key"));
   });
-  /* Human Handoff — 여권처럼 창구 전환 화면으로 보내지 않고 그 자리에서 안내한다.
-     허브에는 아직 고른 민원이 없어 창구에 넘길 사유 코드가 없기 때문이다. */
+  /* hover·포커스는 **보조**다. 미리보기만 잠깐 바꾸고, 벗어나면 고른 것으로 돌아온다. */
+  list.addEventListener("mouseover", function(e){
+    var b=e.target.closest("[data-key]"); if(b) showPaper(b.getAttribute("data-key"));
+  });
+  list.addEventListener("mouseleave", function(){ showPaper(picked); });
+  list.addEventListener("focusin", function(e){
+    var b=e.target.closest("[data-key]"); if(b) pick(b.getAttribute("data-key"));
+  });
+
   document.getElementById("btnStaff").addEventListener("click", function(){
     var n=document.getElementById("staffNote");
     n.innerHTML = n.innerHTML ? "" :
@@ -817,6 +853,8 @@ function init(){
   renderCards();
   renderRailInfo();
   bindEvents();
+  var first=visibleForms()[0];
+  if(first) pick(first.key);          // 처음부터 한 장이 떠 있다(hover 없는 터치 대비)
 }
 init();
 </script>
