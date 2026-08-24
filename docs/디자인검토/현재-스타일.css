@@ -477,7 +477,9 @@ html.big{
      기관마다 이름이 다르다(`rebrand.py`). 그래서 수치가 아니라 구조로 막는다.
      기관명·서식 이름에는 이미 말줄임(ellipsis)이 걸려 있어 줄어도 깨지지 않는다. */
   .topbar{
-    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) auto;
+    /* 양옆을 **같은 1fr** 로 두어야 가운데(서식 이름)가 화면 정중앙에 온다.
+       한쪽만 1fr 이면 남는 폭이 한쪽으로 몰려 제목이 치우친다(2026.08.24 시안). */
+    display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
     align-items:center;gap:12px 20px;
     padding:0 24px;min-height:74px;background:var(--head);border-bottom:0;
     position:sticky;top:0;z-index:20;
@@ -486,6 +488,13 @@ html.big{
      `.topbar` 는 인쇄에서 통째로 숨겨지므로 인쇄물과 무관하다. */
   .topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
     background:var(--grad);}
+  /* 왼쪽 묶음 = 기관 표기 + **담당자 점검용 도구**. 시안대로 시민 동선(오른쪽)에서
+     떼어 놓았다. ⚠️ `.brand` 만 줄어들게 해서 기관명이 긴 곳에서도 버튼이 안 접힌다. */
+  .lead{display:flex;align-items:center;gap:16px;min-width:0;}
+  .tools-test{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+  /* ⚠️ 좁아지면 담당자용 도구를 먼저 감춘다. 그래야 양옆 폭이 같게 유지되어
+     제목이 중앙에 남고, 시민이 쓰는 버튼이 두 줄로 접히지 않는다. */
+  @media screen and (max-width:1500px){ .tools-test{display:none;} }
   .brand{display:flex;align-items:center;gap:13px;min-width:0;}
   .brand-tx{min-width:0;}
   .brand b{display:block;font-size:17px;color:var(--blue-dark);letter-spacing:-.02em;
