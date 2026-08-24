@@ -485,6 +485,123 @@ html.big{
   </div>
 </main>
 
+<!--FORM-CATALOG v1-->
+<script>
+"use strict";
+/* ══════════════════════════════════════════════════════════════════════
+   서식 카탈로그 (2026.08.24 신설) — `docs/디자인검토/2026.08.24-Main-Idle-Start-구조동결-v1.md` §10
+
+   MAIN 과 START 가 **같은 데이터 하나**를 읽는다. 종전에는 서식 목록이 `SECTIONS`
+   배열에 화면 표시용으로만 박혀 있어, 서식을 늘릴 때 이 파일·`kiosk-app/main.js`·
+   `admin/settings.html` 세 곳을 따로 고쳐야 했다.
+
+   ⚠️ 이 블록은 **`index.html` 안에만 둔다.** 읽는 것이 MAIN·START 뿐이고 둘 다 이 파일에
+      있다. 8종 서식은 자기 제목과 준비물을 이미 갖고 있어 쓸 일이 없다 — 9곳에 복제하면
+      얻는 것 없이 갈라질 곳만 늘린다(동결 v1.1 에서 v1 의 9화면 복제를 취소했다).
+
+   ⛔ `key` 를 바꾸지 마라. `kiosk-app/main.js` 의 `FORM_KEYS` 와 환경설정 창의 체크박스가
+      같은 이름을 쓴다. 그 기관이 취급하지 않는 민원은 카드가 아예 뜨지 않는다.
+
+   ── 필드 ────────────────────────────────────────────────────────────
+   citizen   시민이 하려는 일. **MAIN 카드의 큰 글씨**(철학 §3 Ask, Don't Form)
+   formal    정확한 행정서식명. **MAIN 카드의 작은 글씨** · 창구와 말이 통해야 한다
+   category  보조 분류. ⚠️ 1차 탐색을 강제하지 않는다 — 20종 이하에서는 화면에 드러내되
+             카드를 고르는 길은 언제나 카드 자신이다
+   keywords  시민이 쓸 말 · aliases 행정 표기 변형. **검색용이고 UI 는 20종 넘을 때 붙인다**
+   desc      ⚠️ 지금 MAIN 카드가 쓰는 긴 설명. 동결안의 MAIN 은 이것을 쓰지 않는다 —
+             단계 2 에서 카드에서 빠진다. 문장은 버리지 않고 여기 둔다
+   ready     **경로와 무관한** 기본 준비물. START 가 읽는다.
+             ⛔ 경로가 정해진 뒤의 추가 준비물은 각 서식이 맡는다(여권 `SCREENS.ready`)
+             ⚠️ 비어 있으면 START 는 준비물 구역을 내지 않는다 — **없는 것을 지어내지 마라**
+   scale     대략 몇 가지를 묻고 몇 분 걸리는지. null 이면 START 가 그 줄을 내지 않는다
+
+   ⚠️ `citizen` 문구는 **Reference Text 가 아니다.** 현장 직원 검토 대상이라 여기 한 곳에
+      모아 두었다 — 문구만 갈아 끼우면 된다.
+   ══════════════════════════════════════════════════════════════════════ */
+var FORM_CATALOG = [
+  { key:"passport", category:"travel", icon:"\uD83D\uDEC2",
+    citizen:"여권 만들기", formal:"여권발급신청서",
+    keywords:["해외","여행","출국","여권"], aliases:["여권발급","여권신청","여권재발급"],
+    desc:"신규·재발급 신청서 작성 안내. 로마자 성명, 사증 면수·유효기간, 미성년자 동의서·위임장까지 도와드립니다.",
+    /* 여권의 `readyItems()` 중 **경로와 무관한 것만** 옮겼다. 미성년·대리 경로에서
+       더 필요한 서류(가족관계 서류·법정대리인 신분증·대리인 신분증)는 여권이 맡는다. */
+    ready:[ { t:"신분증", s:"접수할 때 창구에서 확인합니다" },
+            { t:"여권용 사진 1장", s:"6개월 이내 · 흰 배경 · 창구에서 붙입니다" },
+            { t:"수수료", s:"창구에서 결제합니다" },
+            { t:"기존 여권", s:"가지고 계시면 함께 준비해 주세요", opt:true } ],
+    scale:{ steps:15, minutes:5 },
+    href:"passport-helper-v1.html" },
+
+  { key:"marriage", category:"family", icon:"\uD83D\uDC8D",
+    citizen:"혼인 신고하기", formal:"혼인신고서",
+    keywords:["결혼","혼인","신고"], aliases:["혼인신고"],
+    desc:"혼인당사자·증인 2인·부모 정보 등 혼인신고서 작성 안내.",
+    ready:[], scale:null,
+    href:"marriage-helper-v1.html" },
+
+  { key:"birth", category:"family", icon:"\uD83D\uDC76",
+    citizen:"아이 출생 신고하기", formal:"출생신고서",
+    keywords:["출생","아기","아이","태어","신고"], aliases:["출생신고"],
+    desc:"출생자·부모·신고인 정보와 등록기준지 안내.",
+    ready:[], scale:null,
+    href:"birth-helper-v1.html" },
+
+  { key:"death", category:"family", icon:"\uD83D\uDD4A\uFE0F",
+    citizen:"사망 신고하기", formal:"사망신고서",
+    keywords:["사망","돌아가","장례","신고"], aliases:["사망신고"],
+    desc:"사망자·신고인·사망 일시와 장소 안내.",
+    ready:[], scale:null,
+    href:"death-helper-v1.html" },
+
+  { key:"naming", category:"family", icon:"\u270D\uFE0F",
+    citizen:"개명 신고하기", formal:"개명신고서",
+    keywords:["개명","이름","바꾸","신고"], aliases:["개명신고","이름변경"],
+    desc:"개명 전·후 이름, 개명허가일자·법원, 신고인 안내.",
+    ready:[], scale:null,
+    href:"naming-helper-v1.html" },
+
+  { key:"divorce", category:"family", icon:"\uD83D\uDCC4",
+    citizen:"이혼·친권자 신고하기", formal:"이혼(친권자 지정)신고서",
+    keywords:["이혼","친권","양육"], aliases:["이혼신고","친권자지정"],
+    desc:"협의·재판상 이혼 구분, 친권자 지정 안내.",
+    ready:[], scale:null,
+    href:"divorce-helper-v1.html" },
+
+  /* ⚠️ 이 서식이 다루는 것은 **가족관계·기본·혼인관계·입양·친양자 5종**이다.
+     **주민등록 등·초본은 포함되지 않는다** — 「서류 떼기」처럼 넓은 말을 쓰면
+     등본 떼러 온 분이 이 카드를 누른다. 문구는 직원 검토 대상이다. */
+  { key:"cert", category:"cert", icon:"\uD83E\uDDFE",
+    citizen:"가족관계증명서 발급받기", formal:"증명서 발급신청",
+    keywords:["증명서","가족관계","기본증명","혼인관계","발급"],
+    aliases:["가족관계증명서","기본증명서","혼인관계증명서","입양관계증명서","친양자입양관계증명서"],
+    desc:"가족관계·기본·혼인관계·입양·친양자 증명서 발급을 한 곳에서 신청.",
+    ready:[], scale:null,
+    href:"cert-helper-v1.html" },
+
+  { key:"realestate", category:"property", icon:"\uD83C\uDFE0",
+    citizen:"부동산 거래 신고하기", formal:"부동산거래계약 신고서",
+    keywords:["부동산","집","매매","거래","계약"], aliases:["부동산거래신고","실거래신고"],
+    desc:"매도인·매수인, 거래대상과 실제 거래가격 작성 안내. 계약 체결일부터 30일 이내에 신고해야 합니다.",
+    ready:[], scale:null,
+    href:"realestate-helper-v1.html" }
+];
+
+/* 보조 분류. ⚠️ 1차 탐색을 강제하는 자리가 아니다(동결 §2 IA).
+   ⚠️ 여기 순서가 화면에 나오는 순서다. */
+var FORM_CATEGORIES = [
+  { id:"travel",   title:"여권",             sub:"여권 발급 신청" },
+  { id:"family",   title:"가족관계등록 신고",  sub:"출생·혼인·이혼·사망·개명 신고서" },
+  { id:"cert",     title:"증명서 발급",       sub:"가족관계·기본·혼인관계 등 각종 증명서" },
+  { id:"property", title:"부동산",            sub:"부동산 거래 신고" }
+];
+
+/* 카탈로그에서 한 건 찾기 — START 가 쓴다 */
+function formByKey(key){
+  for(var i=0;i<FORM_CATALOG.length;i++) if(FORM_CATALOG[i].key===key) return FORM_CATALOG[i];
+  return null;
+}
+</script>
+<!--/FORM-CATALOG-->
 <script>
 "use strict";
 
@@ -496,47 +613,20 @@ var ORG_CONFIG = {
 };
 if(window.__site) ORG_CONFIG = window.__site.org(ORG_CONFIG);
 
-/* 서비스 목록 (섹션별). href 있으면 이용 가능, 없으면 준비 중.
-   새 도우미를 완성하면 해당 항목에 href만 채우면 바로 연결됩니다.
-
-   `key` 는 **취급 서식 설정**과 맞물리는 이름입니다(환경설정 창의 체크박스).
-   그 기관이 취급하지 않는 민원은 카드가 아예 뜨지 않습니다 — 예를 들어 여권은
-   시·군·구청만 취급하므로, 취급하지 않는 곳에서 눌러 들어가면 헛걸음이 됩니다.
-   설정이 없는 웹 배포본에서는 전부 켜진 것으로 봅니다. */
-var SECTIONS = [
-  {
-    title:"여권",
-    sub:"여권 발급 신청",
-    items:[
-      { key:"passport", icon:"🛂", title:"여권발급신청서", desc:"신규·재발급 신청서 작성 안내. 로마자 성명, 사증 면수·유효기간, 미성년자 동의서·위임장까지 도와드립니다.", href:"passport-helper-v1.html" }
-    ]
-  },
-  {
-    title:"가족관계등록 신고",
-    sub:"출생·혼인·이혼·사망·개명 신고서",
-    items:[
-      { key:"marriage", icon:"💍", title:"혼인신고서", desc:"혼인당사자·증인 2인·부모 정보 등 혼인신고서 작성 안내.", href:"marriage-helper-v1.html" },
-      { key:"birth", icon:"👶", title:"출생신고서", desc:"출생자·부모·신고인 정보와 등록기준지 안내.", href:"birth-helper-v1.html" },
-      { key:"death", icon:"🕊️", title:"사망신고서", desc:"사망자·신고인·사망 일시와 장소 안내.", href:"death-helper-v1.html" },
-      { key:"naming", icon:"✍️", title:"개명신고서", desc:"개명 전·후 이름, 개명허가일자·법원, 신고인 안내.", href:"naming-helper-v1.html" },
-      { key:"divorce", icon:"📄", title:"이혼(친권자 지정)신고서", desc:"협의·재판상 이혼 구분, 친권자 지정 안내.", href:"divorce-helper-v1.html" }
-    ]
-  },
-  {
-    title:"증명서 발급",
-    sub:"가족관계·기본·혼인관계 등 각종 증명서",
-    items:[
-      { key:"cert", icon:"🧾", title:"증명서 발급신청", desc:"가족관계·기본·혼인관계·입양·친양자 증명서 발급을 한 곳에서 신청.", href:"cert-helper-v1.html" }
-    ]
-  },
-  {
-    title:"부동산",
-    sub:"부동산 거래 신고",
-    items:[
-      { key:"realestate", icon:"🏠", title:"부동산거래계약 신고서", desc:"매도인·매수인, 거래대상과 실제 거래가격 작성 안내. 계약 체결일부터 30일 이내에 신고해야 합니다.", href:"realestate-helper-v1.html" }
-    ]
-  }
-];
+/* 화면에 뿌릴 목록. **데이터는 위 FORM-CATALOG 가 원본**이고 여기서는 모양만 만든다.
+   종전에는 이 배열에 서식 목록이 직접 박혀 있었다(2026.08.24 에 카탈로그로 옮겼다).
+   ⚠️ `title` 에 `formal`(행정서식명)을 넣는 것은 **지금 화면을 그대로 두기 위한 것**이다.
+      동결안의 MAIN 은 `citizen` 을 큰 글씨로, `formal` 을 작은 글씨로 낸다 — 단계 2 에서
+      카드 구조를 바꿀 때 이 파생도 함께 바뀐다. */
+var SECTIONS = FORM_CATEGORIES.map(function(c){
+  return {
+    title:c.title, sub:c.sub,
+    items:FORM_CATALOG.filter(function(f){ return f.category===c.id; })
+      .map(function(f){
+        return { key:f.key, icon:f.icon, title:f.formal, desc:f.desc, href:f.href };
+      })
+  };
+});
 
 /* 취급 서식 필터. 설정이 없으면(웹 배포본) 전부 켜진 것으로 본다. */
 function formOn(key){
