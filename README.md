@@ -80,6 +80,7 @@ gunpo_minwon/
 | `python tools/check-site-block.py [--fix]` | 기관별 설정 블록(`<!--SITE-CONFIG v1-->`)이 9개 화면에서 같은지 |
 | `python tools/check-design-tokens.py [--fix]` | 디자인 토큰 블록(`<!--DESIGN-TOKENS v1-->`)이 9개 화면에서 같은지 |
 | `python tools/verify-site-config.py [--preview …]` | **화면 회귀 검증** — 환경설정 값이 화면에 실제로 걸리는지(6가지 조합) |
+| `python tools/make-form-previews.py [--check]` | 허브 Main 의 서식 미리보기 그림(8종 1쪽 축소본) → `index.html` 의 FORM-IMAGES 블록 |
 | `python tools/design-shots.py [--only …]` | 디자인 검토용 화면 갈무리 → `docs/디자인검토/shots/` + `현재-스타일.css` |
 | `python tools/design-bundle.py` | 그 자료를 밖에 넘길 묶음으로 → `_디자인검토/`(폴더 + zip) |
 | `tools/calibration-sheet.html` | **프린터 검수지** — 인쇄해서 기기별 인쇄 불가 영역·배율을 재고 기록(설치 검수용) |
