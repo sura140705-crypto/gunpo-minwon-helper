@@ -50,23 +50,59 @@ SHOTS = [
      "", "다른 기관이 대표색을 초록으로 바꾸고 여권을 끈 상태. 색은 기관마다 달라진다."),
 
     ("pass-01-경로선택", "passport-helper-v1.html", {}, "",
-     "여권 첫 화면. 2026.08 개편으로 큰 터치 카드가 됐다 — 나머지 7종에는 이 흐름이 없다."),
+     "여권 첫 화면. 2026.08.21 개편으로 **세 영역**(질문면·서식·안내 기둥)이 됐다 — "
+     "나머지 7종에는 이 흐름이 없다."),
     ("pass-02-주민번호", "passport-helper-v1.html", {},
      CLICK + 'click("제 여권"); click("확인했습니다"); '
              'state.data.nameKor="홍길동"; goNext(); goNext();',
-     "카드와 입력칸이 한 화면에 같이 있는 경우(선택 → 그 자리에서 입력칸이 열린다)."),
+     "카드와 입력칸이 한 화면에 같이 있는 경우(선택 → 그 자리에서 입력칸이 열린다). "
+     "왼쪽 아래 빨간 줄은 **아직 안 적었다는 표시**다 — 틀렸다는 뜻이 아니다."),
     ("pass-03-입력화면", "passport-helper-v1.html", {},
      CLICK + 'click("제 여권"); click("확인했습니다"); goNext();',
-     "글자를 치는 화면. 왼쪽은 실제 서식, 오른쪽이 안내 패널이다."),
+     "글자를 치는 화면. 왼쪽이 질문면, 가운데가 실제 인쇄될 서식, 오른쪽이 안내 기둥이다."),
     ("pass-04-최종확인", "passport-helper-v1.html", {},
      'fillSample("adult"); renderAll(); state.step=flow().length; renderAll();',
-     "인쇄 직전 요약. 빈칸의 뜻을 6가지로 구분해 보여 준다."),
+     "인쇄 직전 요약. 줄마다 「수정」이 붙어 그 자리에서 고치러 간다(2026.08.21 신설). "
+     "[다음] 자리를 인쇄 버튼이 받는다."),
     ("pass-05-창구전환", "passport-helper-v1.html", {},
      'toCounter("P-04"); renderAll();',
      "창구로 넘기는 화면. 오류가 아니라 정상 완료 유형 중 하나로 설계했다."),
     ("pass-06-작성예시", "passport-helper-v1.html", {},
      'fillSample("adult"); renderAll();',
-     "작성예시(가상 인물)를 채운 상태. 왼쪽 서식에 값이 얹힌다."),
+     "작성예시(가상 인물)를 채운 상태. 가운데 서식에 값이 얹힌다."),
+    ("pass-07-작성전준비", "passport-helper-v1.html", {},
+     CLICK + 'click("제 여권"); click("확인했습니다");',
+     "「작성 전 준비」(2026.08.21 신설). 무엇을 들고 와야 하는지 한 번 보여 준다 — "
+     "⛔ 없어도 막지 않는다. 같은 목록이 오른쪽 기둥에 작성 내내 남는다."),
+    ("pass-08-공동친권자", "passport-helper-v1.html", {},
+     'fillSample("minor"); state.data.guardian2Name=""; state.data.guardian2Rel="";'
+     'state.step=flow().indexOf("guardian2")+1; renderAll();',
+     "「공동친권자」(2026.08.21 신설, 미성년 경로). 앞에서 적은 긴급연락처가 부·모면 "
+     "그분을 카드로 그대로 제안한다. 전부 선택이라 비워 두어도 된다."),
+    # ── 크게 보기 (2026.08.24 신설, §13) ─────────────────────────────────
+    # ⛔ 전체 화면 Zoom 이 아니다. 같은 질문 화면을 나란히 놓고 봐야 판단이 된다.
+    ("pass-10a-일반보기", "passport-helper-v1.html", {},
+     CLICK + 'click("제 여권"); click("확인했습니다"); click("확인했습니다");',
+     "「성명」 화면 — 일반 보기. 아래 `pass-10b` 와 같은 화면이다."),
+    ("pass-10b-크게보기", "passport-helper-v1.html", {},
+     CLICK + 'click("제 여권"); click("확인했습니다"); click("확인했습니다");'
+             'document.getElementById("btnBig").click();',
+     "같은 화면 — 크게 보기. 질문면이 넓어지고 글자·입력칸·카드가 커지며, "
+     "가운데 Paper 는 남은 폭에 스스로 맞춰진다(fit-to-area). 오른쪽 기둥은 폭 그대로 글자만 커진다."),
+    # ── Validation 표시 시점 (2026.08.24, 결정 §3) ───────────────────────
+    ("pass-11a-검증전", "passport-helper-v1.html", {},
+     CLICK + 'click("제 여권"); click("확인했습니다"); click("확인했습니다");',
+     "화면에 막 들어선 상태. **경고가 없다** — 아무것도 하지 않았으므로 정상이다. "
+     "종전에는 이 자리에 빨간 상자로 「아직 입력하지 않은 항목이 있어요」가 떠 있었다."),
+    ("pass-11b-검증후", "passport-helper-v1.html", {},
+     CLICK + 'click("제 여권"); click("확인했습니다"); click("확인했습니다");'
+             'document.getElementById("btnNext").click();',
+     "빈칸인 채로 [다음]을 누른 뒤. **그때 처음** 알리고, 어느 칸인지 이름을 불러 준다."),
+    ("pass-09-로마자이름", "passport-helper-v1.html", {},
+     'fillSample("adult"); state.data.romanSur=""; state.data.romanGiven="";'
+     'state.step=flow().indexOf("roman")+1; renderAll();',
+     "로마자 성명. `시안/2026.08.21-로마자이름-시안.png` 이 이 화면의 시안이었다 — "
+     "무엇을 따르고 무엇을 따르지 않았는지는 2회차 문서 §3 에 적혀 있다."),
 
     ("form-01-혼인-초기", "marriage-helper-v1.html", {}, "",
      "여권 말고 다른 서식의 **빈 첫 화면**. 카드가 없고 곧바로 입력 폼이다."),
@@ -82,10 +118,26 @@ SHOTS = [
     ("form-08-부동산", "realestate-helper-v1.html", {}, SAMPLE,
      "부동산거래계약 신고서. 2쪽짜리라 세로로 가장 길다."),
 
-    ("etc-01-무동작경고", "index.html", {},
-     'var s=document.createElement("script"); s.textContent="";'
-     'document.dispatchEvent(new Event("__none"));',
-     "(참고) 개인정보 보호 오버레이는 3분 무동작 뒤에 뜬다 — 이 갈무리에는 담기지 않는다."),
+    # ── 화면 초기화 3종 (2026.08.23 추가) ────────────────────────────────
+    # 「뒷사람에게 앞사람 내용이 보이면 안 된다」를 지키는 장치다. 시간이 지나야 뜨는
+    # 화면이라 손으로는 찍기 어렵다 — **환경설정 값을 줄여·늘려** 갈무리 안에서 띄운다.
+    # ⚠️ 앱 코드는 건드리지 않는다. `window.__kioskCfg` 는 키오스크가 실제로 쓰는 통로다
+    #    (`idleMs`·`printedMs`). 여기서는 그 값만 짧게·길게 준다.
+    ("reset-01-무동작경고", "passport-helper-v1.html", {"idleMs": 30500},
+     'fillSample("adult"); renderAll();',
+     "무동작 경고. 실제로는 3분 무동작 뒤(마지막 30초)에 뜬다 — 갈무리에서는 "
+     "`idleMs` 를 30.5초로 줄여 띄웠다. 숫자는 1초마다 줄어든다."),
+    ("reset-02-인쇄전안내", "passport-helper-v1.html", {},
+     'fillSample("adult"); renderAll();'
+     'window.__printNotice("실제 크기로 인쇄해야 여권 판독기가 신청서를 정확히 읽습니다.",'
+     'function(){});',
+     "[인쇄]를 누르면 먼저 뜨는 안내. ①개인정보 ②여백 없음·배율 100%. "
+     "「인쇄를 취소해도 초기화된다」를 여기서 미리 알린다."),
+    ("reset-03-인쇄후", "passport-helper-v1.html", {"printedMs": 600000},
+     'fillSample("adult"); renderAll();'
+     'window.dispatchEvent(new Event("afterprint"));',
+     "인쇄 창이 닫힌 뒤. 화면을 거의 불투명하게 덮고 5초 뒤 허브로 간다 — "
+     "갈무리에서는 `printedMs` 를 10분으로 늘려 멈춰 세웠다."),
 ]
 
 # 세로 화면(키오스크를 세워 놓는 곳이 있다)으로도 몇 장 찍는다
@@ -136,22 +188,42 @@ def shoot(name, src, cfg, script, w, h, suffix=""):
     return os.path.getsize(out)
 
 
+TOKENS = re.compile(r"<!--DESIGN-TOKENS v1-->\s*<style>(.*?)</style>\s*<!--/DESIGN-TOKENS-->", re.S)
+
+
+def main_style(s):
+    """디자인 토큰 블록과 **그 뒤에 오는 본 스타일**을 갈라 돌려준다.
+
+    ⚠️ 종전에는 「첫 `<style>` = 본 스타일」이었는데, 2026.08.24 에 토큰 블록이
+       그 앞에 생겨 이 함수가 토큰만 집어 오게 됐다(뽑힌 CSS 가 절반으로 줄어
+       밖에 넘기는 자료가 조용히 반쪽이 됐다). 이제 둘을 나눠서 둘 다 뽑는다."""
+    tok = TOKENS.search(s)
+    rest = s[tok.end():] if tok else s
+    m = re.search(r"<style>(.*?)</style>", rest, re.S)
+    return (tok.group(1).strip() if tok else None), (m.group(1).strip() if m else None)
+
+
 def dump_css():
     """지금 쓰는 화면 CSS 를 한 파일로 뽑는다 — 디자인 쪽이 고칠 대상이 이것이다.
 
     ⛔ `@media print` 블록은 **인쇄물의 일부**다. 뽑아 주되 고치지 말라고 표시해 둔다."""
     parts = []
     for src, note in [("engine/base.html", "엔진 서식 5종 + 손작성 2종(혼인·이혼)이 공유하는 틀"),
-                      ("passport-helper-v1.html", "여권 도우미(2026.08 개편으로 카드 흐름이 됐다)"),
+                      ("passport-helper-v1.html", "여권 도우미(2026.08 개편으로 세 영역이 됐다)"),
                       ("index.html", "허브(첫 화면)")]:
         s = io.open(os.path.join(ROOT, src), encoding="utf-8").read()
-        m = re.search(r"<style>(.*?)</style>", s, re.S)     # 첫 번째 = 본 스타일
-        if not m:
+        tok, body = main_style(s)
+        if tok and not parts:            # 9개 화면에 똑같이 들어가므로 한 번만 싣는다
+            parts.append("/* ══════════════════════════════════════════════════════════\n"
+                         "   디자인 토큰 — 9개 화면이 **글자까지 똑같이** 갖고 있는 블록\n"
+                         "   — 원본은 engine/base.html, 값을 고치는 곳은 여기 하나입니다\n"
+                         "   ══════════════════════════════════════════════════════════ */\n%s" % tok)
+        if not body:
             continue
         parts.append("/* ══════════════════════════════════════════════════════════\n"
                      "   %s\n   — %s\n"
                      "   ══════════════════════════════════════════════════════════ */\n%s"
-                     % (src, note, m.group(1).strip()))
+                     % (src, note, body))
     out = os.path.join(os.path.dirname(OUT), "현재-스타일.css")
     io.open(out, "w", encoding="utf-8", newline="").write(
         "/* 지금 쓰는 화면 스타일 — `python tools/design-shots.py` 가 원본에서 뽑아 씁니다.\n"

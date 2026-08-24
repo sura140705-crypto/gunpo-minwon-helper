@@ -77,6 +77,11 @@ gunpo_minwon/
 | `bash tools/sync-kiosk.sh [--check]` | 루트 배포 HTML 9개 → `kiosk-app/app/` 동기화(검증) |
 | `python tools/verify-print.py [--update]` | **인쇄물 회귀 검증** — 8종×예시2 = 19쪽을 `tests/baseline/` 과 픽셀 비교 |
 | `python tools/verify-print.py --electron` | 같은 19쪽을 **키오스크와 같은 Electron 조판**으로 검증 + 용지(A4) 검사 |
+| `python tools/check-site-block.py [--fix]` | 기관별 설정 블록(`<!--SITE-CONFIG v1-->`)이 9개 화면에서 같은지 |
+| `python tools/check-design-tokens.py [--fix]` | 디자인 토큰 블록(`<!--DESIGN-TOKENS v1-->`)이 9개 화면에서 같은지 |
+| `python tools/verify-site-config.py [--preview …]` | **화면 회귀 검증** — 환경설정 값이 화면에 실제로 걸리는지(6가지 조합) |
+| `python tools/design-shots.py [--only …]` | 디자인 검토용 화면 갈무리 → `docs/디자인검토/shots/` + `현재-스타일.css` |
+| `python tools/design-bundle.py` | 그 자료를 밖에 넘길 묶음으로 → `_디자인검토/`(폴더 + zip) |
 | `tools/calibration-sheet.html` | **프린터 검수지** — 인쇄해서 기기별 인쇄 불가 영역·배율을 재고 기록(설치 검수용) |
 | `python tools/rebrand.py --city ○○시 …` | 지역 고유값(기관명·부서·연락처·로고) 일괄 교체 → 타 지자체 확산 |
 | `python tools/make-manual.py [입력.md] [출력.pdf]` | 운영문서 `.md` → 배포 PDF (화면 그림을 헤드리스 크롬으로 촬영·삽입) |
