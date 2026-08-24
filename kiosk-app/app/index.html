@@ -405,8 +405,10 @@ html.big{
 
   @media screen and (max-width:1600px){ .layout{grid-template-columns:var(--cols-narrow);} }
 
-  /* 세로 화면 — 질문·목록 위 / 종이 아래. RAIL 은 머리맡 가로 띠(동결 ⑧) */
-  @media screen and (max-width:860px){
+  /* 세로 화면(1080×1920 키오스크) — 질문·목록 위 / 종이 아래.
+     RAIL 은 머리맡 가로 띠로 접는다(동결 ⑧).
+     ⚠️ 폭으로만 재면 1080 은 걸리지 않는다 — 여권과 같은 **화면비**로 잰다. */
+  @media screen and (max-width:860px), screen and (max-aspect-ratio:9/10){
     .layout{grid-template-columns:1fr;}
     .rail-col{order:1;} .task-col{order:2;} .form-col{order:3;}
     .rail{flex-direction:row;align-items:flex-start;gap:24px;
