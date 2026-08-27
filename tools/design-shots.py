@@ -41,13 +41,52 @@ function click(t){ var n=[].filter.call(document.querySelectorAll(".card"),
 SAMPLE = 'var b=document.getElementById("btnSampleAdult"); if(b) b.click();'
 
 # (파일이름, 소스, 설정, 화면을 만드는 스크립트, 설명)
+#
+# ⚠️ 허브는 열자마자 **시연**이 돈다(대기 화면을 따로 두지 않는다). 그대로 찍으면 찍을
+#    때마다 다른 카드가 짚혀 갈무리가 매번 달라진다 — 아래 스크립트로 **세워 놓고** 찍는다.
+#
+# ⚠️ 시연을 멈추는 것만으로는 부족하다. 카드 강조가 풀리는 **전환이 도는 중에** 셔터가
+#    떨어지면 같은 파일을 두 번 찍어도 그림이 다르다(2026.08.25 에 실측으로 확인했다).
+#    갈무리는 리포에 커밋되므로, 흔들리면 **바뀐 것이 없는데 diff 가 생긴다.**
+#    그래서 세워 놓은 뒤 **전환을 통째로 끈다.**
+FREEZE = ('var s=document.createElement("style");'
+          's.textContent="*,*::before,*::after{transition:none !important;'
+          'animation:none !important}";document.head.appendChild(s);')
+
+#
+# ⚠️ 시연의 종이는 **실루엣**이다(실제 서식이 아니다 — 2026.08.25). 줄이 하나씩 그어지는
+#    중간에서 세워야 「쓰이고 있다」로 읽힌다. ⛔ 줄을 긋기 **전에** 전환을 꺼야 한다 —
+#    켜 둔 채로 클래스를 붙이면 폭이 자라는 중에 셔터가 떨어져 갈무리가 흔들린다.
+DEMO_STILL = ('clearTimeout(demoTimer); demoMark("marriage");'
+              'document.querySelector(".form-col").classList.remove("swap");'
+              'renderPaper(formByKey("marriage"),"silent");' + FREEZE +
+              'var r=document.querySelectorAll("#gpSil .sil-row");'
+              'for(var i=0;i<r.length-1;i++) r[i].classList.add("wrote");')
+# 시연을 끄면 **기본 상태**다 — 아무것도 골라지지 않고 종이 자리는 비어 있다.
+MAIN_STILL = 'stopDemo();' + FREEZE
+# 카드를 눌러 펼친 상태. 종이 갈아끼우기(0.17초)를 기다리지 않고 바로 세운다.
+# ⚠️ `"picked"` 를 넘겨야 **고른 단**이 된다(실제 서식 + 흰 베일). 빠뜨리면 베일이 없다.
+def OPENED(key):
+    return ('stopDemo(); openCard("%s");'
+            'document.querySelector(".form-col").classList.remove("swap");'
+            'renderPaper(formByKey("%s"),"picked");' % (key, key)) + FREEZE
+
 SHOTS = [
-    ("hub-01-첫화면", "index.html", {}, "",
-     "허브(첫 화면). 시민이 여기서 서식을 고른다."),
+    ("hub-00-시연", "index.html", {}, DEMO_STILL,
+     "아무도 안 건드릴 때. **대기 화면을 따로 두지 않고** 이 화면이 스스로 카드를 하나씩 "
+     "짚으며 가운데 종이에 줄을 그어 간다 — 누군가 쓰고 있는 것처럼 보인다. "
+     "⛔ 이때 종이는 **실루엣**이다(이름과 항목 줄만). 실제 서식은 고른 뒤에만 나온다. "
+     "마우스가 움직이거나 아무 키나 누르면 멈추고 아래 첫 화면이 된다."),
+    ("hub-01-첫화면", "index.html", {}, MAIN_STILL,
+     "허브(첫 화면). **아무것도 골라져 있지 않다** — 시민이 고른 것만 오른쪽에 나타난다."),
+    ("hub-03-카드펼침", "index.html", {}, OPENED("passport"),
+     "카드를 누르면 **바로 넘어가지 않고** 그 자리에서 펼쳐진다. 설명·준비물·걸리는 시간을 "
+     "읽고 [작성 시작]을 눌러야 간다 — 잘못 누른 사람이 되돌아올 길이 있다. "
+     "⚠️ 준비물·시간은 지금 여권에만 있다(없는 것을 지어내지 않는다)."),
     ("hub-02-기관색교체", "index.html",
      {"org": {"orgName": "경기도 안양시"}, "themeColor": "#0f6b4f",
       "forms": {"passport": False}},
-     "", "다른 기관이 대표색을 초록으로 바꾸고 여권을 끈 상태. 색은 기관마다 달라진다."),
+     OPENED("birth"), "다른 기관이 대표색을 초록으로 바꾸고 여권을 끈 상태. 색은 기관마다 달라진다."),
 
     ("pass-01-경로선택", "passport-helper-v1.html", {}, "",
      "여권 첫 화면. 2026.08.21 개편으로 **세 영역**(질문면·서식·안내 기둥)이 됐다 — "
@@ -141,7 +180,7 @@ SHOTS = [
 ]
 
 # 세로 화면(키오스크를 세워 놓는 곳이 있다)으로도 몇 장 찍는다
-PORTRAIT = ["hub-01-첫화면", "pass-01-경로선택", "form-03-출생"]
+PORTRAIT = ["hub-00-시연", "hub-01-첫화면", "hub-03-카드펼침", "pass-01-경로선택", "form-03-출생"]
 
 
 def chrome():

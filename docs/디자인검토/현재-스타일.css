@@ -137,6 +137,25 @@
   --sp-5: 22px;
   --sp-6: 30px;
 
+  /* ── Motion (§17 Interaction) ──────────────────────────────────────
+     「움직임은 상태를 설명할 때만」을 지키려면 값이 한 곳에 있어야 한다.
+     종전에는 5원본 8곳에 박혀 있었고 종류가 벌써 다섯이었다(.12·.15·.2·.22·.34s).
+     easing 은 대부분 **방치**돼 브라우저 기본값(ease)으로 굴러갔다 — Radius 13가지와 같은 뿌리다.
+
+     ⚠️ **아래 값은 지금 화면을 그대로 옮긴 것이지, 정해진 값이 아니다.**
+        `docs/디자인검토/2026.08.25-의뢰서-모션과-시각.md` 로 밖에 물어 둔 상태이고,
+        답이 오면 **이 여섯 줄만** 갈아 끼운다. 그것이 이 블록을 만든 이유다.
+
+     ⛔ 인쇄물에는 모션이 없다. 이 값들은 전부 화면 전용이다.
+     ⚠️ 아래 `@media (prefers-reduced-motion: reduce)` 가 이것들을 통째로 끈다.
+        ⛔ 다만 **JS 로 도는 것(허브 시연)은 CSS 로 안 꺼진다** — `matchMedia` 로 따로 본다. */
+  --dur-quick: 120ms;   /* 눌린 표시·hover — 즉답으로 느껴져야 한다 */
+  --dur-base:  220ms;   /* 펼침·접힘·나타남 */
+  --dur-calm:  340ms;   /* 종이 갈아끼우기처럼 느긋한 것 */
+  --ease-out:  cubic-bezier(.22,.61,.36,1);   /* 들어오는 것 — 빨리 나와 천천히 멎는다 */
+  --ease-in:   cubic-bezier(.55,.06,.68,.19); /* 나가는 것 */
+  --ease-move: cubic-bezier(.4,0,.2,1);       /* 자리를 옮기는 것 */
+
   /* ── Typography (§16) ──────────────────────────────────────────────
      글꼴은 하나만 쓴다. 관공서 PC 에 반드시 있는 것이어야 하고, 오프라인
      설치본이라 웹폰트를 받을 수 없다. */
@@ -268,18 +287,46 @@ html.big{
     font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
     font-size:17px;line-height:1.55;}
 
-  /* ===== 상단 바 ===== */
-  .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:12px 16px;
-    padding:14px 20px;background:#fff;border-bottom:0;
+  /* ===== 상단 바 — 여권과 같은 배치 (2026.08.25) =====
+     ⚠️ 종전에는 `flex` + `.brand{margin-right:auto}` 라 **서식 이름이 왼쪽에 붙고**
+        담당자 점검용 「작성예시」 버튼이 시민이 쓰는 버튼들 사이에 끼어 있었다.
+        여권은 2026.08.24 에 이 배치를 고쳤고(`cfff1a4`), 7종을 그 결에 맞춘다.
+     ⛔ 양옆을 **같은 1fr** 로 두어야 가운데(서식 이름)가 화면 정중앙에 온다.
+        한쪽만 `1fr` 이면 남는 폭이 한쪽으로 몰려 제목이 치우친다.
+     ⚠️ `.topbar` 는 인쇄에서 통째로 숨겨지므로 **인쇄물과 무관하다.** */
+  .topbar{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
+    align-items:center;gap:12px 20px;
+    padding:0 24px;min-height:var(--topbar-h);background:#fff;border-bottom:0;
     position:sticky;top:0;z-index:20;}
-  /* 아래 선을 대표색 그라데이션 띠로 — 단색 2px 보다 기관 색이 살아난다.
-     `.topbar` 는 인쇄에서 통째로 숨겨지므로 인쇄물과 무관하다. */
+  /* 아래 선을 대표색 그라데이션 띠로 — 단색 2px 보다 기관 색이 살아난다. */
   .topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
     background:var(--grad);}
-  .brand{display:flex;flex-direction:column;margin-right:auto;}
-  .brand h1{margin:0;font-size:20px;color:var(--blue-dark);}
-  .brand .meta{font-size:14px;color:var(--muted);}
-  .actions{display:flex;gap:10px;flex-wrap:wrap;}
+  /* 왼쪽 묶음 = 기관 표기 + **담당자 점검용 도구**. 시민 동선(오른쪽)에서 떼어 놓았다.
+     ⚠️ `.brand` 만 줄어들게 해서 기관명이 긴 곳에서도 버튼이 안 접힌다. */
+  .lead{display:flex;align-items:center;gap:16px;min-width:0;}
+  .tools-test{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+  /* ⚠️ 좁아지면 담당자용 도구를 먼저 감춘다. 그래야 양옆 폭이 같게 유지되어
+     제목이 중앙에 남고, 시민이 쓰는 버튼이 두 줄로 접히지 않는다. */
+  @media screen and (max-width:1500px){ .tools-test{display:none;} }
+  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
+  .brand-tx{min-width:0;}
+  .brand b{display:block;font-size:17px;color:var(--blue-dark);letter-spacing:-.02em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand .meta{font-size:13px;color:var(--muted);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 가운데 — 지금 작성 중인 서식. 화면 폭이 좁으면 사라진다(도구가 먼저다). */
+  .doc-name{text-align:center;min-width:0;}
+  .doc-name h1{margin:0;font-size:18px;letter-spacing:-.02em;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis;}
+  .doc-name small{display:block;font-size:12.5px;color:var(--muted);letter-spacing:.01em;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:10px 0;}
+  /* 상단 바의 버튼은 본문 버튼보다 한 치수 작다 — 한 줄에 들어가야 한다.
+     ⚠️ `nowrap` — 라벨이 버튼 안에서 접히면 상단 바 높이가 들쭉날쭉해진다. */
+  .topbar .btn{font-size:14.5px;padding:9px 12px;white-space:nowrap;}
+  /* 물리 키보드가 없는 기관에 SITE-CONFIG 가 붙이는 안내띠. 격자에서는
+     `flex:1 0 100%` 가 안 먹으므로 줄 전체를 차지하게 못 박는다. */
+  .kb-help{grid-column:1/-1;}
   .btn{font-family:inherit;font-size:16px;font-weight:600;border:1.5px solid var(--blue);
     background:#fff;color:var(--blue);border-radius:10px;padding:11px 16px;cursor:pointer;
     text-decoration:none;display:inline-flex;align-items:center;}
@@ -292,14 +339,59 @@ html.big{
   .test-tag{font-size:12px;color:#b26a00;background:#fff3e0;border:1px solid #ffd79a;
     border-radius:6px;padding:2px 6px;margin-left:6px;}
 
-  /* ===== 2단 레이아웃 ===== */
-  .layout{display:flex;gap:22px;align-items:flex-start;padding:22px;max-width:1420px;margin:0 auto;}
-  .form-col{flex:1 1 auto;min-width:0;}
-  .panel-col{flex:0 0 400px;width:400px;}
+  /* ===== 2단 레이아웃 — 여권과 같은 결 (2026.08.25) =====
+     ⚠️ 종전에는 **서식이 왼쪽 / 패널이 오른쪽 400px** 이었고 `max-width:1420px` 로
+        가운데 몰려 있었다. 여권은 **질문면이 왼쪽 / 서식이 오른쪽**이고 화면을 다 쓴다.
+        같은 키오스크에서 서식마다 좌우가 뒤집히면 조작법이 갈린다.
+     ⚠️ 질문면 폭을 `1fr : 2fr` 로 둔 것은 우연이 아니다 — 1920 에서 640px 이 되어
+        여권의 질문면(`--cols` 2:3:1 의 첫 칸 = 640px)과 **똑같아진다.**
+        7종에는 RAIL 이 없으니 그 몫이 서식 쪽으로 간다.
+     ⛔ 흐름은 그대로다. 이번에 맞춘 것은 **자리**뿐이다 — 3영역 전환은 별도 과제다.
+     ⚠️ 인쇄 CSS 가 `.layout{display:block}` 으로 되돌리므로 **인쇄물과 무관하다.** */
+  .layout{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,2fr);
+    gap:22px;align-items:flex-start;padding:22px;}
+  .form-col{min-width:0;}
+  .panel-col{min-width:0;}
+  /* 패널 칸이 넓어졌어도 **읽는 폭은 그대로 둔다.** 한 줄이 길어지면 눈이 되돌아오기
+     힘들다 — 여권이 `--question-max`(640px)로 막아 둔 것과 같은 이유다. */
+  .panel-col > *{max-width:var(--question-max);}
+  /* 화면을 꽉 채우되 **상단 바 높이를 숫자로 빼지 않는다.** 기관명이 길거나 화면이 좁아
+     버튼이 두 줄로 접히면 그만큼 본문이 아래로 밀려 잘린다. body 를 세로 flex 로 두고
+     본문이 남는 높이를 먹게 하면 상단 바가 몇 줄이 되든 어긋나지 않는다(여권과 같은 방식).
+     ⚠️ 종전에는 `.wiz-body{max-height:calc(100vh - 320px)}` 로 숫자를 빼서, 상단 바가
+        높아지면 **[다음] 버튼이 화면 밖으로 잘렸다.**
+     ⛔ `@media screen` 안에 둔다 — 인쇄에서 `height:100vh;overflow:hidden` 이 살아 있으면
+        서식이 첫 화면 높이에서 잘려 나간다. */
+  @media screen and (min-width:861px){
+    body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+    .topbar{flex:0 0 auto;position:static;}
+    .layout{flex:1 1 auto;min-height:0;}
+    .panel-col,.form-col{height:100%;min-height:0;}
+    .form-col{overflow:auto;}
+    /* ⛔ **[이전]·[다음]이 화면 밖으로 내려가면 안 된다.** 종전에는 패널이 통째로 길어져
+       버튼이 잘렸고, 시민은 스크롤해야 다음으로 갈 수 있었다(키오스크에서 알기 어렵다).
+       질문 **본문만** 스크롤하고 버튼은 바닥에 남게 한다 — 여권의 `.wiz-nav` 와 같은 결이다. */
+    .panel-col{display:flex;flex-direction:column;}
+    .phone{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+    .phone-head,.step-warn,.wiz-nav,.link-skip,.m-preview{flex:0 0 auto;}
+    .wiz-body{flex:1 1 auto;min-height:0;max-height:none;overflow:auto;}
+    .screen-notice{flex:0 0 auto;}
+  }
+  /* 패널 머리의 작은 로고 — 상단 바에 이미 기관 로고가 있어 **한 화면에 둘**이 된다.
+     여권의 질문면에는 없다. 표식(`<!--GUNPO-LOGO-->`)은 도구가 쓰므로 남기고 감춘다. */
+  .phone-head .gunpo-logo{display:none;}
 
-  /* ===== 좌측: 실제 서식 이미지 위에 값 오버레이 (여권 도우미와 동일 방식) ===== */
+  /* ===== 서식(Paper) : 실제 서식 이미지 위에 값 오버레이 =====
+     ⚠️ 2026.08.25 부터 이 칸은 **오른쪽**이다(위 「2단 레이아웃」 참조). */
   .paper{background:#fff;box-shadow:0 3px 14px rgba(0,0,0,.10);width:210mm;margin:0 auto;
     -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  @media screen{
+    /* 210mm 보다 좁은 자리에서도 서식이 잘리지 않게 폭을 맞춘다.
+       ⚠️ 안의 값은 전부 `%`(위치)와 `cqw`(글자 크기)라 **비율이 그대로 유지된다** —
+          좌표가 밀리지 않는다. 세로 키오스크(1080)에서 오른쪽이 잘리던 것을 이것으로 막는다.
+       ⛔ `@media screen` 밖으로 내지 마라. 인쇄는 210mm 고정이어야 한다. */
+    .form-col .paper{width:min(210mm,100%);}
+  }
   .stage{position:relative;width:100%;container-type:inline-size;}
   .stage .bg{display:block;width:100%;height:auto;}
   .ovl{position:absolute;inset:0;pointer-events:none;}
@@ -327,23 +419,29 @@ html.big{
   .phone-head{background:var(--blue);color:#fff;padding:16px 18px;}
   .wiz-title{font-size:20px;font-weight:700;}
   .wiz-count{font-size:14px;opacity:.9;margin-top:3px;}
-  .stepper{display:flex;margin-top:14px;}
-  .stp{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;min-width:0;}
-  .stp+.stp::before{content:"";position:absolute;top:12px;right:50%;width:100%;height:3px;
-    background:rgba(255,255,255,.30);z-index:0;}
-  .stp.done::before,.stp.cur::before{background:#fff;}
-  .stp-dot{position:relative;z-index:1;width:26px;height:26px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:800;
-    background:rgba(255,255,255,.25);color:#fff;border:2px solid transparent;
-    transition:transform .15s,background .15s;}
-  .stp.done .stp-dot{background:#fff;color:var(--blue);}
-  .stp.cur .stp-dot{background:#fff;color:var(--blue-dark);border-color:#bfe0ff;
-    transform:scale(1.18);box-shadow:0 0 0 4px rgba(255,255,255,.28);}
-  .stp-lab{font-size:9.5px;line-height:1.2;margin-top:5px;text-align:center;
-    color:rgba(255,255,255,.72);white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;}
-  .stp.cur .stp-lab{color:#fff;font-weight:700;}
-  .stp.nav .stp-dot{cursor:pointer;}
-  .stp.nav .stp-dot:hover{background:#eaf3ff;}
+  /* ===== 진행 표시 — 여권과 같은 결 (2026.08.25) =====
+     ⚠️ 종전에는 **동그라미 스텝퍼**였고 여권은 「진행 n / N」 + 막대였다.
+        같은 키오스크에서 단계 표시가 두 가지면 조작법이 갈린다.
+     ⛔ **되돌아가는 길을 없애지 않았다.** 동그라미를 지우면서 지나온 단계로 뛰는 기능을
+        같이 잃으면, 요약 화면에 「수정」이 없는 7종에서는 [이전]을 여러 번 눌러야 한다.
+        그래서 지나온 단계는 **가로로 조용한 글자 링크**로 남긴다 — 여권의 안내 기둥
+        「묶음 목록」과 같은 구실이다(여권은 RAIL 이 있어 세로로 눕힐 자리가 있다).
+     ⚠️ 이 패널 머리는 대표색 바탕이라 글자는 흰색 계열이다. */
+  .pbar{height:6px;background:rgba(255,255,255,.28);border-radius:var(--r-pill);
+    overflow:hidden;margin:12px 0 10px;}
+  .pbar-fill{height:100%;background:#fff;border-radius:var(--r-pill);
+    transition:width var(--dur-base) var(--ease-move);}
+  .stepper{display:flex;flex-wrap:wrap;gap:5px 10px;align-items:center;}
+  .stp{font-size:11.5px;line-height:1.3;color:rgba(255,255,255,.62);
+    display:inline-flex;align-items:center;gap:4px;min-width:0;}
+  .stp .tick{font-weight:900;opacity:.85;}
+  .stp.cur{color:#fff;font-weight:800;}
+  /* 지나온 단계 — 눌러서 되돌아간다. 앞으로 건너뛰기는 엔진이 막는다. */
+  button.stp{font-family:inherit;background:none;border:0;padding:0;cursor:pointer;
+    text-decoration:underline;text-underline-offset:2px;
+    transition:color var(--dur-quick) var(--ease-out);}
+  button.stp:hover{color:#fff;}
+
   .wiz-body{padding:18px;max-height:calc(100vh - 320px);overflow:auto;}
 
   .coach-q{font-size:22px;font-weight:800;line-height:1.35;margin-bottom:8px;}
@@ -938,7 +1036,9 @@ html.big{
   .card{display:flex;flex-direction:column;align-items:flex-start;gap:11px;width:100%;
     min-height:var(--touch-card);padding:20px 22px;background:#fff;border:1.5px solid var(--line-strong);
     border-radius:var(--r-lg);text-align:left;cursor:pointer;font-family:inherit;
-    transition:border-color .12s,background .12s,box-shadow .12s;}
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out),
+               box-shadow var(--dur-quick) var(--ease-out);}
   .card:hover,.card:focus-visible{border-color:var(--blue);background:var(--blue-light);}
   .card.picked{border-color:var(--blue);background:var(--blue-light);
     box-shadow:inset 0 0 0 1px var(--blue);}
@@ -1009,7 +1109,7 @@ html.big{
   /* 진행 막대 — 경로마다 화면 수가 달라 「N/10」 고정 표기를 버렸다.
      이제 안내 기둥 안에 놓이므로 바탕이 흰색이 아니라 기둥색 위의 회색이다. */
   .pbar{height:6px;background:#d9d7d1;border-radius:var(--r-pill);overflow:hidden;margin:14px 0 22px;}
-  .pbar-fill{height:100%;background:var(--blue);border-radius:var(--r-pill);transition:width .2s;}
+  .pbar-fill{height:100%;background:var(--blue);border-radius:var(--r-pill);transition:width var(--dur-base) var(--ease-move);}
   /* 빈칸의 뜻 — 일부러 비운 칸과 빠뜨린 칸을 눈으로 구별한다 */
   .sum-row .fs-manual{color:#8a4b00;font-weight:700;}
   .sum-row .fs-existing{color:var(--blue);font-weight:700;}
@@ -1153,6 +1253,9 @@ html.big{
      ⚠️ Stitch 시안에서 가져온 것은 **비례·여백·정렬·ASK↔PAPER 시각 관계**다.
      ⛔ hover 에만 의존하는 정보를 만들지 않는다 — 첫 서식이 **처음부터** 떠 있고
         hover·포커스는 그것을 바꿀 뿐이다. 터치에서도 종이가 늘 보인다.
+
+     ⚠️ **대기 화면을 따로 두지 않는다**(2026.08.25). 아무도 안 건드리면 이 화면이
+        스스로 카드를 짚어 보이는 **시연**을 돌 뿐이다 — 아래 「시연」 절을 함께 보라.
      ═══════════════════════════════════════════════════════════════════ */
 
   /* ── BAR ─────────────────────────────────────────────────────────────*/
@@ -1199,8 +1302,14 @@ html.big{
   .paper-fit{flex:1 1 auto;min-height:0;display:flex;
     align-items:center;justify-content:center;}
   /* 실제 서식 1쪽. ⛔ 인쇄용이 아니라 **미리보기용 축소본**이다
-     (`tools/make-form-previews.py`). 인쇄물은 각 서식이 따로 갖고 있다. */
-  .gp-img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;
+     (`tools/make-form-previews.py`). 인쇄물은 각 서식이 따로 갖고 있다.
+     ⚠️ 그림을 `.img-hold` 로 감싼 것은 **베일을 그림 위에만** 덮기 위해서다 —
+        감싸지 않고 `.paper-fit` 에 덮으면 종이 둘레의 바닥까지 밝아진다(실제로 겪었다).
+     ⚠️ 크기는 실루엣(`.gp-sil`)과 **같은 식**으로 정한다. 두 상태가 같은 자리·같은
+        크기여야 고를 때 「바뀌는」 것으로 읽힌다. */
+  .img-hold{position:relative;width:min(210mm,100%);margin:0 auto;aspect-ratio:210/297;}
+  .img-hold{width:min(210mm,100%,calc(100cqh * 210 / 297));}
+  .gp-img{display:block;width:100%;height:100%;
     object-fit:contain;background:var(--paper);box-shadow:var(--paper-shadow);}
   /* 서식이 놓인 자리를 가리키는 모서리 선 — 여권과 같은 표시 */
   .form-col::before{content:"";position:absolute;left:25px;top:25px;width:94px;height:94px;
@@ -1218,7 +1327,8 @@ html.big{
     min-height:var(--row-h);padding:10px 14px;background:var(--paper);
     border:1.5px solid var(--border-strong);border-radius:var(--r-lg);
     text-align:left;cursor:pointer;font-family:inherit;color:inherit;
-    transition:border-color .12s,background .12s;}
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out);}
   .card:hover,.card:focus-visible{border-color:var(--blue);background:var(--blue-light);}
   /* 지금 오른쪽에 떠 있는 서식 — hover 가 없는 터치에서도 **무엇이 보이는지** 알린다 */
   .card.picked{border-color:var(--blue);background:var(--blue-light);
@@ -1291,6 +1401,148 @@ html.big{
   .screen-notice ul{margin:0;padding-left:16px;}
   .screen-notice li{font-size:12px;color:#6a706d;line-height:1.6;}
 
+  /* ---------------------------------------------------------------------
+     빈 상태 · 카드 펼침 · 시연 (2026.08.25)
+
+     ⚠️ 대기 화면을 **따로 두지 않는다.** 이 화면 하나가 대기도 하고 선택도 한다 —
+        아무도 안 건드리면 **시연**이 카드를 하나씩 짚어 가운데 종이를 바꾸고,
+        마우스가 움직이거나 아무 키나 누르면 시연이 멈추고 **기본 상태**로 돌아간다.
+        별도 화면이 없으니 「깨어날 때 화면이 갈린다」는 느낌 자체가 생기지 않는다.
+     ⛔ 카드를 누른다고 **바로 넘어가지 않는다.** 그 카드가 아래로 펼쳐져 설명과
+        [작성 시작]을 내고, 그것을 눌러야 간다 — 잘못 누른 사람이 되돌아올 길이 생긴다.
+     --------------------------------------------------------------------- */
+
+  /* ══ 종이 자리의 네 단 (2026.08.25) ═════════════════════════════════════
+     ⛔ **실제 서식은 「고른 것」에만 쓴다.** 종전에는 시연·hover·고름이 **셋 다**
+        실제 서식을 띄워서, 눌러도 화면이 그대로인 것처럼 보였고(구별 안 됨)
+        빽빽한 정부 서식이 2.6초마다 바뀌어 부담스러웠다.
+
+       ① 아무것도 안 고름  빈 윤곽 + 「서식을 골라 주세요」
+       ② 시연             실루엣 — 이름 + 항목 줄이 **하나씩 그어진다**
+       ③ hover            실루엣 — 정지. 줄은 비어 있다
+       ④ 고름             **실제 서식**, 살짝 흐리게 — 아직 내 것이 아니다
+       ⑤ 작성(Writing)    실제 서식, 또렷 ← 페이지가 바뀌는 순간 선명해진다
+
+     **선명도가 곧 확정의 단계다.** ④→⑤ 는 기하가 같아 화면이 안 움직이는 전환인데,
+     종이가 또렷해지는 것이 그 순간을 말해 준다.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ⛔ `[hidden]` 은 브라우저 기본 규칙이라 **클래스의 `display` 에 진다.**
+     아래는 `display` 를 직접 주므로 숨김 규칙을 같이 적어야 한다 —
+     빠뜨리면 `hidden=true` 로 감춘 것이 화면에 그대로 남는다(실제로 겪었다). */
+  .gp-empty[hidden],.img-hold[hidden],.gp-sil[hidden]{display:none;}
+
+  /* ── ① 빈 자리 ──
+     ⚠️ hover 가 없는 터치에서 빈 화면이 되지 않게 **이 자리가 대신 말을 건다.** */
+  .gp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:16px;height:100%;color:var(--ink-muted);text-align:center;}
+  .gp-empty b{display:block;font-size:var(--fs-lead);font-weight:var(--fw-bold);color:var(--ink);}
+  .gp-empty small{display:block;margin-top:5px;font-size:var(--fs-small);}
+  /* 종이 윤곽만 그려 둔다 — 「여기에 종이가 놓입니다」를 보이는 것으로 말한다 */
+  .gp-empty .ghost{width:min(52%,300px);aspect-ratio:210/297;border-radius:2px;
+    border:2px dashed var(--border);}
+
+  /* ── ②③ 실루엣 ──
+     실제 서식이 **아니다.** 이름과 항목 수만 가진 종이 모양이다.
+     ⛔ 그림을 쓰지 않으므로 무게가 없다 — 2.6초마다 바뀌어도 부담되지 않는다.
+     ⚠️ 크기는 실제 서식과 **같은 자리·같은 비율**이어야 한다. 그래야 고를 때
+        실루엣이 실제 서식으로 **바뀌는** 것으로 읽힌다(딴 것이 나타나는 게 아니다). */
+  /* ⚠️ **폭 하나로 크기를 정한다.** `width` + `max-height` 를 같이 주면 A4 비율이
+     깨진다(2026.08.25 에 겪었다). 재는 상자는 `.paper-fit` 이다 — 아래 참조.
+     ⚠️ 컨테이너 질의를 모르는 브라우저에서는 이 선언이 무시되고 `min(210mm,100%)`
+        로 물러난다. 종이가 조금 클 뿐 화면은 깨지지 않는다. */
+  .gp-sil{width:min(210mm,100%);margin:0 auto;background:var(--paper);
+    box-shadow:var(--paper-shadow);aspect-ratio:210/297;
+    display:flex;flex-direction:column;padding:6.5% 8% 7%;
+    transition:opacity var(--dur-calm) var(--ease-out);}
+  .gp-sil{width:min(210mm,100%,calc(100cqh * 210 / 297));}
+  .sil-name{font-size:clamp(15px,2.4cqh,23px);font-weight:var(--fw-heavy);
+    letter-spacing:.06em;color:var(--ink);text-align:center;}
+  .sil-rule{height:2px;background:var(--border-strong);margin:4% 0 7%;}
+  /* ⛔ 줄 사이를 `%` 로 벌리지 마라. 이 상자는 높이가 **내용에서 나오므로** 백분율
+     간격이 0 으로 접힌다 — 줄이 위에 뭉쳐 바코드처럼 보인다(2026.08.25 에 겪었다).
+     종이 높이를 재는 `cqh` 로 벌린다(재는 상자는 `.paper-fit`). */
+  .sil-rows{display:flex;flex-direction:column;gap:clamp(10px,4.2cqh,44px);}
+  /* 한 줄 = 한 항목. 비었을 때는 옅은 밑줄, 그어지면 획이 찬다. */
+  .sil-row{height:clamp(8px,1.25cqh,13px);border-radius:2px;background:var(--surface-work);
+    position:relative;overflow:hidden;}
+  .sil-row::after{content:"";position:absolute;inset:0;width:0;border-radius:2px;opacity:.42;
+    background:repeating-linear-gradient(90deg,var(--ink-muted) 0 12px,transparent 12px 21px);
+    transition:width var(--dur-calm) var(--ease-out);}
+  .sil-row.wrote::after{width:var(--w,62%);}
+  /* 아래쪽 서명 줄. ⚠️ 이것이 없으면 종이의 아래 절반이 통째로 비어 「빈 종이」로 읽히고,
+     고른 순간 나오는 **빽빽한 실제 서식**과 무게가 너무 달라 다른 종이처럼 보인다.
+     ⛔ 「서명하세요」 표시가 아니다 — 인쇄물의 `--marker-sign` 과 아무 관계가 없다. */
+  .sil-sign{margin-top:auto;margin-bottom:7%;display:flex;justify-content:flex-end;}
+  .sil-sign span{display:block;width:40%;height:clamp(8px,1.25cqh,13px);
+    border-radius:2px;background:var(--surface-work);}
+  .sil-foot{font-size:clamp(11px,1.6cqh,14px);
+    color:var(--ink-muted);text-align:center;}
+
+  /* ── ④ 고른 서식 — 실제 서식이지만 **아직 흐리다** ──
+     ⛔ `filter:blur()` 를 쓰지 마라. 700×990 그림에 blur 는 재사용 사무용 PC 에서
+        부담이다(§19 저사양). 흰 베일 한 겹이면 합성만으로 끝난다.
+     ⚠️ 「흐림」은 화면 전용이다. 인쇄에는 이 겹이 나가지 않는다 — 허브는 인쇄하지 않는다. */
+  .form-col{--veil:0;}
+  /* `cqh` 를 쓰는 실루엣·그림이 이 상자의 높이를 잰다. 「같은 자리·같은 비율」이 되려면
+     둘이 같은 칸에서 재야 한다. */
+  .paper-fit{position:relative;container-type:size;}
+  /* ⛔ 베일은 **그림 위에만** 덮는다(`.img-hold`). `.paper-fit` 에 덮으면 종이가 아니라
+     구역 전체가 밝아져 바닥에 밝은 사각형이 생긴다. */
+  .img-hold::after{content:"";position:absolute;inset:0;pointer-events:none;
+    background:var(--paper);opacity:var(--veil);
+    transition:opacity var(--dur-calm) var(--ease-out);}
+  .picked .form-col{--veil:.42;}
+
+  /* -- 카드 펼침 --
+     ⚠️ 카드는 `<button>` 이라 그 **안에** [작성 시작] 단추를 넣을 수 없다
+        (단추 안의 단추는 HTML 위반이고 터치에서 엉뚱한 것이 눌린다).
+        `.card-wrap` 으로 감싸고 펼침판을 **형제로** 둔다. */
+  .card-wrap{display:block;}
+  /* 0fr -> 1fr 은 내용 높이를 재지 않고도 부드럽게 열린다.
+     ⛔ `max-height` 추측값을 쓰지 마라 — 준비물이 긴 여권에서 내용이 잘린다. */
+  .card-open{display:grid;grid-template-rows:0fr;
+    transition:grid-template-rows var(--dur-base) var(--ease-move);}
+  .card-open > div{overflow:hidden;}
+  .card-wrap.open .card-open{grid-template-rows:1fr;}
+  .card-body{padding:14px 16px 16px;margin:0 0 7px;
+    background:var(--paper);border:1.5px solid var(--blue);border-top:0;
+    border-radius:0 0 var(--r-lg) var(--r-lg);}
+  .card-wrap.open .card{border-color:var(--blue);background:var(--blue-light);
+    border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:inset 3px 0 0 var(--blue);}
+  /* ⚠️ 설명이 카드 제목(`--fs-card` - 2)만 해지면 위계가 죽는다. 카드 안의 보조
+     글자 크기(`--fs-card-sub`)를 쓴다 — 크게 보기에서도 함께 커진다. */
+  .card-desc{margin:0;font-size:var(--fs-card-sub);line-height:1.6;color:var(--ink-muted);}
+  .card-scale{margin:9px 0 0;font-size:var(--fs-small);color:var(--ink-muted);}
+  .card-ready{margin:11px 0 0;padding:0;list-style:none;}
+  .card-ready li{font-size:var(--fs-small);line-height:1.6;color:var(--ink-muted);}
+  .card-ready b{color:var(--ink);font-weight:var(--fw-bold);}
+  .card-go{display:block;width:100%;margin:14px 0 0;min-height:var(--touch-min);
+    font-family:inherit;font-size:var(--fs-label);font-weight:var(--fw-heavy);
+    color:#fff;background:var(--blue);border:0;border-radius:var(--r-md);
+    padding:13px 16px;cursor:pointer;}
+  .card-go:hover{background:var(--blue-dark);}
+
+  /* -- 시연 --
+     ⛔ 시연이 짚는 카드에 `.picked` 를 쓰지 않는다. 그러면 시연이 끝난 뒤에도
+        시민이 고른 것처럼 남는다 — 고르지도 않은 것이 골라져 있으면 안 된다.
+     ⚠️ 목록 **높이는 고정**이다. 시연이 펼침판까지 열면 아래 카드들이 밀려내려가
+        목록 전체가 출렁인다. 움직이는 것은 **강조 하나와 가운데 종이**뿐이다. */
+  .card.demo-on{border-color:var(--blue);background:var(--blue-light);
+    box-shadow:inset 3px 0 0 var(--blue);}
+  .demo .card,.demo .card-sub{cursor:default;}
+  /* 시연 중에만 나오는 말. 장치를 전제하지 않는다(철학 §19·§22) */
+  .demo-cta{display:none;}
+  .demo .demo-cta{display:block;margin:12px auto 0;width:min(210mm,100%);
+    font-size:var(--fs-lead);font-weight:var(--fw-bold);color:var(--accent-strong);
+    text-align:center;}
+  /* 종이가 바뀔 때 튀지 않게 — 짧은 어둠이 아니라 가만한 갈아끼우기다.
+     ⚠️ `prefers-reduced-motion` 에서는 공통 토큰 블록이 이 전환을 끈다. */
+  .gp-img,.gpaper{transition:opacity var(--dur-calm) var(--ease-out);}
+  /* ⚠️ 실루엣도 함께 뺀다 — 시연은 1.8초마다 실루엣끼리 갈아끼우므로, 여기서 빠지면
+     시연에서만 종이가 툭툭 바뀐다(가장 오래 보이는 화면인데). */
+  .form-col.swap .gp-img,.form-col.swap .gpaper,.form-col.swap .gp-sil{opacity:0;}
+
   :focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
 
   @media screen and (max-width:1600px){ .layout{grid-template-columns:var(--cols-narrow);} }
@@ -1299,7 +1551,10 @@ html.big{
      RAIL 은 머리맡 가로 띠로 접는다(동결 ⑧).
      ⚠️ 폭으로만 재면 1080 은 걸리지 않는다 — 여권과 같은 **화면비**로 잰다. */
   @media screen and (max-width:860px), screen and (max-aspect-ratio:9/10){
-    .layout{grid-template-columns:1fr;}
+    /* ⚠️ 행을 `auto auto 1fr` 로 못 박는다. 안 그러면 세 칸이 다 내용 높이로 자라
+       화면 아래로 넘치고, 키오스크는 스크롤을 모르는 사람이 많아 **종이가 잘린 채**
+       끝난다. 남는 높이를 종이가 가져가야 `cqh` 로 재는 종이가 화면 안에 들어온다. */
+    .layout{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;}
     .rail-col{order:1;} .task-col{order:2;} .form-col{order:3;}
     .rail{flex-direction:row;align-items:flex-start;gap:24px;
       padding:12px 20px;overflow-x:auto;}
