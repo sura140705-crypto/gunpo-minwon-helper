@@ -329,7 +329,8 @@ html.big{
   .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     justify-content:flex-end;padding:10px 0;}
   .today{font-size:13.5px;color:var(--ink-muted);white-space:nowrap;}
-  .btn{font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
+  .btn{display:inline-flex;align-items:center;gap:7px;
+    font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
     border:1.5px solid var(--blue);background:var(--paper);color:var(--blue);
     border-radius:var(--r-md);padding:10px 15px;cursor:pointer;}
   .btn:hover{background:var(--blue-light);}
@@ -389,8 +390,15 @@ html.big{
   /* ⚠️ 아이콘은 **보조 표시**다. 크면 목록이 둔해 보이고 시민의 말(큰 글씨)과
      주인 자리를 다툰다. 26px → 20px 로 내렸다(2026.08.24). */
   /* 아이콘은 보조 표시다. 20 → 14px(30% 더). 목록이 조밀해지고 시민의 말이 산다. */
-  .card-ic{font-size:14px;line-height:1;flex:0 0 auto;width:17px;text-align:center;
-    opacity:.85;}
+  /* 선 아이콘 한 벌(인라인 SVG). ⚠️ 색은 **잉크**를 따른다 — 카드끼리 색으로 경쟁하지
+     않게. 고른 카드에서만 대표색이 된다(그때는 색이 「골라짐」이라는 뜻을 갖는다).
+     ⚠️ `font-size`·`text-align` 은 아이콘이 없는 서식의 이모지 대비책으로 남겨 둔다. */
+  .card-ic{flex:0 0 auto;width:21px;height:21px;font-size:14px;line-height:1;
+    text-align:center;color:var(--ink-muted);opacity:.9;
+    transition:color var(--dur-quick) var(--ease-out);}
+  .card-ic svg{display:block;width:100%;height:100%;}
+  .card:hover .card-ic,.card:focus-visible .card-ic,
+  .card-wrap.open .card-ic,.demo-on .card-ic{color:var(--blue);opacity:1;}
   .card-tx{display:flex;flex-direction:column;gap:3px;min-width:0;}
   /* 목록은 여권의 두 칸 격자 카드보다 한 치수 작다 — 8개를 세로로 훑는 자리다.
      ⚠️ 크게 보기에서는 토큰이 커지므로 여기서도 함께 커진다. */
@@ -399,7 +407,11 @@ html.big{
   .card-formal{font-size:calc(var(--fs-card-sub) - 1px);color:var(--ink-muted);line-height:1.4;}
 
   /* Human Handoff (철학 §8) — 여기 없으면 시민이 갇힌다 */
-  .card-sub{display:block;width:100%;margin:auto 0 0;padding:14px;
+  /* 단추 안의 선 아이콘. ⚠️ 카드 아이콘과 **같은 문법**(24 격자·굵기 1.7·둥근 끝)이고
+     `currentColor` 라 단추 색을 그대로 따라간다 — hover 에서 같이 물든다. */
+  .btn-ic{flex:0 0 auto;width:16px;height:16px;display:block;}
+  .card-sub{display:flex;align-items:center;justify-content:center;gap:9px;
+    width:100%;margin:auto 0 0;padding:14px;
     font-family:inherit;font-size:15px;font-weight:var(--fw-bold);
     color:var(--ink-muted);background:var(--surface-work);
     border:1.5px dashed var(--border);border-radius:var(--r-lg);cursor:pointer;}
@@ -436,10 +448,16 @@ html.big{
   .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
     padding:26px 20px 20px;}
   .rail-info{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
-  .rail-sec{margin-bottom:20px;}
+  /* ⚠️ MAIN 의 RAIL 은 위에 **한 묶음뿐**이다(동결 §7 의 「[대체] 이렇게 도와드립니다」).
+     아래 안심 안내는 바닥 고정이라, 같은 간격을 쓰면 가운데에 큰 구멍이 남아
+     「조용한」 것이 아니라 「덜 만든」 것으로 읽힌다.
+     ⛔ 정보를 더 넣어 채우지 않는다(결정 ⑤ — 없으면 여백을 허용한다).
+        대신 **묶음을 벌리고 남는 높이를 위아래로 나눠** 여백이 의도로 읽히게 한다.
+     ⚠️ 세로 배치에서는 기둥이 가로 띠가 되므로 아래 미디어 쿼리에서 되돌린다. */
+  .rail-sec{margin:clamp(8px,13vh,150px) 0 20px;}
   .rail-head{display:flex;align-items:center;gap:8px;
-    font-size:var(--fs-rail-head);font-weight:900;margin-bottom:11px;}
-  .rail-items{display:grid;gap:11px;}
+    font-size:var(--fs-rail-head);font-weight:900;margin-bottom:14px;}
+  .rail-items{display:grid;gap:clamp(12px,2.2vh,24px);}
   .rail-item{display:grid;grid-template-columns:16px 1fr;gap:8px;
     font-size:var(--fs-rail-item);line-height:1.45;color:#7b7f7d;}
   .rail-item .check{color:#b7b5af;font-weight:900;}
@@ -515,14 +533,21 @@ html.big{
   /* ⛔ 줄 사이를 `%` 로 벌리지 마라. 이 상자는 높이가 **내용에서 나오므로** 백분율
      간격이 0 으로 접힌다 — 줄이 위에 뭉쳐 바코드처럼 보인다(2026.08.25 에 겪었다).
      종이 높이를 재는 `cqh` 로 벌린다(재는 상자는 `.paper-fit`). */
-  .sil-rows{display:flex;flex-direction:column;gap:clamp(10px,4.2cqh,44px);}
-  /* 한 줄 = 한 항목. 비었을 때는 옅은 밑줄, 그어지면 획이 찬다. */
-  .sil-row{height:clamp(8px,1.25cqh,13px);border-radius:2px;background:var(--surface-work);
-    position:relative;overflow:hidden;}
-  .sil-row::after{content:"";position:absolute;inset:0;width:0;border-radius:2px;opacity:.42;
-    background:repeating-linear-gradient(90deg,var(--ink-muted) 0 12px,transparent 12px 21px);
-    transition:width var(--dur-calm) var(--ease-out);}
-  .sil-row.wrote::after{width:var(--w,62%);}
+  .sil-rows{display:flex;flex-direction:column;gap:clamp(12px,6cqh,60px);}
+  /* 한 줄 = 한 항목. **왼쪽에 그 서식이 묻는 것 / 오른쪽에 채워질 자리.**
+     ⚠️ 항목 이름은 언제나 보인다 — 비어 있어도 「무엇을 쓰는 종이인지」는 읽혀야 한다. */
+  .sil-row{display:grid;grid-template-columns:37% 1fr;gap:4%;align-items:end;}
+  .sil-k{font-size:clamp(10px,1.5cqh,15px);color:var(--ink-muted);line-height:1.3;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 밑줄은 **칸**이 갖고, 글자만 왼쪽에서 오른쪽으로 드러난다 — 손으로 적어 나가는 결이다.
+     ⛔ 밑줄을 글자 쪽에 주지 마라. 같이 잘려서 빈 칸에 줄이 없어진다(빈 서식으로 안 읽힌다). */
+  .sil-v{border-bottom:1px solid var(--border-strong);overflow:hidden;
+    padding-bottom:clamp(2px,.55cqh,6px);}
+  .sil-v i{display:block;font-style:normal;font-size:clamp(11px,1.75cqh,17px);
+    line-height:1.3;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    clip-path:inset(0 100% 0 0);
+    transition:clip-path var(--dur-calm) var(--ease-out);}
+  .sil-row.wrote .sil-v i{clip-path:inset(0 0 0 0);}
   /* 아래쪽 서명 줄. ⚠️ 이것이 없으면 종이의 아래 절반이 통째로 비어 「빈 종이」로 읽히고,
      고른 순간 나오는 **빽빽한 실제 서식**과 무게가 너무 달라 다른 종이처럼 보인다.
      ⛔ 「서명하세요」 표시가 아니다 — 인쇄물의 `--marker-sign` 과 아무 관계가 없다. */
@@ -612,6 +637,7 @@ html.big{
     .rail{flex-direction:row;align-items:flex-start;gap:24px;
       padding:12px 20px;overflow-x:auto;}
     .rail-info{flex-direction:row;gap:24px;}
+    .rail-sec{margin:0;}          /* 가로 띠에서는 위아래로 벌릴 이유가 없다 */
     .rail-safe{margin-top:0;border-top:0;padding-top:0;}
     .screen-notice{display:none;}
     .task-col{padding:22px 20px 16px;}
@@ -739,8 +765,13 @@ html.big{
   <div></div>
   <div class="actions">
     <span class="today" id="today"></span>
+    <!-- ⚠️ 아이콘과 글자를 갈라 둔다. 글자만 「일반 보기로」로 바뀌므로,
+         한 덩어리로 두면 JS 가 매번 아이콘까지 다시 그려야 한다. -->
     <button class="btn ghost" id="btnBig" aria-pressed="false"
-            title="질문과 글자를 크게 봅니다">🔍 크게 보기</button>
+            title="질문과 글자를 크게 봅니다"><svg class="btn-ic" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+      aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.6"/><path d="M15.4 15.4L21 21"/>
+      </svg><span id="btnBigLabel">크게 보기</span></button>
   </div>
 </header>
 
@@ -754,7 +785,12 @@ html.big{
     <p class="ask-sub">고르시면 오른쪽에 그 신청서가 나타납니다.</p>
     <div class="cards" id="cards" role="list"></div>
     <!-- Human Handoff — 여기 없으면 시민이 갇힌다(철학 §8) -->
-    <button type="button" class="card-sub" id="btnStaff">🤔 어느 것인지 모르겠어요 — 직원에게 여쭤볼게요</button>
+    <button type="button" class="card-sub" id="btnStaff"><svg class="btn-ic" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+      stroke-linejoin="round" aria-hidden="true"><circle cx="8.8" cy="7.4" r="3"/><path
+      d="M3.4 19.4c0-3 2.4-5.4 5.4-5.4s5.4 2.4 5.4 5.4"/><path d="M16.4 8.1c0-1.2 1-2.2 2.2-2.2s2.2
+      1 2.2 2.2c0 1.5-2.2 1.6-2.2 3.2"/><path d="M18.6 14.3h.01"/></svg><span>어느 것인지
+      모르겠어요 — 직원에게 여쭤볼게요</span></button>
     <div class="staff-note" id="staffNote" role="status"></div>
   </main>
 
@@ -862,7 +898,8 @@ var FORM_CATALOG = [
     scale:{ steps:15, minutes:5 },
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["한글 성명","주민등록번호","로마자 성명","본인 연락처","긴급 연락처"] },
+    preview:{ fields:["한글 성명","주민등록번호","로마자 성명","본인 연락처","긴급 연락처"],
+              sample:["홍길동","900101-●●●●●●●","HONG GILDONG","010-0000-0000","010-0000-0000"] },
     href:"passport-helper-v1.html" },
 
   { key:"birth", category:"family", icon:"\uD83D\uDC76",
@@ -872,7 +909,8 @@ var FORM_CATALOG = [
     ready:[], scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["출생자 성명","출생 일시","출생 장소","부·모 성명","신고인"] },
+    preview:{ fields:["출생자 성명","출생 일시","출생 장소","부·모 성명","신고인"],
+              sample:["김민준","2026.08.20 09:15","군포시 산본로 000","김도현 · 이서연","김도현 (부)"] },
     href:"birth-helper-v1.html" },
 
   { key:"marriage", category:"family", icon:"\uD83D\uDC8D",
@@ -882,7 +920,8 @@ var FORM_CATALOG = [
     ready:[], scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["남편 성명","아내 성명","등록기준지","증인 2인","신고인"] },
+    preview:{ fields:["남편 성명","아내 성명","등록기준지","증인 2인","신고인"],
+              sample:["김도현","이서연","군포시 산본로 000","박준호 · 최수빈","김도현 · 이서연"] },
     href:"marriage-helper-v1.html" },
 
   { key:"death", category:"family", icon:"\uD83D\uDD4A\uFE0F",
@@ -892,7 +931,8 @@ var FORM_CATALOG = [
     ready:[], scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["사망자 성명","주민등록번호","사망 일시","사망 장소","신고인"] },
+    preview:{ fields:["사망자 성명","주민등록번호","사망 일시","사망 장소","신고인"],
+              sample:["홍판서","400101-●●●●●●●","2026.08.18 14:30","군포시 소재 병원","홍길동 (자녀)"] },
     href:"death-helper-v1.html" },
 
   { key:"naming", category:"family", icon:"\u270D\uFE0F",
@@ -902,7 +942,8 @@ var FORM_CATALOG = [
     ready:[], scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["개명 전 이름","개명 후 이름","주민등록번호","허가일자·법원","신고인"] },
+    preview:{ fields:["개명 전 이름","개명 후 이름","주민등록번호","허가일자·법원","신고인"],
+              sample:["김철수","김한결","900101-●●●●●●●","2026.08.11 · 수원가정법원","김한결 (본인)"] },
     href:"naming-helper-v1.html" },
 
   { key:"divorce", category:"family", icon:"\uD83D\uDCC4",
@@ -912,7 +953,8 @@ var FORM_CATALOG = [
     ready:[], scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["남편 성명","아내 성명","이혼 구분","친권자 지정","신고인"] },
+    preview:{ fields:["남편 성명","아내 성명","이혼 구분","친권자 지정","신고인"],
+              sample:["김도현","이서연","협의이혼","모 (이서연)","김도현 · 이서연"] },
     href:"divorce-helper-v1.html" },
 
   /* ⚠️ 이 서식이 다루는 것은 **가족관계·기본·혼인관계·입양·친양자 5종**이다.
@@ -926,7 +968,8 @@ var FORM_CATALOG = [
     ready:[], scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["신청인 성명","주민등록번호","증명서 종류","통수","사용 목적"] },
+    preview:{ fields:["신청인 성명","주민등록번호","증명서 종류","통수","사용 목적"],
+              sample:["홍길동","900101-●●●●●●●","가족관계증명서 (상세)","2통","은행 제출"] },
     href:"cert-helper-v1.html" },
 
   { key:"realestate", category:"property", icon:"\uD83C\uDFE0",
@@ -936,7 +979,8 @@ var FORM_CATALOG = [
     ready:[], scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
-    preview:{ fields:["매도인","매수인","소재지","실제 거래가격","계약 체결일"] },
+    preview:{ fields:["매도인","매수인","소재지","실제 거래가격","계약 체결일"],
+              sample:["김도현","이서연","군포시 산본로 000","3억 5,000만원","2026.08.14"] },
     href:"realestate-helper-v1.html" }
 ];
 
@@ -1044,27 +1088,29 @@ function renderPaper(f, mode){
     '<div class="gp-sign"><span></span><span>신청인 <i></i> (서명 또는 인)</span></div>';
 }
 
-/* 실루엣 한 장. ⛔ 실제 서식의 칸 이름을 베끼지 않는다 — **줄 수와 길이만** 쓴다.
-   길이를 서로 다르게 두는 것은 「글자가 적힌 종이」로 읽히게 하기 위한 것이고,
-   길이는 서식 이름에서 계산해 **같은 서식이면 늘 같게** 만든다(찍을 때마다 달라지지 않는다). */
-var SIL_W = [34,52,46,72,41,58,66,38];
+/* 실루엣 한 장 — **그 서식이 묻는 것**과 **채워질 자리**.
+   ⛔ 실제 서식 그림이 아니다(그것은 「고른 것」에만 쓴다 — 네 단 규칙).
+      항목 이름은 카탈로그의 `preview.fields` 이고 실제 서식과 배치가 다를 수 있다.
+   ⚠️ 값은 **전부 가상 인물**이고, 종이 아래에 「작성 예시」라고 적는다 —
+      앞사람 개인정보가 남아 있는 것처럼 보이면 이 제품의 가장 큰 강점이 무너진다.
+   ⚠️ 주민등록번호 뒷자리는 **가상값이라도 가린다.** 늘 켜져 있는 화면이라
+      숫자 13자리가 통째로 떠 있는 그림 자체를 만들지 않는다. */
 function silHtml(f){
-  var n = (f.preview && f.preview.fields || []).length || 5;
-  var seed = f.key.length;
+  var fs = (f.preview && f.preview.fields) || [];
+  var vs = (f.preview && f.preview.sample) || [];
   var rows = "";
-  for(var i=0;i<n;i++){
-    rows += '<div class="sil-row" style="--w:'+SIL_W[(i+seed)%SIL_W.length]+'%"></div>';
+  for(var i=0;i<fs.length;i++){
+    rows += '<div class="sil-row"><span class="sil-k">'+esc(fs[i])+'</span>'+
+            '<span class="sil-v"><i>'+esc(vs[i]||"")+'</i></span></div>';
   }
-  var foot = (f.scale && f.scale.steps)
-    ? "약 "+f.scale.steps+"가지 · "+f.scale.minutes+"분쯤"
-    : "질문에 답하면 채워집니다";
   return '<div class="sil-name">'+esc(f.formal)+'</div><div class="sil-rule"></div>'+
          '<div class="sil-rows">'+rows+'</div>'+
          '<div class="sil-sign"><span></span></div>'+
-         '<div class="sil-foot">'+esc(foot)+'</div>';
+         '<div class="sil-foot">작성 예시입니다 · 질문에 답하시면 이렇게 채워집니다</div>';
 }
 
-/* 실루엣의 줄이 하나씩 그어진다 — 시연에서만. hover 는 정지된 실루엣이다.
+/* 값이 한 줄씩 채워진다 — **시연에서만.** hover 는 정지된 빈 서식이다(항목만 보인다).
+   이것이 이 화면의 한 문장을 눈앞에서 보여 준다 — 「질문에 답하면, 신청서가 완성됩니다」.
    ⚠️ `prefers-reduced-motion` 이면 아예 돌지 않는다(시연 자체가 안 돈다). */
 var silTimers=[];
 function silStop(){ for(var i=0;i<silTimers.length;i++) clearTimeout(silTimers[i]); silTimers=[]; }
@@ -1133,12 +1179,62 @@ function cardBody(f){
   return h+'<button type="button" class="card-go" data-go="'+esc(f.key)+'">작성 시작 →</button>';
 }
 
+/* ══ 카드 아이콘 (2026.08.27) ═══════════════════════════════════════════════
+   ⛔ **이모지를 쓰지 않는다.** 두 가지 이유다.
+      ① OS·글꼴에 따라 모양이 달라진다 — 배포본 하나를 여러 기관이 쓰는데 화면이 갈린다
+      ② **여러 색을 쓴다.** 철학 §15 는 색마다 하나의 역할을 주고 §1 은 장식 목적의
+         여러 색을 금하는데, 목록 8장에 8가지 색이 박혀 있었다
+   ⛔ 아이콘 폰트·SVG 세트를 받아 오지 않는다(오프라인). 여기에 인라인으로 둔다.
+   ⚠️ **같은 문법으로 그린다** — 24 격자 · 굵기 1.7 · 둥근 끝. 하나만 달라도 티가 난다.
+   ⚠️ `currentColor` 라 **잉크색**을 따른다. 기관 대표색을 따라가게 하지 마라 —
+      카드 8장이 색으로 경쟁하면 훑는 일이 느려진다. 고른 카드에서만 대표색이 된다.
+   ⚠️ 사망·이혼은 **감정이 실리는 민원**이다. 상징을 세게 쓰지 않는다 —
+      국화 한 송이와 담담한 두 사람으로 두었다.
+   ⚠️ 카탈로그의 `icon`(이모지)은 남겨 두었다. 여기 없는 서식이 생기면 그것으로 물러난다.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var ICON_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
+                'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+var ICONS = {
+  /* 여권 — 책자 + 사진 자리 */
+  passport:'<rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8.5 3v18"/>'+
+           '<circle cx="14" cy="10" r="2.7"/><path d="M11.7 16.4h4.6"/>',
+  /* 출생 — 머리가 큰 사람 하나. 머리 위 곱슬 한 획이 「아기」를 만든다 */
+  birth:'<circle cx="12" cy="8.2" r="3.5"/>'+
+        '<path d="M5.9 20.6c0-3.4 2.7-6.1 6.1-6.1s6.1 2.7 6.1 6.1"/>'+
+        '<path d="M12 4.7c0-1.1 1-1.8 1.9-1.3"/>',
+  /* 혼인 — 겹친 반지 둘 */
+  marriage:'<circle cx="9.2" cy="14" r="4.6"/><circle cx="14.8" cy="14" r="4.6"/>'+
+           '<path d="M9.2 6.1l1.6 2.3H7.6z"/>',
+  /* 사망 — 헌화. ⛔ 십자가·비둘기처럼 종교·문화가 실리는 상징을 쓰지 않는다 */
+  death:'<circle cx="12" cy="4.9" r="2.1"/><circle cx="15.6" cy="8" r="2.1"/>'+
+        '<circle cx="8.4" cy="8" r="2.1"/><circle cx="12" cy="11.1" r="2.1"/>'+
+        '<path d="M12 13.2V21"/><path d="M12 17.6c-2 0-3.2-1.2-3.2-2.9 2 0 3.2 1.2 3.2 2.9z"/>',
+  /* 개명 — 펜 */
+  naming:'<path d="M4 20l.9-3.6L15.4 5.9l2.7 2.7L7.6 19.1z"/><path d="M13.6 7.7l2.7 2.7"/>',
+  /* 이혼·친권자 — 두 사람과 그 사이의 끊긴 선. ⛔ 깨진 하트를 쓰지 않는다 */
+  divorce:'<circle cx="6.8" cy="8.6" r="2.4"/>'+
+          '<path d="M3 18.4c0-2.1 1.7-3.8 3.8-3.8s3.8 1.7 3.8 3.8"/>'+
+          '<circle cx="17.2" cy="8.6" r="2.4"/>'+
+          '<path d="M13.4 18.4c0-2.1 1.7-3.8 3.8-3.8s3.8 1.7 3.8 3.8"/>'+
+          '<path d="M12 4.4v2.5M12 10v2.5M12 15.6v2.5"/>',
+  /* 증명서 — 접힌 문서 + 관인 */
+  cert:'<path d="M6 3h7.4L18 7.6V21H6z"/><path d="M13.4 3v4.6H18"/>'+
+       '<path d="M8.8 11.4h6.4M8.8 14.3h4.2"/><circle cx="15.1" cy="17.5" r="2.3"/>',
+  /* 부동산 — 집 */
+  realestate:'<path d="M3.6 11.1L12 4.3l8.4 6.8"/><path d="M6.1 9.4V20.4h11.8V9.4"/>'+
+             '<path d="M10.2 20.4v-5.1h3.6v5.1"/>'
+};
+function iconHtml(f){
+  var d = ICONS[f.key];
+  return d ? '<svg '+ICON_ATTR+'>'+d+'</svg>' : esc(f.icon||"");
+}
+
 function cardHtml(f){
   var id="open_"+f.key;
   return '<div class="card-wrap" role="listitem" data-key="'+esc(f.key)+'">'
     + '<button type="button" class="card" data-key="'+esc(f.key)+'"'
     +   ' aria-expanded="false" aria-controls="'+id+'">'
-    +   '<span class="card-ic" aria-hidden="true">'+f.icon+'</span>'
+    +   '<span class="card-ic" aria-hidden="true">'+iconHtml(f)+'</span>'
     +   '<span class="card-tx">'
     +     '<span class="card-label">'+esc(f.citizen)+'</span>'
     +     '<span class="card-formal">'+esc(f.formal)+'</span>'
@@ -1185,7 +1281,11 @@ function renderRailInfo(){
    ⚠️ 서식 8종은 무동작·인쇄 후 이 파일로 돌아온다. 그 끝이 곧 이 시연이다.
    ========================================================================== */
 
-var DEMO_STEP_MS = 1800;   // 카드 한 장에 머무는 시간. 8종이면 한 바퀴 14.4초
+/* 카드 한 장에 머무는 시간. 8종이면 한 바퀴 22.4초.
+   ⚠️ 2026.08.27 에 2.6→1.8 로 줄였다가 **2.8 로 되돌렸다.** 그때는 종이에 추상적인 줄만
+      그어져 읽을 것이 없었지만, 이제 항목 이름과 값이 한 줄씩 채워진다 —
+      다섯 줄을 읽을 시간이 필요하다. 지나가던 사람이 한 서식은 끝까지 보게 하는 것이 목적이다. */
+var DEMO_STEP_MS = 2800;
 var DEMO_GUARD_MS = 400;   // 시연이 막 시작한 직후의 합성 mousemove 를 무시하는 시간
 
 /* 아무 조작이 없을 때 시연으로 돌아가는 시간. 키오스크 환경설정 값이 있으면 그것을 쓴다
@@ -1311,7 +1411,7 @@ function bindEvents(){
   document.getElementById("btnBig").addEventListener("click", function(){
     var on=document.documentElement.classList.toggle("big");
     this.setAttribute("aria-pressed", on?"true":"false");
-    this.textContent = on ? "🔍 일반 보기로" : "🔍 크게 보기";
+    document.getElementById("btnBigLabel").textContent = on ? "일반 보기로" : "크게 보기";
   });
 }
 

@@ -348,7 +348,11 @@ html.big{
      시민이 누를 것은 본문에 있지 여기에 있지 않다(여기는 도구·담당자용이다).
      ⚠️ `nowrap` — 라벨이 버튼 안에서 두 줄로 접히면 상단 바 높이가 들쭉날쭉해진다. */
   .topbar .btn{font-size:14.5px;padding:9px 12px;white-space:nowrap;}
-  .btn{font-family:inherit;font-size:15.5px;font-weight:700;border:1.5px solid var(--blue);
+  /* 선 아이콘. ⚠️ 허브(`index.html`)와 **같은 문법**이다 — 24 격자·굵기 1.7·둥근 끝.
+     상단 바는 9개 화면에서 같아 보여야 하므로 한쪽만 고치지 마라. */
+  .btn-ic{flex:0 0 auto;width:16px;height:16px;display:block;}
+  .btn{display:inline-flex;align-items:center;gap:7px;
+    font-family:inherit;font-size:15.5px;font-weight:700;border:1.5px solid var(--blue);
     background:#fff;color:var(--blue);border-radius:var(--r-md);padding:10px 15px;cursor:pointer;}
   .btn:hover{background:var(--blue-light);}
   .btn.primary{background:var(--grad);color:#fff;border-color:var(--blue-dark);}
@@ -1090,7 +1094,10 @@ html.big{
     <!-- 크게 보기 — 고령자를 위한 별도 UI 가 아니라 **누구나 쓰는 보기 방식**이다(§13).
          ⚠️ 저장하지 않는다. 다음 시민이 앞사람이 켜 둔 화면을 물려받지 않게 한다. -->
     <button class="btn ghost" id="btnBig" aria-pressed="false"
-            title="질문과 글자를 크게 봅니다">🔍 크게 보기</button>
+            title="질문과 글자를 크게 봅니다"><svg class="btn-ic" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+      aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.6"/><path d="M15.4 15.4L21 21"/>
+      </svg><span id="btnBigLabel">크게 보기</span></button>
     <button class="btn ghost" id="btnReset">초기화</button>
     <button class="btn" id="btnPreview">미리보기</button>
     <button class="btn primary" id="btnPrint">🖨️ 인쇄</button>
@@ -2814,7 +2821,8 @@ function resetAll(){
      (무동작·인쇄 후 초기화는 허브로 이동하므로 새로 열리며 저절로 꺼진다) */
   document.documentElement.classList.remove("big");
   var bb=document.getElementById("btnBig");
-  if(bb){ bb.setAttribute("aria-pressed","false"); bb.textContent="🔍 크게 보기"; }
+  if(bb){ bb.setAttribute("aria-pressed","false");
+          var bl=document.getElementById("btnBigLabel"); if(bl) bl.textContent="크게 보기"; }
   renderAll(); scrollPanelTop();
 }
 
@@ -3057,7 +3065,7 @@ function bindGlobalEvents(){
   document.getElementById("btnBig").addEventListener("click", function(){
     var on=document.documentElement.classList.toggle("big");
     this.setAttribute("aria-pressed", on?"true":"false");
-    this.textContent = on ? "🔍 일반 보기로" : "🔍 크게 보기";
+    document.getElementById("btnBigLabel").textContent = on ? "일반 보기로" : "크게 보기";
   });
   document.getElementById("btnPreview").addEventListener("click", openPreview);
   var bpm=document.getElementById("btnPreviewMobile"); if(bpm) bpm.addEventListener("click", openPreview);
