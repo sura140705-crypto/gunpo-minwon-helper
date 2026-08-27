@@ -14,6 +14,19 @@
 - **무저장** — 입력값은 메모리에만 존재. 파일·서버 기록 0, 외부 통신 0 → 완전 오프라인
 - **자체완결 HTML** — 서식 이미지·글꼴·로직이 파일 하나에 들어 있어 `file://` 로 바로 열림
 
+## 문서
+
+이 파일은 **개발자용 지도**다. 「무엇을 왜 만드는가」는 아래에 있다.
+
+| | |
+|---|---|
+| [`PROJECT_OVERVIEW.md`](PROJECT_OVERVIEW.md) | **무엇을 만들고 있으며 왜 만드는가** — 처음 오셨다면 여기부터 |
+| [`docs/디자인검토/DESIGN_PHILOSOPHY.md`](docs/디자인검토/DESIGN_PHILOSOPHY.md) | 어떤 원칙으로 디자인하는가 (기준 문서) |
+| [`docs/UX_DECISIONS.md`](docs/UX_DECISIONS.md) | 무엇을 고민했고 **왜 그렇게 정했는가** |
+| [`docs/EXPANSION_PLAYBOOK.md`](docs/EXPANSION_PLAYBOOK.md) | 새 서식·다른 기관으로 어떻게 넓히는가 |
+| [`docs/history/`](docs/history/) | 화면이 어떻게 여기까지 왔는가 |
+| [`AGENTS.md`](AGENTS.md) | 이 리포에서 작업할 때의 지침 — **고치기 전에 읽는다** |
+
 ## 서식 8종
 
 | 배포 파일 | 서식 | 만드는 방식 |
@@ -63,7 +76,12 @@ gunpo_minwon/
 ├─ kiosk-app/       배포(Electron 설치본) — main.js(키오스크 통제)·preload.js·app/(사본 9개)
 │   └─ admin/      관리자 설정 스크립트 · 인쇄실패·점검 안내 화면
 ├─ tests/baseline/  인쇄물 기준선 이미지 19쪽 (verify-print.py 가 비교하는 대상)
+├─ PROJECT_OVERVIEW.md  ☞ 무엇을 왜 만드는가 (개요·현황·용어)
 ├─ docs/            GOTCHAS.md(함정 목록) · 타지자체-확산.md · archive/(과거 인계 문서)
+│   ├─ UX_DECISIONS.md       ☞ 왜 그렇게 정했는가 (의사결정 기록)
+│   ├─ EXPANSION_PLAYBOOK.md ☞ 새 서식·다른 기관으로 넓히는 절차
+│   ├─ history/              ☞ 화면 변화의 시각적 기록
+│   └─ 디자인검토/           DESIGN_PHILOSOPHY.md(기준) · 구조동결 · 갈무리 · 밖에 넘기는 묶음
 ├─ CHANGELOG.md     시범운영 피드백 반영 이력
 └─ LICENSE          공공누리 제1유형(출처표시)
 ```
