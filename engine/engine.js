@@ -210,23 +210,33 @@ function renderStepBody(step){
   return h;
 }
 
+/* 진행 표시 — 막대 + 지나온 단계(2026.08.25, 여권과 같은 결).
+   ⚠️ 종전에는 동그라미 스텝퍼였다. 같은 키오스크에서 여권과 표시가 갈리지 않게 바꿨다.
+   ⛔ **되돌아가는 길을 없애지 않았다.** 지나온 단계는 눌러서 뛸 수 있다 —
+      앞으로 건너뛰기는 `gotoStep` 쪽에서 막는다. 7종의 요약 화면에는 아직
+      줄마다 「수정」이 없어서, 이 길을 없애면 [이전]을 여러 번 눌러야 한다. */
 function renderStepper(){
   var cur=state.step, STEPS=FORM.STEPS, TOTAL=STEPS.length, h='';
+  var fill=document.getElementById("pbarFill");
+  if(fill) fill.style.width = Math.round(cur/TOTAL*100)+"%";
   for(var i=0;i<TOTAL;i++){
-    var n=i+1, cls="stp", inner=String(n);
-    if(n<cur){ cls+=" done nav"; inner="✓"; }
-    else if(n===cur){ cls+=" cur"; }
-    var navAttr = n<cur ? ' data-goto="'+n+'" tabindex="0" role="button" aria-label="'+esc(STEPS[i].short)+' 단계로"' : '';
-    h+='<div class="'+cls+'"><div class="stp-dot"'+navAttr+'>'+inner+'</div>'
-      +'<div class="stp-lab">'+esc(STEPS[i].short)+'</div></div>';
+    var n=i+1, done=n<cur, now=n===cur;
+    var cls="stp"+(done?" done":(now?" cur":""));
+    var tick='<span class="tick" aria-hidden="true">'+(done?"✓":(now?"▶":"·"))+'</span>';
+    var lab='<span>'+esc(STEPS[i].short)+'</span>';
+    h += done
+      ? '<button type="button" class="'+cls+'" data-goto="'+n+'"'
+        +' aria-label="'+esc(STEPS[i].short)+' 단계로 돌아가기">'+tick+lab+'</button>'
+      : '<span class="'+cls+'">'+tick+lab+'</span>';
   }
   el.stepper.innerHTML=h;
   el.stepper.setAttribute("aria-valuenow", cur);
+  el.stepper.setAttribute("aria-valuetext", cur+" / "+TOTAL+" 단계 · "+STEPS[cur-1].short);
 }
 function renderStep(){
   var def=FORM.STEPS[state.step-1], TOTAL=FORM.STEPS.length;
   el.wizTitle.textContent=def.title;
-  el.wizCount.textContent=state.step+" / "+TOTAL+" 단계";
+  el.wizCount.textContent="진행 "+state.step+" / "+TOTAL;   // 여권과 같은 문구
   el.wizBody.innerHTML=renderStepBody(state.step);
   el.stepWarn.textContent="";
   el.btnPrev.disabled = state.step===1;

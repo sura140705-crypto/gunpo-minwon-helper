@@ -142,6 +142,25 @@
   --sp-5: 22px;
   --sp-6: 30px;
 
+  /* ── Motion (§17 Interaction) ──────────────────────────────────────
+     「움직임은 상태를 설명할 때만」을 지키려면 값이 한 곳에 있어야 한다.
+     종전에는 5원본 8곳에 박혀 있었고 종류가 벌써 다섯이었다(.12·.15·.2·.22·.34s).
+     easing 은 대부분 **방치**돼 브라우저 기본값(ease)으로 굴러갔다 — Radius 13가지와 같은 뿌리다.
+
+     ⚠️ **아래 값은 지금 화면을 그대로 옮긴 것이지, 정해진 값이 아니다.**
+        `docs/디자인검토/2026.08.25-의뢰서-모션과-시각.md` 로 밖에 물어 둔 상태이고,
+        답이 오면 **이 여섯 줄만** 갈아 끼운다. 그것이 이 블록을 만든 이유다.
+
+     ⛔ 인쇄물에는 모션이 없다. 이 값들은 전부 화면 전용이다.
+     ⚠️ 아래 `@media (prefers-reduced-motion: reduce)` 가 이것들을 통째로 끈다.
+        ⛔ 다만 **JS 로 도는 것(허브 시연)은 CSS 로 안 꺼진다** — `matchMedia` 로 따로 본다. */
+  --dur-quick: 120ms;   /* 눌린 표시·hover — 즉답으로 느껴져야 한다 */
+  --dur-base:  220ms;   /* 펼침·접힘·나타남 */
+  --dur-calm:  340ms;   /* 종이 갈아끼우기처럼 느긋한 것 */
+  --ease-out:  cubic-bezier(.22,.61,.36,1);   /* 들어오는 것 — 빨리 나와 천천히 멎는다 */
+  --ease-in:   cubic-bezier(.55,.06,.68,.19); /* 나가는 것 */
+  --ease-move: cubic-bezier(.4,0,.2,1);       /* 자리를 옮기는 것 */
+
   /* ── Typography (§16) ──────────────────────────────────────────────
      글꼴은 하나만 쓴다. 관공서 PC 에 반드시 있는 것이어야 하고, 오프라인
      설치본이라 웹폰트를 받을 수 없다. */
@@ -755,7 +774,9 @@ html.big{
   .card{display:flex;flex-direction:column;align-items:flex-start;gap:11px;width:100%;
     min-height:var(--touch-card);padding:20px 22px;background:#fff;border:1.5px solid var(--line-strong);
     border-radius:var(--r-lg);text-align:left;cursor:pointer;font-family:inherit;
-    transition:border-color .12s,background .12s,box-shadow .12s;}
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out),
+               box-shadow var(--dur-quick) var(--ease-out);}
   .card:hover,.card:focus-visible{border-color:var(--blue);background:var(--blue-light);}
   .card.picked{border-color:var(--blue);background:var(--blue-light);
     box-shadow:inset 0 0 0 1px var(--blue);}
@@ -826,7 +847,7 @@ html.big{
   /* 진행 막대 — 경로마다 화면 수가 달라 「N/10」 고정 표기를 버렸다.
      이제 안내 기둥 안에 놓이므로 바탕이 흰색이 아니라 기둥색 위의 회색이다. */
   .pbar{height:6px;background:#d9d7d1;border-radius:var(--r-pill);overflow:hidden;margin:14px 0 22px;}
-  .pbar-fill{height:100%;background:var(--blue);border-radius:var(--r-pill);transition:width .2s;}
+  .pbar-fill{height:100%;background:var(--blue);border-radius:var(--r-pill);transition:width var(--dur-base) var(--ease-move);}
   /* 빈칸의 뜻 — 일부러 비운 칸과 빠뜨린 칸을 눈으로 구별한다 */
   .sum-row .fs-manual{color:#8a4b00;font-weight:700;}
   .sum-row .fs-existing{color:var(--blue);font-weight:700;}
