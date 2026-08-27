@@ -610,7 +610,11 @@ html.big{
      시민이 누를 것은 본문에 있지 여기에 있지 않다(여기는 도구·담당자용이다).
      ⚠️ `nowrap` — 라벨이 버튼 안에서 두 줄로 접히면 상단 바 높이가 들쭉날쭉해진다. */
   .topbar .btn{font-size:14.5px;padding:9px 12px;white-space:nowrap;}
-  .btn{font-family:inherit;font-size:15.5px;font-weight:700;border:1.5px solid var(--blue);
+  /* 선 아이콘. ⚠️ 허브(`index.html`)와 **같은 문법**이다 — 24 격자·굵기 1.7·둥근 끝.
+     상단 바는 9개 화면에서 같아 보여야 하므로 한쪽만 고치지 마라. */
+  .btn-ic{flex:0 0 auto;width:16px;height:16px;display:block;}
+  .btn{display:inline-flex;align-items:center;gap:7px;
+    font-family:inherit;font-size:15.5px;font-weight:700;border:1.5px solid var(--blue);
     background:#fff;color:var(--blue);border-radius:var(--r-md);padding:10px 15px;cursor:pointer;}
   .btn:hover{background:var(--blue-light);}
   .btn.primary{background:var(--grad);color:#fff;border-color:var(--blue-dark);}
@@ -1276,7 +1280,8 @@ html.big{
   .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
     justify-content:flex-end;padding:10px 0;}
   .today{font-size:13.5px;color:var(--ink-muted);white-space:nowrap;}
-  .btn{font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
+  .btn{display:inline-flex;align-items:center;gap:7px;
+    font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
     border:1.5px solid var(--blue);background:var(--paper);color:var(--blue);
     border-radius:var(--r-md);padding:10px 15px;cursor:pointer;}
   .btn:hover{background:var(--blue-light);}
@@ -1336,8 +1341,15 @@ html.big{
   /* ⚠️ 아이콘은 **보조 표시**다. 크면 목록이 둔해 보이고 시민의 말(큰 글씨)과
      주인 자리를 다툰다. 26px → 20px 로 내렸다(2026.08.24). */
   /* 아이콘은 보조 표시다. 20 → 14px(30% 더). 목록이 조밀해지고 시민의 말이 산다. */
-  .card-ic{font-size:14px;line-height:1;flex:0 0 auto;width:17px;text-align:center;
-    opacity:.85;}
+  /* 선 아이콘 한 벌(인라인 SVG). ⚠️ 색은 **잉크**를 따른다 — 카드끼리 색으로 경쟁하지
+     않게. 고른 카드에서만 대표색이 된다(그때는 색이 「골라짐」이라는 뜻을 갖는다).
+     ⚠️ `font-size`·`text-align` 은 아이콘이 없는 서식의 이모지 대비책으로 남겨 둔다. */
+  .card-ic{flex:0 0 auto;width:21px;height:21px;font-size:14px;line-height:1;
+    text-align:center;color:var(--ink-muted);opacity:.9;
+    transition:color var(--dur-quick) var(--ease-out);}
+  .card-ic svg{display:block;width:100%;height:100%;}
+  .card:hover .card-ic,.card:focus-visible .card-ic,
+  .card-wrap.open .card-ic,.demo-on .card-ic{color:var(--blue);opacity:1;}
   .card-tx{display:flex;flex-direction:column;gap:3px;min-width:0;}
   /* 목록은 여권의 두 칸 격자 카드보다 한 치수 작다 — 8개를 세로로 훑는 자리다.
      ⚠️ 크게 보기에서는 토큰이 커지므로 여기서도 함께 커진다. */
@@ -1346,7 +1358,11 @@ html.big{
   .card-formal{font-size:calc(var(--fs-card-sub) - 1px);color:var(--ink-muted);line-height:1.4;}
 
   /* Human Handoff (철학 §8) — 여기 없으면 시민이 갇힌다 */
-  .card-sub{display:block;width:100%;margin:auto 0 0;padding:14px;
+  /* 단추 안의 선 아이콘. ⚠️ 카드 아이콘과 **같은 문법**(24 격자·굵기 1.7·둥근 끝)이고
+     `currentColor` 라 단추 색을 그대로 따라간다 — hover 에서 같이 물든다. */
+  .btn-ic{flex:0 0 auto;width:16px;height:16px;display:block;}
+  .card-sub{display:flex;align-items:center;justify-content:center;gap:9px;
+    width:100%;margin:auto 0 0;padding:14px;
     font-family:inherit;font-size:15px;font-weight:var(--fw-bold);
     color:var(--ink-muted);background:var(--surface-work);
     border:1.5px dashed var(--border);border-radius:var(--r-lg);cursor:pointer;}
@@ -1383,10 +1399,16 @@ html.big{
   .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
     padding:26px 20px 20px;}
   .rail-info{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
-  .rail-sec{margin-bottom:20px;}
+  /* ⚠️ MAIN 의 RAIL 은 위에 **한 묶음뿐**이다(동결 §7 의 「[대체] 이렇게 도와드립니다」).
+     아래 안심 안내는 바닥 고정이라, 같은 간격을 쓰면 가운데에 큰 구멍이 남아
+     「조용한」 것이 아니라 「덜 만든」 것으로 읽힌다.
+     ⛔ 정보를 더 넣어 채우지 않는다(결정 ⑤ — 없으면 여백을 허용한다).
+        대신 **묶음을 벌리고 남는 높이를 위아래로 나눠** 여백이 의도로 읽히게 한다.
+     ⚠️ 세로 배치에서는 기둥이 가로 띠가 되므로 아래 미디어 쿼리에서 되돌린다. */
+  .rail-sec{margin:clamp(8px,13vh,150px) 0 20px;}
   .rail-head{display:flex;align-items:center;gap:8px;
-    font-size:var(--fs-rail-head);font-weight:900;margin-bottom:11px;}
-  .rail-items{display:grid;gap:11px;}
+    font-size:var(--fs-rail-head);font-weight:900;margin-bottom:14px;}
+  .rail-items{display:grid;gap:clamp(12px,2.2vh,24px);}
   .rail-item{display:grid;grid-template-columns:16px 1fr;gap:8px;
     font-size:var(--fs-rail-item);line-height:1.45;color:#7b7f7d;}
   .rail-item .check{color:#b7b5af;font-weight:900;}
@@ -1462,14 +1484,21 @@ html.big{
   /* ⛔ 줄 사이를 `%` 로 벌리지 마라. 이 상자는 높이가 **내용에서 나오므로** 백분율
      간격이 0 으로 접힌다 — 줄이 위에 뭉쳐 바코드처럼 보인다(2026.08.25 에 겪었다).
      종이 높이를 재는 `cqh` 로 벌린다(재는 상자는 `.paper-fit`). */
-  .sil-rows{display:flex;flex-direction:column;gap:clamp(10px,4.2cqh,44px);}
-  /* 한 줄 = 한 항목. 비었을 때는 옅은 밑줄, 그어지면 획이 찬다. */
-  .sil-row{height:clamp(8px,1.25cqh,13px);border-radius:2px;background:var(--surface-work);
-    position:relative;overflow:hidden;}
-  .sil-row::after{content:"";position:absolute;inset:0;width:0;border-radius:2px;opacity:.42;
-    background:repeating-linear-gradient(90deg,var(--ink-muted) 0 12px,transparent 12px 21px);
-    transition:width var(--dur-calm) var(--ease-out);}
-  .sil-row.wrote::after{width:var(--w,62%);}
+  .sil-rows{display:flex;flex-direction:column;gap:clamp(12px,6cqh,60px);}
+  /* 한 줄 = 한 항목. **왼쪽에 그 서식이 묻는 것 / 오른쪽에 채워질 자리.**
+     ⚠️ 항목 이름은 언제나 보인다 — 비어 있어도 「무엇을 쓰는 종이인지」는 읽혀야 한다. */
+  .sil-row{display:grid;grid-template-columns:37% 1fr;gap:4%;align-items:end;}
+  .sil-k{font-size:clamp(10px,1.5cqh,15px);color:var(--ink-muted);line-height:1.3;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 밑줄은 **칸**이 갖고, 글자만 왼쪽에서 오른쪽으로 드러난다 — 손으로 적어 나가는 결이다.
+     ⛔ 밑줄을 글자 쪽에 주지 마라. 같이 잘려서 빈 칸에 줄이 없어진다(빈 서식으로 안 읽힌다). */
+  .sil-v{border-bottom:1px solid var(--border-strong);overflow:hidden;
+    padding-bottom:clamp(2px,.55cqh,6px);}
+  .sil-v i{display:block;font-style:normal;font-size:clamp(11px,1.75cqh,17px);
+    line-height:1.3;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+    clip-path:inset(0 100% 0 0);
+    transition:clip-path var(--dur-calm) var(--ease-out);}
+  .sil-row.wrote .sil-v i{clip-path:inset(0 0 0 0);}
   /* 아래쪽 서명 줄. ⚠️ 이것이 없으면 종이의 아래 절반이 통째로 비어 「빈 종이」로 읽히고,
      고른 순간 나오는 **빽빽한 실제 서식**과 무게가 너무 달라 다른 종이처럼 보인다.
      ⛔ 「서명하세요」 표시가 아니다 — 인쇄물의 `--marker-sign` 과 아무 관계가 없다. */
@@ -1559,6 +1588,7 @@ html.big{
     .rail{flex-direction:row;align-items:flex-start;gap:24px;
       padding:12px 20px;overflow-x:auto;}
     .rail-info{flex-direction:row;gap:24px;}
+    .rail-sec{margin:0;}          /* 가로 띠에서는 위아래로 벌릴 이유가 없다 */
     .rail-safe{margin-top:0;border-top:0;padding-top:0;}
     .screen-notice{display:none;}
     .task-col{padding:22px 20px 16px;}
