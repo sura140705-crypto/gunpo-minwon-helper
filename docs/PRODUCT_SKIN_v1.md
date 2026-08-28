@@ -303,8 +303,13 @@ Shell v1 은 **구조·위치·크기·타이포의 일원화**까지다. 아래
 
 | | 껍데기 | 쓰는 서식 |
 |---|---|---|
-| Product UI v1 | **`engine/base-product.html`** | **출생신고** (config 에 `shell:"product"`) |
+| Product UI v1 | **`engine/base-product.html`** | **출생신고 · 혼인신고** (config 에 `shell:"product"`) |
 | 옛 조형 | `engine/base.html` | 사망 · 개명 · 증명서 · 부동산 |
+
+⚠️ **손작성 포크는 엔진으로 되돌린 뒤 이식한다.** 혼인신고가 그랬다 —
+`marriage-helper-v1.html` 은 옛 엔진을 복제해 손으로 유지하던 포크였고(필수 검증이 한 곳도
+없었다), `forms/marriage.config.js` 로 옮긴 뒤에야 Product UI v1 을 한 번에 넣을 수 있었다.
+📌 이혼 도우미도 같은 포크다.
 
 - 새 껍데기는 `passport-helper-v1.html`(`1d735fc`)의 **머리와 꼬리를 글자 그대로 뜬 것**이다.
   ⛔ 조형을 거기서 새로 만들지 마라 — 여권이 원본이다.
