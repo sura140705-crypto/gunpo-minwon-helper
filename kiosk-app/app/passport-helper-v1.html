@@ -640,22 +640,38 @@ html.big{
     position:relative;letter-spacing:-.01em;}
   .wiz-count{font-size:15.5px;font-weight:800;color:var(--muted);white-space:nowrap;}
   .wiz-body{flex:1 1 auto;min-height:0;overflow:auto;padding:0 2px 6px;}
+  /* ── Human Handoff 자리 (2026.08.28 단계 6) ──
+     질문 영역의 **바닥에 고정**된 보조 행동 영역. 질문이 길어 본문이 굴러도 남는다.
+     ⚠️ 허브 Main 의 `.ask-foot` 과 같은 문법이다 — 위에 실선 하나로 갈라 둔다.
+     ⛔ 이 화면에 탈출구가 없으면 **자리를 차지하지 않는다.** */
+  .ask-foot{flex:0 0 auto;margin-top:10px;padding-top:12px;
+    border-top:1px solid var(--m-border);}
+  .ask-foot:empty{display:none;}
+  .ask-foot .card-sub{margin:0;}
+  .ask-foot .ask-box{margin:0;}
 
   /* ===== 안내 기둥(Companion Rail) =====
      진행 · 준비물 · 안심 안내. 질문에 답하는 동안 **눈을 돌리지 않아도** 지금 어디쯤인지와
      무엇을 꺼내 둬야 하는지가 늘 보이게 한다. 종전에는 이 정보가 패널 머리의 얇은 막대
      하나뿐이었고, 준비물은 아예 없었다. */
   .rail-col{background:var(--rail);border-left:1px solid var(--line-warm);}
+  /* ⚠️ 여백은 **실측으로 정한 예산**이다(2026.08.28 단계 6). 미성년 경로 + 크게 보기가
+     기준이고, 여기서 조금만 벌리면 진행·준비물이 화면 밖으로 밀린다. */
   .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
-    padding:26px 20px 20px;}
+    padding:20px 18px 16px;}
+  /* 진행 머리 — 캡션(좌) + 큰 숫자(우)를 **한 줄에**(2026.08.28 단계 6).
+     ⚠️ 두 줄이던 것을 한 줄로 묶어 23px 을 벌었다 — 준비물이 여섯 개인 미성년 경로에서
+        그만큼이 기둥 안에 담기느냐 마느냐를 갈랐다. 정보는 그대로다. */
+  .rail-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
   .rail-cap{font-size:12px;letter-spacing:.12em;color:var(--m-ink-muted);font-weight:800;}
-  .rail-num{font-size:var(--fs-rail-num);font-weight:900;letter-spacing:-.04em;margin-top:4px;line-height:1.05;}
+  .rail-num{font-size:var(--fs-rail-num);font-weight:900;letter-spacing:-.04em;line-height:1.05;}
   .rail-num span{font-size:15px;color:var(--muted);font-weight:800;}
   .rail-now{font-size:14px;color:var(--blue-dark);font-weight:800;margin-top:5px;}
-  .rail-steps{display:grid;gap:11px;font-size:var(--fs-rail-item);margin-bottom:22px;}
+  .rail-steps{display:grid;gap:7px;font-size:var(--fs-rail-item);margin-bottom:22px;}
   .rail-step{display:grid;grid-template-columns:19px 1fr;gap:9px;align-items:center;
     color:#7b7f7d;background:none;border:0;padding:0;font-family:inherit;text-align:left;
     width:100%;line-height:1.35;}
+  .ic-dot{display:block;width:12px;height:12px;}
   .rail-step .dot{width:17px;height:17px;border:1px solid var(--m-border-mid);border-radius:50%;
     display:grid;place-items:center;font-size:9px;background:#fff;}
   /* 지나온 묶음은 눌러서 되돌아갈 수 있다(앞으로 건너뛰기는 막는다 — 검증 우회 방지) */
@@ -664,20 +680,31 @@ html.big{
   .rail-step.done:hover{color:var(--blue-dark);}
   .rail-step.now{font-weight:800;color:var(--ink);}
   .rail-step.now .dot{background:var(--blue);border-color:var(--blue);}
-  .rail-rule{height:1px;background:var(--line-warm);margin:0 0 20px;}
-  .rail-sec{margin-bottom:20px;}
+  .rail-rule{height:1px;background:var(--line-warm);margin:0 0 14px;}
+  .rail-sec{margin-bottom:14px;}
   .rail-head{display:flex;align-items:center;gap:8px;font-size:var(--fs-rail-head);font-weight:900;margin-bottom:11px;}
-  .rail-items{display:grid;gap:11px;}
-  .rail-item{display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:var(--fs-rail-item);line-height:1.45;
-    color:var(--m-ink-read);}
+  .rail-items{display:grid;gap:7px;}
+  .rail-item{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;
+    font-size:var(--fs-rail-item);line-height:1.45;color:var(--m-ink-read);}
+  /* ── compact 준비물 (2026.08.28 단계 6) ──
+     32px 아이콘판 + 이름 한 줄 + 조건 한 줄. ⛔ 조건이 두 줄이 되면 **문구를 줄인다** —
+     칸을 키우면 미성년 경로에서 기둥이 넘친다(실측으로 정한 예산이다). */
+  .rail-ic{width:30px;height:30px;border-radius:var(--m-r-card);
+    background:var(--m-icon-bg);color:var(--m-ink-muted);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .ic-rail{display:block;width:19px;height:19px;}
+  /* 꼭 필요한 것은 아이콘판이 대표색을 띤다 — 종전의 「✓」 글자를 대신한다 */
+  .rail-item.req .rail-ic{background:var(--m-a10);color:var(--blue);}
+  .rail-item b{display:block;font-weight:var(--fw-bold);color:var(--m-ink);line-height:1.35;}
   .rail-item .check{color:var(--m-border-mid);font-weight:900;}
   /* 꼭 필요한 것만 진하게. 나머지는 한 톤 내려 「없어도 되는 것」임이 눈에 보이게 한다. */
   .rail-item.req{color:var(--ink);font-weight:700;}
   .rail-item.req .check{color:var(--blue);}
-  .rail-item small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px;font-weight:400;}
-  .rail-safe{margin-top:auto;border-top:1px solid var(--line-warm);padding-top:16px;}
+  .rail-item small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px;font-weight:400;
+    line-height:1.35;}   /* ⚠️ 조건 한 줄. 줄 간격이 예산에 직접 걸린다(단계 6 실측) */
+  .rail-safe{margin-top:auto;border-top:1px solid var(--line-warm);padding-top:12px;}
   .rail-safe .rail-head{font-size:var(--fs-rail-item);margin-bottom:7px;}
-  .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:var(--m-ink-read);margin:6px 0;}
+  .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:var(--m-ink-read);margin:5px 0;}
 
   /* 질문 — 이 화면에서 가장 큰 글자. 어르신이 서서 보는 거리에서 한눈에 읽혀야 한다. */
   .coach-q{font-size:var(--fs-question);font-weight:var(--fw-heavy);line-height:1.28;letter-spacing:var(--ls-tight);
@@ -805,13 +832,29 @@ html.big{
   .wiz-nav .btn{padding:0;height:var(--btn-h);font-size:var(--fs-label);font-weight:var(--fw-heavy);border-radius:var(--r-md);}
 
   /* 이용 안내 — 레일 맨 아래. 늘 읽는 글이 아니라 조용히 둔다. */
-  .screen-notice{margin-top:18px;background:none;border:0;border-top:1px solid var(--line-warm);
+  .screen-notice{margin-top:14px;background:none;border:0;border-top:1px solid var(--line-warm);
     /* ⚠️ 이 목록은 허브 Main 의 「이용 안내」와 **같은 내용**이다 — 같은 잉크를 쓴다
        (2026.08.28 · 종전 #6a706d 하드코딩). */
     border-radius:0;padding:14px 0 0;font-size:12px;color:var(--m-ink-sub);}
   .screen-notice h3{margin:0 0 7px;font-size:13px;color:var(--blue-dark);}
   .screen-notice ul{margin:0;padding-left:16px;}
-  .screen-notice li{margin:4px 0;line-height:1.5;}
+  .screen-notice li{margin:3px 0;line-height:1.45;}
+
+  /* ── 크게 보기의 RAIL 여백 (2026.08.28 단계 6) ──
+     ⚠️ 글자가 커지면 같은 내용이 25px 더 든다(미성년 경로 실측). **글자는 그대로 두고**
+        묶음 사이의 숨만 줄여 기둥 안에 담는다 — 스크롤이 생기면 진행·준비물이 밀린다.
+     ⛔ 크게 보기의 글자 크기는 단계 7 소관이다. 여기서 건드리지 마라. */
+  html.big .rail{padding:16px 16px 14px;}
+  html.big .rail-sec{margin-bottom:10px;}
+  html.big .rail-items{gap:6px;}
+  html.big .rail-steps{gap:6px;}
+  html.big .rail-rule{margin:0 0 10px;}
+  /* ⚠️ 크게 보기에서 준비물 여섯 개(미성년 + 기존 여권)가 19px 넘쳤다 —
+     **글자 크기는 그대로 두고 줄 간격만** 좁혀 담는다(단계 7 소관과 겹치지 않게). */
+  html.big .rail-item b{line-height:1.25;}
+  html.big .rail-item small{line-height:1.3;}
+  html.big .rail-safe p{margin:4px 0;}
+  html.big .screen-notice{margin-top:12px;}
 
   /* 모바일 전용: 질문면 안에서 완성된 서식을 확인하는 버튼 (넓은 화면에선 숨김) */
   .m-preview{display:none;flex:0 0 auto;width:100%;margin:12px 0 0;max-width:var(--question-max);
@@ -1353,6 +1396,13 @@ html.big{
         <div class="wiz-count" id="wizCount"></div>
       </div>
       <div class="wiz-body" id="wizBody" aria-live="polite"></div>
+      <!-- Human Handoff — **질문 영역의 바닥에 고정**(2026.08.28 단계 6).
+           ⚠️ 종전에는 질문 본문 끝에 붙어 있어서, 로마자처럼 내용이 긴 화면에서는
+              320px 아래로 밀려 **스크롤해야 보였다**(실측). 막힌 사람이 찾아야 하는
+              탈출구가 화면 밖에 있으면 없는 것과 같다(철학 §8).
+           ⚠️ 이 화면에 탈출구가 없으면 **자리를 차지하지 않는다**(`:empty`).
+           ⛔ 무엇을 낼지·눌렀을 때 무엇을 할지는 그대로다 — 자리만 옮겼다. -->
+      <div class="ask-foot" id="askFoot"></div>
       <div class="step-warn" id="stepWarn" role="status"></div>
       <button type="button" class="m-preview" id="btnPreviewMobile"><svg class="btn-ic" viewBox="0 0 24 24"
       fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
@@ -1381,15 +1431,16 @@ html.big{
       <div class="rail-prog" id="stepper" role="progressbar"
            aria-valuemin="1" aria-valuemax="10" aria-valuenow="1"></div>
       <div class="rail-info" id="railInfo"></div>
+      <!-- ⚠️ 6줄 → 3줄(2026.08.28 단계 6). 지운 셋은 **버린 것이 아니라 옮겼다** —
+           「서버로 전송되지 않음」·「출력물은 본인이 관리」는 위 안심 문단에 들어 있고,
+           「사용 후 초기화 버튼을 누르세요」는 화면이 스스로 지워지므로 사실과 어긋났다
+           (인쇄 후·무동작 3분 자동 초기화). ⛔ 다시 늘리지 마라 — 이 기둥이 스크롤되면
+           정작 진행·준비물이 화면 밖으로 밀린다. -->
       <div class="screen-notice">
         <h3>이용 안내</h3>
         <ul>
-          <li>본 도구는 여권발급신청서 작성을 돕기 위한 미리보기 도구입니다.</li>
-          <li>입력한 내용은 서버로 전송되지 않으며 저장되지 않습니다.</li>
-          <li>공식 신청서와 항목·배치가 다를 수 있습니다.</li>
-          <li>실제 접수 가능 여부와 필요 서류는 담당 직원의 확인을 따릅니다.</li>
-          <li>공용 PC에서 사용한 후에는 반드시 초기화 버튼을 눌러 주세요.</li>
-          <li>출력물에는 개인정보가 포함되므로 본인이 직접 수령·관리해야 합니다.</li>
+          <li>필요 서류는 직원 확인을 따릅니다.</li>
+          <li>여기서 접수되지는 않습니다.</li>
         </ul>
       </div>
     </div>
@@ -2080,11 +2131,11 @@ function stages(){
    목록이 다 같은 굵기면 시민이 무엇부터 챙겨야 할지 고르지 못한다. */
 function readyItems(){
   var p=state.ui.path, d=state.data, out=[];
-  out.push({ t:"신분증", s:"접수할 때 창구에서 확인합니다", req:true });
-  out.push({ t:"여권용 사진 1장", s:"6개월 이내 · 흰 배경 · 창구에서 붙입니다", req:true });
+  out.push({ t:"신분증", s:"접수할 때 창구에서 확인합니다", req:true, g:"idcard" });
+  out.push({ t:"여권용 사진 1장", s:"6개월 이내 · 흰 배경", req:true, g:"photo" });
   if(p==="minor"){
-    out.push({ t:"가족관계 서류", s:"자녀와의 관계를 확인합니다", req:true });
-    out.push({ t:"법정대리인 신분증", s:"자녀가 아니라 지금 오신 분의 것", req:true });
+    out.push({ t:"가족관계 서류", s:"자녀와의 관계를 확인합니다", req:true, g:"document" });
+    out.push({ t:"법정대리인 신분증", s:"지금 오신 분의 것", req:true, g:"idcard" });
   }
   if(p==="proxy") out.push({ t:"대리인 신분증", s:"위임장은 신청서와 함께 인쇄해 드립니다", req:true });
   if(d.hasPassport==="있음") out.push({ t:"지금 가지고 계신 여권", s:"영문 이름을 그 여권과 맞춰야 합니다", req:true });
@@ -2228,6 +2279,7 @@ const el={
   stepper:document.getElementById("stepper"),
   railInfo:document.getElementById("railInfo"),
   stepWarn:document.getElementById("stepWarn"),
+  askFoot:document.getElementById("askFoot"),
   btnPrev:document.getElementById("btnPrev"),
   btnNext:document.getElementById("btnNext")
 };
@@ -2684,10 +2736,13 @@ function renderStepper(){
   st.forEach(function(s){
     var done=cur>s.to, back=done && s.from<cur;
     var cls=done?"done":(s===now?"now":"");
+    /* ⚠️ 완료 표시를 활자 ✓ 에서 **선 아이콘**으로(2026.08.28 단계 6). 지금 묶음은
+       채운 점, 남은 묶음은 빈 점 — 셋이 한눈에 갈린다. */
+    var mark = done ? svgIcon("check","ic-dot") : "";
     h+= back
       ? '<button type="button" class="rail-step '+cls+'" data-act="goto" data-step="'+s.from+'">'+
-        '<span class="dot">✓</span><span>'+esc(s.label)+'</span></button>'
-      : '<div class="rail-step '+cls+'"><span class="dot">'+(done?"✓":"")+'</span>'+
+        '<span class="dot">'+mark+'</span><span>'+esc(s.label)+'</span></button>'
+      : '<div class="rail-step '+cls+'"><span class="dot">'+mark+'</span>'+
         '<span>'+esc(s.label)+'</span></div>';
   });
   h+='</div>';
@@ -2714,7 +2769,7 @@ function renderRailInfo(){
       .map(function(r){ return '<div class="rail-item"><span class="check">'+r[0]+"</span><div>"+
         esc(r[1])+"<small>"+esc(r[2])+"</small></div></div>"; }).join("")+
       "</div></div>"+
-      '<div class="rail-safe"><div class="rail-head">안심하고 작성하세요</div>'+
+      '<div class="rail-safe"><div class="rail-head">'+svgIcon("lock","ic-sm")+'안심하고 작성하세요</div>'+
       "<p>적으신 내용은 이 화면에서만 쓰이고 어디에도 저장·전송되지 않습니다.</p>"+
       "<p>작성이 끝나면 종이로 인쇄해 창구에 내시면 됩니다. 접수·전송은 하지 않습니다.</p></div>";
     return;
@@ -2723,15 +2778,22 @@ function renderRailInfo(){
   h+='<div class="rail-sec"><div class="rail-head">'+svgIcon("checklist","ic-sm")+'준비하셨나요?</div>';
   h+='<div class="rail-items">';
   readyItems().forEach(function(it){
-    h+='<div class="rail-item'+(it.req?" req":"")+'"><span class="check" aria-hidden="true">'+
-       (it.req?"✓":"·")+"</span><div>"+esc(it.t)+
+    /* compact 준비물 — 32px 아이콘판 + 이름 한 줄 + 조건 한 줄(2026.08.28 단계 6).
+       ⛔ 조건이 두 줄이 되게 두지 마라. 칸 높이를 늘리는 대신 **문구를 줄인다.**
+       ⚠️ 필수는 아이콘판이 대표색을 띤다 — 「✓」 글자를 대신한다. */
+    h+='<div class="rail-item'+(it.req?" req":"")+'">'+
+       '<span class="rail-ic" aria-hidden="true">'+svgIcon(it.g||"document","ic-rail")+'</span>'+
+       '<div><b>'+esc(it.t)+'</b>'+
        (it.s?'<small>'+esc(it.s)+"</small>":"")+"</div></div>";
   });
   h+='</div></div>';
-  h+='<div class="rail-safe"><div class="rail-head">안심하고 작성하세요</div>'+
-     "<p>적으신 내용은 이 화면에서만 쓰이고 어디에도 저장·전송되지 않습니다.</p>"+
-     "<p>인쇄가 끝나거나 잠시 자리를 비우면 화면이 저절로 지워집니다.</p>"+
-     "<p>공용 화면에 넣기 불편한 칸은 비워 두고 <b>인쇄한 뒤 직접</b> 적으셔도 됩니다.</p></div>";
+  /* ⚠️ 3문단 → 2문단(2026.08.28 단계 6). **뜻을 지우지 않고 합쳤다** —
+     ①저장·전송 안 함 + 자동 삭제를 한 문단으로, ②비워 두고 직접 적어도 된다는 선택지.
+     ⛔ 개인정보가 저장되지 않는다는 사실과 자동으로 지워진다는 사실은 **둘 다 남긴다.** */
+  h+='<div class="rail-safe"><div class="rail-head">'+svgIcon("lock","ic-sm")+'안심하고 작성하세요</div>'+
+     "<p>적으신 내용은 저장·전송되지 않고, 인쇄가 끝나거나 자리를 비우면 지워집니다.</p>"+
+     "<p>불편한 칸은 비워 두고 <b>인쇄한 뒤</b> 적으셔도 됩니다. "+
+     "출력물은 <b>본인이</b> 챙겨 주세요.</p></div>";
   el.railInfo.innerHTML=h;
 }
 
@@ -2842,6 +2904,25 @@ var ICONS = {
       '<path d="M3.4 19.4c0-3 2.4-5.4 5.4-5.4s5.4 2.4 5.4 5.4"/>'+
       '<path d="M16.4 8.1c0-1.2 1-2.2 2.2-2.2s2.2 1 2.2 2.2c0 1.5-2.2 1.6-2.2 3.2"/>'+
       '<path d="M18.6 14.3h.01"/>',
+  /* ── 준비물(RAIL compact) ──
+     ⛔ 허브 Main CENTER 의 큰 미니 그래픽(120px 사물 그림)을 **축소해 옮기지 않는다.**
+        저기는 「무엇을 가져오는지」를 처음 보여 주는 자리라 그림이 크고, 여기는
+        작성하는 **내내 곁눈으로 확인하는** 자리다. 같은 그림을 줄이면 뭉개지기만 한다.
+        같은 문법(24 격자·1.7)으로 **작게 읽히도록 다시 그린 것**을 쓴다. */
+  idcard:'<rect x="2.6" y="5.4" width="18.8" height="13.2" rx="2"/>'+
+         '<circle cx="8.4" cy="10.6" r="2.1"/>'+
+         '<path d="M5 15.6c0-1.7 1.5-3 3.4-3s3.4 1.3 3.4 3"/>'+
+         '<path d="M14.6 9.8h4M14.6 13.4h3"/>',
+  photo:'<rect x="4.4" y="2.6" width="15.2" height="18.8" rx="2"/>'+
+        '<circle cx="12" cy="9.6" r="3"/>'+
+        '<path d="M7 17.6c0-2.6 2.2-4.6 5-4.6s5 2 5 4.6"/>',
+  pay:'<rect x="2.6" y="5.6" width="18.8" height="12.8" rx="2"/>'+
+      '<path d="M2.6 10h18.8"/><path d="M6.4 14.6h3.6"/>',
+  document:'<path d="M6.5 3h7.2L18 7.3V21H6.5z"/><path d="M13.7 3v4.3H18"/>'+
+           '<path d="M9.3 12.4h5.4M9.3 15.6h3.6"/>',
+  /* 자물쇠 — 안심하고 작성하세요 */
+  lock:'<rect x="4.4" y="10.4" width="15.2" height="10.2" rx="2"/>'+
+       '<path d="M8 10.4V7.6a4 4 0 0 1 8 0v2.8"/><path d="M12 14.6v2.2"/>',
   /* 목록 — 준비하셨나요 */
   checklist:'<rect x="4.4" y="3.4" width="15.2" height="17.2" rx="2"/>'+
             '<path d="M8.2 8.6l1.4 1.4 2.4-2.4"/><path d="M13.8 9h3"/>'+
@@ -2865,7 +2946,7 @@ var EMOJI_ICON = {
   "❓":"question",
   "🔤":"letters",
   "🏛️":"gov", "🏛":"gov",
-  "🔟":"period",
+  "🔟":"period", "5️⃣":"period",   /* ⚠️ 키캡 이모지였다(2026.08.28 단계 5 에서 놓쳤다) */
   "📗":"bookthick", "📙":"bookthin",
   "🏢":"office",
   "📮":"mail",
@@ -3000,7 +3081,7 @@ function renderStep(){
     return;
   }
   const def=curScreen();
-  let h="";
+  let h="", foot="";     /* `foot` = ASK 바닥의 보조 행동 영역(Human Handoff) */
 
   if(def.summary){ h=renderSummary(def); }
   else {
@@ -3045,20 +3126,23 @@ function renderStep(){
              시스템이 이미 정할 수 있는 화면(미성년 5년 고정)에는 두지 않는다. */
     var subDef=resolveField(def.sub);
     if(subDef)
-      h+='<button type="button" class="card-sub" data-act="sub">'+esc(subDef.label)+"</button>";
+      foot+='<button type="button" class="card-sub" data-act="sub">'+esc(subDef.label)+"</button>";
     else if(def.askBox)
       /* 탈출구를 한 줄짜리 점선 버튼이 아니라 **눈에 걸리는 판**으로 낸다.
          이 화면은 「한 번 정하면 바꾸기 어려운」 것을 묻는 자리라, 헷갈리는 사람이
          직원을 부르는 길이 밑줄 하나로 숨어 있으면 안 된다. */
-      h+='<div class="ask-box"><span class="ask-ic" aria-hidden="true">'+svgIcon("ask")+'</span>'+
+      foot+='<div class="ask-box"><span class="ask-ic" aria-hidden="true">'+svgIcon("ask")+'</span>'+
          '<div class="ask-tx"><b>'+esc(def.askBox.q)+"</b><span>"+esc(def.askBox.d)+"</span></div>"+
          '<button type="button" class="ask-btn" data-act="ask">'+esc(def.askBox.b)+"</button></div>";
     else if(def.ask)
-h+='<button type="button" class="card-sub" data-act="ask">'+svgIcon("ask","btn-ic")+
+      foot+='<button type="button" class="card-sub" data-act="ask">'+svgIcon("ask","btn-ic")+
          '<span>잘 모르겠어요 — 직원에게 여쭤볼게요</span></button>';
   }
 
   el.wizBody.innerHTML=h;
+  /* ⚠️ 탈출구는 질문 본문이 아니라 **바닥 영역**에 넣는다. 비면 빈 문자열이 들어가고
+     `:empty` 규칙이 그 자리를 없앤다 — 없는 화면에서 여백을 먹지 않는다. */
+  if(el.askFoot) el.askFoot.innerHTML=foot;
   el.wizTitle.textContent=def.title||"여권 신청";
   var f=flow();
   el.wizCount.textContent = state.ui.path ? ("진행 "+Math.min(state.step,f.length)+" / "+f.length) : "";
@@ -3273,7 +3357,10 @@ function bindWizardEvents(){
     if(idx>-1 && idx<flds.length-1){ flds[idx+1].focus(); }
     else { el.btnNext.click(); }
   });
-  el.wizBody.addEventListener("click", function(e){
+  /* ⚠️ 이 처리기는 **두 곳**에 건다 — 질문 본문과 ASK 바닥의 보조 행동 영역.
+     Handoff 단추가 본문 밖으로 나갔으므로(단계 6), 한 곳에만 걸면 눌러도 아무 일도
+     일어나지 않는다. ⛔ 로직을 복사해 두 벌로 만들지 마라 — 갈라진다. */
+  function onWizClick(e){
     /* 큰 터치 카드 — 이 개편의 주 입력 수단 */
     const card=e.target.closest('[data-act="card"]');
     if(card){
@@ -3367,7 +3454,9 @@ function bindWizardEvents(){
       renderAll();
       return;
     }
-  });
+  }
+  el.wizBody.addEventListener("click", onWizClick);
+  if(el.askFoot) el.askFoot.addEventListener("click", onWizClick);
   el.wizBody.addEventListener("input", function(e){
     if(e.target.closest('[data-act="addr"]')){ onAddr(e); return; }
     const input=e.target.closest('[data-act="input"]');
