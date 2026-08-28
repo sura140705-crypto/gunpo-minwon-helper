@@ -54,6 +54,7 @@ bash tools/sync-kiosk.sh --check        # 루트 → kiosk-app/app 드리프트 
 python tools/check-site-block.py        # 기관별 설정 블록이 9개 화면에서 같은지 — 다르면 exit 1
 python tools/check-design-tokens.py     # 디자인 토큰 블록이 9개 화면에서 같은지 — 다르면 exit 1
 python tools/verify-site-config.py      # 환경설정 값이 화면에 걸리는지(6가지 조합) — 다르면 exit 1
+python tools/measure-screen.py          # 화면 구조 실측 — 가로 넘침·종이 축소가 생기면 exit 1
 node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 ```
 
@@ -71,6 +72,13 @@ node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 `--update` 로 기준선을 갱신하고 **왜 달라졌는지 `CHANGELOG.md` 에 남겨라**. 설명 없이 갱신하지 마라.
 
 화면(코치 패널)만 고쳤어도 인쇄물 0px를 확인하는 편이 안전하다 — 실수로 인쇄 CSS를 건드리는 일이 잦다.
+
+**화면 조형을 바꿨으면 `measure-screen.py` 를 돌려라.** `verify-print.py` 는 인쇄 경로만 보므로
+화면이 망가져도 19쪽 0px 는 그대로 통과한다 — 그 틈을 이 도구가 메운다.
+⛔ 픽셀을 고정하는 도구가 아니다. **나빠진 것만** 실패로 본다(가로 넘침이 새로 생김 · 종이가
+기준선보다 작아짐 · 측정 실패). 값이 달라지는 것은 정상이고, 의도한 변화면
+**왜 달라졌는지 적고** `--baseline` 으로 기준선(`tests/screen-baseline.json`)을 갱신한다.
+눈으로 볼 것은 `python tools/design-shots.py` 갈무리가 맡는다 — 둘은 같은 상태 스크립트를 쓴다.
 
 ## 3. 하지 말 것
 
