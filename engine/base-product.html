@@ -1,0 +1,1880 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>여권발급신청서 작성 미리보기 도우미</title>
+<!--
+  여권발급신청서(여권법 시행규칙 별지 제1호서식, 2026.6.1 개정) 작성 미리보기 도우미
+  - 단일 HTML 파일 · 외부 서버/라이브러리/CDN/폰트/이미지 없음
+  - 입력값은 브라우저 메모리에서만 처리 · 저장(localStorage 등) 안 함 · 새로고침 시 소멸
+  - 좌: 실제 서식을 재현한 신청서 (실시간 반영) / 우: 단계별 간단 입력
+  - 작성 보조·미리보기용 (공식 접수 가능 여부 미보장)
+-->
+<!--DESIGN-TOKENS v1-->
+<style>
+/* ══════════════════════════════════════════════════════════════════════
+   디자인 토큰 (2026.08.24 신설) — `docs/디자인검토/DESIGN_PHILOSOPHY.md` §21
+
+   「새로운 서식을 만들 때 새로운 디자인을 발명하지 않는다」를 지키려면 값이 한 곳에
+   있어야 한다. 종전에는 색·반경·간격·글자 크기가 **다섯 원본에 흩어져 하드코딩**돼
+   있었다(engine/base.html · passport · marriage · divorce · index). 한 곳을 고치면
+   나머지 넷이 조용히 갈라진다 — 초기화 코드가 아홉 곳에 복제된 것과 같은 뿌리다.
+
+   ⚠️ 이 블록은 **5개 원본에 글자까지 똑같이** 들어간다.
+      고칠 때는 `engine/base.html` 을 고치고 →
+        `node tools/build-form.js <이름>` 으로 엔진 5종 재빌드
+        `python tools/check-design-tokens.py --fix` 로 손작성 3종·허브 반영
+      확인은 `python tools/check-design-tokens.py` (다르면 exit 1).
+
+   ⛔ **인쇄물에 나가는 값을 이 블록에 얹지 마라.** 여기 있는 것은 전부 화면 전용이다.
+      서식 위 값의 위치·크기·글꼴은 절대좌표라 `verify-print.py` 19쪽 0px 가 지킨다.
+      예외는 `--sign-hl` 하나이고, 왜 예외인지 그 자리에 적어 두었다.
+
+   ⚠️ **신설 시점에는 아무도 이 토큰을 쓰지 않는다.** 값이 지금 화면과 똑같도록
+      맞춰 두었을 뿐이다(화면 무변경이 이 단계의 합격 조건이었다). 하드코딩을
+      토큰으로 바꾸는 일은 영역별로 나누어 진행한다 — 한꺼번에 바꾸면 무엇이
+      화면을 바꿨는지 짚을 수 없다.
+   ══════════════════════════════════════════════════════════════════════ */
+:root{
+
+  /* ── Institution Accent ────────────────────────────────────────────
+     기관 대표색. **값을 여기에 적지 않는다** — `--blue` 계열은 SITE-CONFIG 블록이
+     `documentElement.style` 로 주입하는 이름이고, 그 네 이름은 계약이다.
+     새 CSS 는 아래 별칭을 쓴다. 그래야 나중에 `--blue` 라는 이름을 버리더라도
+     화면 쪽 코드를 건드리지 않는다.
+     ⛔ `--blue`·`--blue-dark`·`--blue-light`·`--grad` 를 **이름째 바꾸지 마라.**
+        SITE-CONFIG·환경설정 창(main.js)이 그 이름으로 값을 넣는다. */
+  --accent:        var(--blue);
+  --accent-strong: var(--blue-dark);
+  --accent-soft:   var(--blue-light);
+  /* --grad(135° 그라데이션) — DESIGN_PHILOSOPHY §1 DON'T 는 **큰 면적의 장식적**
+     Gradient 를 금하는 것으로 읽는다(2026.08.24 결정 §4). 지금 쓰이는 곳은 상단 바
+     아래 3px 띠처럼 좁은 Accent 뿐이라 **당장 걷어내지 않는다.** 단색화 여부는
+     최종 Visual Design 단계에서 다시 판단한다. */
+
+  /* ── Surface (§1 Quiet Paper Desk · §2 세 영역) ─────────────────────
+     대표색과 **무관한** 따뜻한 무채색. 기관이 대표색을 무엇으로 바꾸든 이 값들은
+     그대로여서 색을 갈아 끼워도 화면이 무너지지 않는다.
+     세 면의 명도를 조금씩 달리해 **선을 긋지 않고도 영역이 갈리게** 한다. */
+  --surface-work: #f7f6f3;   /* LEFT   질문하고 입력하는 곳 */
+  --surface-zone: #e4e1db;   /* CENTER 서식이 놓이는 바닥 */
+  --surface-rail: #f1f0ec;   /* RIGHT  Context Rail */
+  --surface-head: #fbfaf7;   /* 상단 바 */
+  --surface-cool: #f2f4f7;   /* 옛 배경색(허브·7종). 세 영역으로 옮기면 사라진다 */
+
+  /* ── Paper (§2 Paper First) ────────────────────────────────────────
+     종이 자체는 언제나 흰색이다. 그림자로만 바닥에서 띄운다. */
+  --paper:        #fff;
+  --paper-shadow: 0 2px 6px rgba(0,0,0,.06), 0 14px 34px rgba(0,0,0,.10);
+
+  /* ── Ink (§16 Typography is the Voice) ─────────────────────────────
+     ⚠️ `--ink-muted` 를 더 옅게 하지 마라. §15 「가독성을 해칠 정도로 대비를
+        낮추지 않는다」. 여권은 이미 한 번 진하게 올렸다(#5b626c → #495059). */
+  --ink:       #1a1c1f;
+  --ink-muted: #5b626c;
+
+  /* ── Border ────────────────────────────────────────────────────────*/
+  --border:        #d2cfc9;              /* 따뜻한 기본선 */
+  --border-strong: #b9b6b0;              /* 입력칸·카드 테두리 */
+  --border-cool:   #d5d9df;              /* 옛 회색선(허브·7종) */
+  --hair:          rgba(27,95,192,.16);  /* 기하학적 포인트 선 */
+  /* ⚠️ `--hair` 는 기본 파랑이 **박혀 있다.** 기관이 대표색을 초록으로 바꿔도
+        이 선만 파랑으로 남는다 — 알려진 결함이고, 대표색에서 계산하도록
+        SITE-CONFIG 에서 함께 주입하는 것이 옳다. 다음 단계로 미뤄 둔다. */
+
+  /* ── Current Focus (§5 Show Where It Goes) ─────────────────────────
+     **지금 작성 중인 Paper 위치.** 화면 전용이고, 기관 대표색에서 파생한 저채도다.
+     ⛔ 노랑/Amber 로 바꾸지 마라. 그 색은 아래 **Print Marker** 의 것이고,
+        한 색이 「지금 적는 칸」과 「여기 서명하세요」 두 뜻을 갖게 된다.
+        (DESIGN_PHILOSOPHY §15 는 Muted Amber 를 제안했으나 이 충돌 때문에
+         대표색 파생을 유지하기로 했다 — 2026.08.24 결정 §1.)
+     ⚠️ 대표색에서 파생하므로 기관이 색을 바꾸면 Focus 도 따라온다. */
+  --focus-face: var(--blue-light);
+  --focus-line: var(--blue);
+
+  /* ── Print Marker ──────────────────────────────────────────────────
+     **출력 후 시민이 직접 서명·날인·기재할 위치.** Current Focus 와 섞지 마라 —
+     이쪽은 사람이 펜을 댈 자리를 종이 위에서 가리키는 것이다.
+     ⛔⛔ 이 토큰 하나만 **인쇄물이다.** 색·투명도·좌표를 바꾸면 인쇄 결과가 달라져
+        `verify-print.py` 기준선을 갱신해야 한다. */
+  --marker-sign: rgba(255,232,0,.55);
+
+  /* ── Warning (§11 Privacy without Fear) ────────────────────────────
+     > Warning color is semantic, not decorative.
+     ⚠️ 빨강은 **실제 오류·위험·즉각적인 주의**에만 쓴다. 개인정보 안내처럼
+        「중요하지만 위험은 아닌」 문장은 아래 `--notice-*`(갈색 계열)를 쓴다.
+        지금 화면에는 이 규칙을 어긴 곳이 남아 있다(허브 빨간 띠, 인쇄 전 안내
+        빨간 상자, 아무것도 틀리지 않았는데 뜨는 `.step-warn`). 다음 단계 과제다. */
+  --warn:      #a12727;
+  --warn-face: #fdecec;
+  --warn-line: #f5b5b5;
+  --notice:      #7a5600;   /* 중요하지만 위험이 아닌 안내 — 짙은 갈색 */
+  --notice-face: #fff8e6;
+  --notice-line: #ffe19a;
+
+  /* ── Radius ────────────────────────────────────────────────────────
+     여권 한 파일에 반경이 13가지 흩어져 있던 것을 아래 여섯 단계로 모았다
+     (2026.08.24). 새 서식은 이 여섯 개 밖의 값을 쓰지 않는다.
+
+     ⛔ **인쇄되는 반경 둘은 토큰을 쓰지 않는다** — 값이 박혀 있어야 한다.
+          `.ovhi`     4px  Print Marker(서명 자리)
+          `.csign-hl` 3px  위임장·동의서 서명 형광
+        토큰으로 바꿔 두면 나중에 아래 값을 만질 때 **인쇄물이 조용히 달라진다.**
+     ⚠️ 제목 왼쪽 2px 장식 막대도 뺐다 — 폭이 3px 남짓이라 `--r-xs`(4px)를 주면
+        알약이 된다. 스케일에 넣기엔 너무 작다. */
+  --r-xs:   4px;
+  --r-sm:   8px;
+  --r-md:  10px;    /* 가장 많이 쓰이는 값 */
+  --r-lg:  12px;
+  --r-xl:  18px;
+  --r-pill: 999px;
+
+  /* ── Shadow (§1 DON'T 강한 그림자) ─────────────────────────────────*/
+  --shadow-lift:  0 4px 20px rgba(0,0,0,.4);
+  --shadow-modal: 0 20px 60px rgba(0,0,0,.35);
+
+  /* ── Spacing ───────────────────────────────────────────────────────*/
+  --sp-1:  4px;
+  --sp-2:  8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 22px;
+  --sp-6: 30px;
+
+  /* ── Motion (§17 Interaction) ──────────────────────────────────────
+     「움직임은 상태를 설명할 때만」을 지키려면 값이 한 곳에 있어야 한다.
+     종전에는 5원본 8곳에 박혀 있었고 종류가 벌써 다섯이었다(.12·.15·.2·.22·.34s).
+     easing 은 대부분 **방치**돼 브라우저 기본값(ease)으로 굴러갔다 — Radius 13가지와 같은 뿌리다.
+
+     ✅ **값이 정해졌다(2026.08.27, 외부 검토 과제 A).** 세 박자로 통합했다 —
+        120 / 200 / 320. 종전(120·220·340)과 20ms 씩만 다르다. 지금 화면이 크게 틀리지
+        않았다는 뜻이고, **바뀐 것은 주로 easing** 이다. 셋이 제각각이던 곡선을
+        **한 가족**(빠르게 나와 길게 멎는 out · 가속하며 물러나는 in · 양끝이 완만한 move)
+        으로 맞췄다.
+     ⚠️ 세 박자 이상으로 늘리지 마라. 늘어나는 순간 다시 흩어진다.
+
+     ⛔ 인쇄물에는 모션이 없다. 이 값들은 전부 화면 전용이다.
+     ⚠️ 아래 `@media (prefers-reduced-motion: reduce)` 가 이것들을 통째로 끈다.
+        ⛔ 다만 **JS 로 도는 것(허브 시연)은 CSS 로 안 꺼진다** — `matchMedia` 로 따로 본다. */
+  --dur-quick: 120ms;   /* 눌린 표시·hover — 손을 뗄 무렵 반응이 보여야 한다 */
+  --dur-base:  200ms;   /* 펼침·접힘·나타남 — 시민이 직접 일으킨 상태 변화 */
+  --dur-calm:  320ms;   /* 종이 갈아끼우기·큰 비율 변화 — 위치가 어디로 갔는지 따라갈 시간 */
+  --ease-out:  cubic-bezier(.2,0,0,1);        /* 들어오는 것 — 빨리 보이기 시작해 길게 멎는다 */
+  --ease-in:   cubic-bezier(.4,0,1,1);        /* 나가는 것 — 다음 내용을 가리지 않고 물러난다 */
+  --ease-move: cubic-bezier(.4,0,.2,1);       /* 자리를 옮기는 것 — 양끝이 완만하다 */
+
+  /* ── Typography (§16) ──────────────────────────────────────────────
+     글꼴은 하나만 쓴다. 관공서 PC 에 반드시 있는 것이어야 하고, 오프라인
+     설치본이라 웹폰트를 받을 수 없다. */
+  --ff: "Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
+  --fs-question: 34px;    /* 시민에게 말하는 큰 질문 */
+  --fs-lead:     21px;    /* 입력칸에 치는 글자 */
+  --fs-label:    18px;    /* 항목 라벨 */
+  --fs-card:     20px;    /* 선택 카드 제목 */
+  --fs-card-sub: 15px;    /* 선택 카드 설명 */
+  --fs-body:     17px;    /* 본문 기본 */
+  --fs-help:     17px;    /* 「왜 묻는지」 */
+  --fs-sum:    16.5px;    /* 최종 확인 요약 줄 */
+  --fs-small:  13.5px;    /* 행정적 보조 설명 */
+  /* Context Rail(§10)은 구조와 폭을 고정하고 **글자만** 크게 보기를 따른다 */
+  --fs-rail-num:   33px;  /* 진행 큰 숫자 */
+  --fs-rail-head:  15px;  /* 「준비하셨나요?」 같은 머리 */
+  --fs-rail-item:13.5px;  /* 목록 항목 */
+  --fs-rail-note:12.5px;  /* 안심 안내 본문 */
+  --fw-bold:   700;
+  --fw-heavy:  800;
+  --ls-tight: -.035em;    /* 큰 질문에만 */
+
+  /* ── Touch target — Input-Agnostic, Touch-Friendly ─────────────────
+     터치·마우스·물리키보드에서 **모두** 쓸 수 있어야 한다(2026.08.24 결정 §2).
+     ⚠️ **크기는 터치 기준을 유지한다.** 큰 표적은 마우스에서도 문제가 없지만
+        그 반대는 성립하지 않는다.
+     ⛔ hover 는 보조 효과로만 쓴다. **hover 에만 의존하는 정보·기능은 금지.** */
+  --touch-card:  132px;   /* 큰 선택 카드 최소 높이 */
+  --touch-field:  64px;   /* 글자 입력칸 높이 */
+  --touch-min:    48px;   /* 그 밖의 누를 수 있는 것의 최소 변 */
+  --btn-h:        62px;   /* [이전]·[다음] 높이 */
+
+  /* ── Layout (§2 LEFT / CENTER / RIGHT) ─────────────────────────────*/
+  --topbar-h:      74px;
+  --rail-w:       252px;
+  --rail-w-narrow:214px;  /* 1600px 이하 */
+  --question-max: 640px;  /* 질문 한 줄이 길어지지 않게 */
+  --cards-max:    700px;
+  /* 세 영역의 가로 배분. **1920×1080 실물을 보고 미세조정**할 수 있게 토큰으로 뺐다.
+     ⛔ 비율만 숫자로 빼서 `calc(var(--x)*1fr)` 로 쓰지 마라 — **`fr` 은 `calc()` 안에서
+        쓸 수 없다.** 선언 전체가 무효가 되어 3단이 한 줄로 무너진다(2026.08.24 에 실제로
+        그렇게 깨졌고 갈무리 용량이 절반으로 줄어 들통났다). 트랙 목록을 통째로 담는다. */
+  /* ⚠️ 2026.08.24 — 고정폭 RAIL 을 버리고 **비율**로 바꿨다. 종전 값(1 : 1.08 : 252px)은
+     1920 에서 794 : 858 : 252 = 약 3 : 3 : 1 이 되어 **질문면이 너무 넓고 종이가 좁았다.**
+     이제 세 칸 전부 `fr` 이라 화면이 커지든 작아지든 비율이 유지된다.
+       일반 보기  2 : 3 : 1   → 1920 에서 640 : 960 : 320
+       크게 보기  5 : 5 : 2   → 1920 에서 800 : 800 : 320  (아래 html.big)
+     RAIL 은 두 경우 모두 화면의 1/6 이라 폭이 변하지 않는다 — 「크게 보기에서 RAIL 은
+     구조와 폭을 그대로 두고 글자만 키운다」(동결 §3-3)가 이렇게 지켜진다. */
+  --cols:             minmax(0,2fr) minmax(0,3fr) minmax(0,1fr);
+  /* 좁은 화면에서도 비율이 같다 — 고정폭이 아니라 `fr` 이므로 저절로 줄어든다.
+     이름은 남겨 둔다(각 화면의 미디어 쿼리가 이 이름으로 참조한다). */
+  --cols-narrow:      minmax(0,2fr) minmax(0,3fr) minmax(0,1fr);
+  --cols-narrow-left: minmax(0,3fr) minmax(0,2fr) minmax(0,1fr);
+}
+
+/* ── 크게 보기 (§13) — Responsive Layout Mode ─────────────────────────
+   ⛔ **전체 화면 Zoom 이 아니다.** Paper 를 통째로 확대하는 기능도 아니다.
+      목적은 질문·입력·조작 UI 의 읽기와 조작 편의이고, CENTER Paper 는
+      **바뀐 영역 안에서 가능한 최대 크기**를 유지한다(fit-to-area).
+   ⚠️ 그래서 크게 보기를 켜면 **Paper 는 오히려 작아진다**(1920 기준 794→667px).
+      **버그가 아니라 받아들인 결과다**(2026.08.24 결정 §6-1). 서식을 크게 보는 길은
+      Paper 확대·스크롤과 [미리보기]로 따로 있다. 되돌리려면 그 결정을 먼저 고쳐라.
+      비율 조정이 필요하면 **아래 `--cols` 계열만** 만진다 — 그것이 의도된 조정 경로다.
+   ⚠️ RIGHT Context Rail 은 **구조와 폭을 그대로 두고 글자만** 키운다.
+      자유 Drag/Resize 는 만들지 않는다.
+   ⚠️ 아래는 전부 토큰이다 — 실물 화면을 보고 이 값만 만지면 된다. */
+html.big{
+  --fs-question:  40px;
+  --fs-lead:      24px;
+  --fs-label:     21px;
+  --fs-card:      23px;
+  --fs-card-sub:  17px;
+  --fs-body:      19px;
+  --fs-help:      19px;
+  --fs-sum:     18.5px;
+  --fs-small:     15px;
+  --fs-rail-num:  38px;
+  --fs-rail-head: 17px;
+  --fs-rail-item:15.5px;
+  --fs-rail-note: 14px;
+  --touch-card:  150px;
+  --touch-field:  72px;
+  --touch-min:    56px;
+  --btn-h:        72px;
+  --question-max:780px;
+  --cards-max:   820px;
+  /* LEFT 를 넓힌다 — CENTER Paper 는 남은 폭에 스스로 맞춰 줄어든다(fit-to-area).
+     RIGHT 는 폭 그대로다(글자만 커진다). */
+  --cols:             minmax(0,5fr) minmax(0,5fr) minmax(0,2fr);
+  --cols-narrow:      minmax(0,5fr) minmax(0,5fr) minmax(0,2fr);
+  --cols-narrow-left: minmax(0,5fr) minmax(0,5fr) minmax(0,2fr);
+}
+
+/* ── 공통 UI 규칙 ─────────────────────────────────────────────────────
+   9개 화면이 함께 지켜야 하는 것. 값이 아니라 규칙이라 `:root` 밖에 둔다. */
+
+/* §17 Interaction — 움직임은 상태를 설명할 때만. 줄여 달라고 한 사용자에게는 끈다.
+   ⚠️ JS 의 `scrollIntoView({behavior:"smooth"})` 는 CSS 로 꺼지지 않는다.
+      그쪽은 각 서식이 `matchMedia` 로 따로 본다. */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.001ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.001ms !important;
+    scroll-behavior:auto !important;
+  }
+}
+
+/* 개인정보 덮개·안내 모달은 **화면 전용**이다. 인쇄 CSS 가 숨기지 않으면 실수로
+   인쇄될 때 새까만 페이지가 나간다 — 덮개를 완전 불투명으로 올린 2026.08.24 에
+   함께 막았다(그전에는 `.985` 라 티가 덜 났을 뿐 같은 문제였다). */
+@media print{ #idleGuard,#printGuard,#printNotice{display:none !important;} }
+</style>
+<!--/DESIGN-TOKENS-->
+<!--MAIN-SKIN v1-->
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Main 전용 스킨 (2026.08.28) — Figma Make Main 원형 이식
+
+   ⛔ **이 블록은 허브(Main)에만 있다.** 9개 화면 공통 블록이 아니다 —
+      위의 `DESIGN-TOKENS` 는 한 글자도 건드리지 않았다(`check-design-tokens.py`).
+      Main 과 Writing 의 시각언어 통일은 **여권 상세 UI 개편 단계**에서 한다(2026.08.28 결정 ③).
+   ⛔ Figma 의 `#2563EB` 를 박지 마라. 기관 대표색은 여전히 `--blue`(SITE-CONFIG 주입)이고,
+      알파 파생은 Figma `accentAt(hex, a)` 규칙을 `color-mix` 로 옮긴 것이다.
+      ⚠️ `color-mix` 를 모르는 브라우저에서는 아래 rgba 폴백(기본 대표색)이 남는다 —
+         대표색을 바꾼 기관에서 색이 조금 어긋날 뿐 화면은 깨지지 않는다.
+   ⚠️ 글자 크기는 **공통 토큰(`--fs-*`)을 그대로 쓴다.** 그래야 크게 보기가 열 폭을
+      건드리지 않고 글자만 커진다(결정 ② — 크게 보기는 zoom 도 비율 변경도 아니다).
+      Figma 의 11.5~14px 밀도는 서서 쓰는 키오스크에 그대로 옮기지 않았다.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* ── Figma neutral palette (차가운 무채색) ─────────────────────────────
+     ⚠️ 공통 토큰의 따뜻한 회색(`--surface-work` 계열)과 **다른 계열**이다.
+        지금은 Main 만 이 계열이고, 8종은 그대로다 — 의도된 갈림이다(결정 ③). */
+  --m-bg:#f2f4f7;            /* CENTER 바닥 */
+  --m-surface:#ffffff;       /* LEFT·RIGHT·카드 면 */
+  --m-border:#e5e7eb;        /* 기본선 */
+  --m-border-mid:#d1d5db;    /* 한 단 진한 선 — 그래픽 윤곽·hover */
+  --m-hairline:#f3f4f6;      /* 항목 사이 아주 옅은 선 */
+  /* ── 잉크 계층 (2026.08.28 — 고령·저시력 이용자 기준으로 보정) ──────────
+     ⛔ Figma 의 연한 gray 위계를 그대로 쓰지 않는다. 여기는 서서 읽는 공공 민원실이다.
+     ⚠️ **역할이 곧 하한선이다.** 흰 면(#fff) 위 대비:
+          `--m-ink`        17.7:1  제목 · 목록 민원명 · 카드 이름
+          `--m-ink-sub`    10.1:1  묶음 머리 · 안내 목록
+          `--m-ink-read`    7.6:1  **실제로 읽어야 하는 설명**(준비물 보조·안심 문장 …)
+          `--m-ink-muted`   4.9:1  secondary 하한선. 이보다 연한 글자를 만들지 마라
+          `--m-ink-faint`   2.5:1  ⛔ 글자에는 **날짜 같은 비핵심 metadata 에만.**
+                                   그 밖에는 아이콘·그래픽 선처럼 **글자가 아닌 것**에만 쓴다
+     ⛔ 미선택 항목의 글자를 흐리게 해서 선택 상태를 만들지 마라 — 8개 중 7개가
+        읽기 어려워진다. 선택은 **배경·테두리·대표색**으로만 말한다. */
+  --m-ink:#111827;
+  --m-ink-sub:#374151;
+  --m-ink-read:#4b5563;
+  --m-ink-muted:#6b7280;
+  --m-ink-faint:#9ca3af;
+  --m-icon-bg:#f3f4f6;
+  --m-photo:#e9eaec;         /* 미니 그래픽의 사진 자리 */
+  --m-photo-fill:#c4c9d4;
+  --m-chip:#f8f9fa;          /* 미니 그래픽의 카드 몸통 */
+
+  /* ── 대표색 알파 파생 (Figma accentAt) ── */
+  --m-a06:rgba(27,95,192,.06); --m-a07:rgba(27,95,192,.07);
+  --m-a08:rgba(27,95,192,.08); --m-a10:rgba(27,95,192,.10);
+  --m-a12:rgba(27,95,192,.12); --m-a18:rgba(27,95,192,.18);
+  --m-a20:rgba(27,95,192,.20); --m-a25:rgba(27,95,192,.25);
+  --m-a30:rgba(27,95,192,.30); --m-a35:rgba(27,95,192,.35);
+  --m-a55:rgba(27,95,192,.55);
+
+  /* ── 골격 ──
+     ⚠️ 26 / 56 / 18 (2026.08.28 결정 ②). Figma 의 LEFT 340px 고정은 채택하지 않았다 —
+        LEFT 가 Main 의 1차 행동영역이고 긴 민원명과 크게 보기를 받아야 한다.
+     ⛔ `fr` 은 `calc()` 안에서 못 쓴다. 트랙 목록을 통째로 담는다(공통 토큰 §Layout 참조).
+     ⚠️ `html.big` 이 이 값을 **덮지 않는다.** 크게 보기에서 열 폭은 그대로다. */
+  --m-cols:minmax(0,26fr) minmax(0,56fr) minmax(0,18fr);
+  /* Figma 의 얇은 BAR 인상을 받되 52px 을 그대로 복사하지 않았다(결정 ②).
+     로고 28px + 위아래 여백이 들어가는 최소 높이다. 60~64px 구간에서 실물로 조정한다. */
+  --m-bar-h:62px;
+  --m-center-max:720px;      /* CENTER 콘텐츠 읽는 폭 상한 — 여백은 장식으로 채우지 않는다 */
+  --m-r-card:8px;            /* 준비물·신청서 카드 */
+  --m-r-row:10px;            /* LEFT 목록 줄 */
+  --m-r-btn:6px;             /* CTA */
+  --m-r-chip:4px;            /* 서식명 배지 */
+
+  /* ── 글자 크기 — **역할별로** 둔다 (2026.08.28) ──────────────────────
+     ⚠️ 공통 토큰(`--fs-*`)을 그대로 쓰면 크게 보기의 배율이 8종과 묶여 버린다.
+        Main 은 열 폭을 **고정한 채** 글자만 키워야 하므로 자기 눈금이 필요하다
+        (결정 ② — 프레임은 그대로, 글자를 크게).
+     ⚠️ 아래가 **일반 보기**이고, `html.big` 이 같은 이름을 덮는다.
+     ⛔ 카드·미니그래픽·열 폭은 이 눈금에 딸려 커지지 않는다. */
+  --m-fs-ask:22px;           /* LEFT 「무엇을 하러 오셨나요?」 */
+  --m-fs-ask-sub:15px;       /* 그 아래 한 줄 */
+  --m-fs-menu:19px;          /* LEFT 민원명 — 시민의 말 */
+  --m-fs-menu-sub:14px;      /* LEFT 서식명 — 행정명칭 */
+  --m-fs-handoff:15px;       /* 직원에게 여쭤보는 단추 */
+  --m-fs-badge:13.5px;       /* CENTER 서식명 배지 */
+  --m-fs-title:30px;         /* CENTER 큰 제목 — Figma 26px 를 키오스크 거리로 올림 */
+  --m-fs-lead:16px;          /* 그 아래 한 줄 */
+  --m-fs-item:15px;          /* 준비물 이름 */
+  --m-fs-item-sub:13.5px;    /* 준비물 조건 */
+  --m-fs-form:15px;          /* 작성할 신청서 이름 */
+  --m-fs-form-sub:13.5px;    /* 그 곁의 두 줄 */
+  --m-fs-cta:18px;           /* [작성 시작하기] */
+  --m-fs-note:13.5px;        /* 조용한 한 줄 · 직원 안내쪽지 */
+  --m-fs-rail-head:15px;     /* RIGHT 묶음 머리 */
+  --m-fs-rail-title:13.5px;  /* RIGHT 항목 제목 */
+  --m-fs-rail-sub:12.5px;    /* RIGHT 안내문 — 실제로 읽는 줄 */
+  --m-fs-brand:16.5px;       /* 기관 표기 */
+  --m-fs-brand-sub:14px;     /* 제품 이름 */
+  --m-fs-btn:14px;           /* [크게 보기] */
+  --m-fs-chip:12px;          /* 「선택」 칩 */
+  /* ⚠️ metadata(날짜·기관표기 푸터)는 **거의 키우지 않는다.** 읽을 것이 아니라
+     있는 것을 확인하는 자리다 — 키우면 본문과 다툰다. */
+  --m-fs-meta:13.5px;
+}
+@supports (color: color-mix(in srgb, red 50%, transparent)){
+  :root{
+    --m-a06:color-mix(in srgb,var(--blue) 6%,transparent);
+    --m-a07:color-mix(in srgb,var(--blue) 7%,transparent);
+    --m-a08:color-mix(in srgb,var(--blue) 8%,transparent);
+    --m-a10:color-mix(in srgb,var(--blue) 10%,transparent);
+    --m-a12:color-mix(in srgb,var(--blue) 12%,transparent);
+    --m-a18:color-mix(in srgb,var(--blue) 18%,transparent);
+    --m-a20:color-mix(in srgb,var(--blue) 20%,transparent);
+    --m-a25:color-mix(in srgb,var(--blue) 25%,transparent);
+    --m-a30:color-mix(in srgb,var(--blue) 30%,transparent);
+    --m-a35:color-mix(in srgb,var(--blue) 35%,transparent);
+    --m-a55:color-mix(in srgb,var(--blue) 55%,transparent);
+  }
+}
+/* ══ 크게 보기 (2026.08.28) ═══════════════════════════════════════════════
+   **프레임은 그대로, 글자를 크게.**
+   ⛔ 열 폭(`--m-cols` 26/56/18)을 바꾸지 않는다.
+   ⛔ 화면 전체 zoom 이 아니다. 카드·미니그래픽을 비례확대하지 않는다.
+   ⚠️ 읽는 글자는 **+15~21%**, metadata 는 거의 그대로다 — 그래야 위계가 유지된다.
+   ⚠️ 늘어난 글자가 한 화면에 남게 **여백만** 조인다(아래 `html.big` 규칙).
+      1920×1080 에서 LEFT 8줄 + 직원 단추, RIGHT 세 묶음이 스크롤 없이 들어가야 한다. */
+html.big{
+  --m-fs-ask:26px;
+  --m-fs-ask-sub:17px;
+  --m-fs-menu:23px;
+  --m-fs-menu-sub:17px;
+  --m-fs-handoff:17px;
+  --m-fs-badge:15.5px;
+  --m-fs-title:36px;
+  --m-fs-lead:19px;
+  --m-fs-item:18px;
+  --m-fs-item-sub:16px;
+  --m-fs-form:18px;
+  --m-fs-form-sub:16px;
+  --m-fs-cta:21px;
+  --m-fs-note:15px;
+  --m-fs-rail-head:17px;
+  --m-fs-rail-title:16px;
+  --m-fs-rail-sub:15px;
+  --m-fs-brand:18px;
+  --m-fs-brand-sub:15px;
+  --m-fs-btn:15.5px;
+  --m-fs-chip:13px;
+  --m-fs-meta:14px;
+  --m-center-max:820px;
+}
+</style>
+<!--/MAIN-SKIN-->
+<style>
+  :root{
+    /* 대표색 3종 + 그라데이션. 기관 대표색을 환경설정에서 넣으면 아래 SITE-CONFIG
+       블록이 이 네 값을 **한 색에서 계산해** 덮어쓴다. 기본값은 군포시 파랑이고,
+       그라데이션도 같은 색에서 뽑은 것이라 종전 화면과 거의 같아 보인다.
+       ⛔ 이 네 이름은 **바꾸지 마라.** SITE-CONFIG 블록이 이 이름으로 값을 넣고,
+          그 블록은 8종+허브에 글자까지 똑같아야 한다(`check-site-block.py`). */
+    --blue:#1b5fc0; --blue-dark:#164e9e; --blue-light:#eaf1fb;
+    --grad:linear-gradient(135deg,hsl(215,75%,52%) 0%,hsl(215,75%,43%) 52%,hsl(215,79%,32%) 100%);
+    --line:var(--m-border); --bg:var(--m-bg);
+    /* 잉크 — 역할별 하한선(Main 과 같은 계층). `--muted` 는 **읽어야 하는 설명**이
+       대부분이라 `--m-ink-read`(#4b5563 · 7.6:1)로 맞춘다. 날짜 같은 metadata 는
+       아래에서 따로 `--m-ink-muted` 로 내린다. */
+    --muted:var(--m-ink-read); --ink:var(--m-ink);
+    /* ── 작업면 중립색 (2026.08.21 디자인 개편) ─────────────────────────
+       대표색과 무관한 따뜻한 무채색. 기관이 대표색을 무엇으로 바꾸든 이 값들은
+       그대로여서, 색을 갈아 끼워도 화면이 무너지지 않는다.
+         --work  질문을 적는 작업면   --zone  서식이 놓이는 바닥
+         --rail  오른쪽 안내 기둥     --head  상단 바
+       세 면의 명도를 조금씩 달리해 **선을 긋지 않고도 영역이 갈리게** 한다. */
+    /* ⚠️ 2026.08.28 — **Main 계열로 갈아 끼웠다**(단계 3). 이름은 그대로 두고 값만
+       `MAIN-SKIN` 토큰을 가리키게 했다. 이 파일의 CSS 가 이미 이 이름들로 쓰여 있어
+       40여 곳이 한 번에 옮겨간다 — 규칙을 하나씩 고치면 빠뜨리는 자리가 생긴다.
+       ⛔ 이름을 바꾸지 마라(`--work`·`--zone`…). 인쇄 CSS·세로 배치도 이 이름을 쓴다. */
+    --work:var(--m-surface);   /* 질문면 — 따뜻한 회색 → 흰 면 */
+    --zone:var(--m-bg);        /* 서식이 놓이는 바닥 */
+    --rail:var(--m-surface);   /* 안내 기둥 */
+    --head:var(--m-surface);   /* 상단 바 */
+    --line-strong:var(--m-border-mid);
+    --line-warm:var(--m-border);
+    --hair:rgba(27,95,192,.16);          /* 기하학적 포인트 선 — 대표색의 아주 옅은 농도 */
+    /* 서식을 왼쪽에 두는 기관용 — `--m-cols`(26/56/18)를 **뒤집은 것**이다.
+       ⛔ `MAIN-SKIN` 블록 안에 넣지 마라. 그 블록은 허브와 글자까지 같아야 하고,
+          허브에는 좌우 교체가 없다. */
+    --m-cols-left:minmax(0,56fr) minmax(0,26fr) minmax(0,18fr);
+    /* 흰 질문면(`--work`) 위에 놓이는 **누르고 적는 것**의 면. 한 톤만 내린다
+       (2026.08.28 단계 4 · Main 의 목록 카드와 같은 값).
+       ⚠️ 이것이 없으면 흰 바탕에 흰 입력칸이라 1.5px 테두리 하나로 형태를 버틴다.
+       ⛔ 더 어둡게 하지 마라 — 「비활성」처럼 보이면 안 된다. */
+    --m-control:#fafafa;
+
+    /* ══ Product Typography v1 — **Normal 을 Main 의 밀도로** (2026.08.28) ═══
+       위 `DESIGN-TOKENS` 눈금은 **크게 보기가 없던 시절**(2026.07 「어르신 가독성
+       강화」)에 만들어져 Normal 이 큰 글씨 몫까지 지고 있었다. 이제 크게 보기가
+       따로 있으므로 Normal 은 **허브 Main 과 같은 밀도**를 쓴다 — 같은 제품인데
+       목록에서 작성으로 넘어가면 글자가 갑자기 커지는 느낌을 없앤다.
+
+       ⛔ **공통 `DESIGN-TOKENS` 블록을 고치지 마라.** 그 블록은 9개 화면에 글자까지
+          같아야 하고(`check-design-tokens.py`), 여기서 고치면 나머지 8종이 함께
+          끌려간다 — 아직 옮기지 않은 서식들이다. **이 파일의 지역 `:root`** 에서만 덮는다.
+       ⛔ `html.big`(DESIGN-TOKENS 안)이 같은 이름을 더 높은 우선순위로 덮으므로
+          **크게 보기 값은 그대로다.** 아래 값은 일반 보기에만 걸린다.
+       ⚠️ 다른 7종으로 옮길 때는 이 묶음을 통째로 가져가라(`docs/PRODUCT_SKIN_v1.md`).
+
+       ── 대응(허브 Main) ────────────────────────────────────────────────
+         질문 28 ← CENTER 제목 30 · 설명 15 ← 리드 16 · 라벨 16 ← 리드 16
+         카드 18/14 ← 민원명 19/14 · 입력 18 · CTA 17 ← CTA 18 · 보조 13 ← note 13.5 */
+    --fs-question: 28px;    /* 34 → 28  시민에게 말하는 큰 질문 */
+    --fs-lead:     18px;    /* 21 → 18  입력칸에 치는 글자 */
+    --fs-label:    16px;    /* 18 → 16  항목 라벨 */
+    --fs-card:     18px;    /* 20 → 18  선택 카드 제목 */
+    --fs-card-sub: 14px;    /* 15 → 14  선택 카드 설명 */
+    --fs-body:   15.5px;    /* 17 → 15.5  본문 기본 */
+    --fs-help:     15px;    /* 17 → 15  「왜 묻는지」 */
+    --fs-sum:      15px;    /* 16.5 → 15  최종 확인 요약 줄 */
+    --fs-small:    13px;    /* 13.5 → 13  행정적 보조 설명 */
+    /* 손끝 표적 — ⛔ `--touch-min`(48px) 아래로 내리지 않는다. 셋 다 그 위에 있다. */
+    --touch-card:  116px;   /* 132 → 116 */
+    --touch-field:  56px;   /* 64 → 56 */
+    --btn-h:        56px;   /* 62 → 56 */
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0;padding:0;background:var(--zone);color:var(--ink);
+    font-family:"Malgun Gothic","맑은 고딕",system-ui,-apple-system,sans-serif;
+    font-size:var(--fs-body);line-height:1.55;
+  }
+
+  /* ===== 상단 바 =====
+     왼쪽 기관 · 가운데 지금 쓰는 서식 이름 · 오른쪽 도구. 가운데를 비워 두면
+     시민이 「내가 무슨 서류를 쓰고 있는지」를 확인할 자리가 없다. */
+  /* ⚠️ 도구 칸을 `auto`(제 너비)로 두고 **기관명·서식 이름이 먼저 줄어들게** 한다.
+     종전에는 `1fr auto 1fr` 이라 도구가 제 몫보다 넓어지면 **버튼이 두 줄로 접혔다**
+     (2026.08.24 에 「크게 보기」를 더하면서 일곱 개가 되어 실제로 접혔다).
+     버튼 폭을 깎아 맞추는 식은 **기관명 길이가 바뀌면 또 접힌다** — 이 배포본은
+     기관마다 이름이 다르다(`rebrand.py`). 그래서 수치가 아니라 구조로 막는다.
+     기관명·서식 이름에는 이미 말줄임(ellipsis)이 걸려 있어 줄어도 깨지지 않는다. */
+  .topbar{
+    /* ⚠️ 2026.08.28 — 3등분 격자를 버리고 **Shell 순서**로 바꿨다(`PRODUCT_SKIN_v1.md`).
+       종전에는 서식 이름을 정중앙에 두려고 양옆을 `1fr` 로 잡았는데, 오른쪽 단추가
+       하나만 늘어도 제목이 움직였다. 이제 제목은 **identity 옆 고정 슬롯**이다.
+       ⚠️ `flex-wrap` 은 SITE-CONFIG 의 `.kb-help`(`order:9`)가 아랫줄에 붙게 한다. */
+    display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;
+    padding:0 28px;min-height:var(--m-bar-h);background:var(--head);   /* Main 과 같은 좌우 여백 */
+    /* ⚠️ 허브 Main 과 **같은 구현**(2026.08.28 Product Shell v1) — `border-bottom`.
+       종전에는 BAR 내용이 62px 을 꽉 채워 테두리를 두면 63px 이 돼 안쪽 그림자로 그렸는데,
+       Shell 로 바꾸며 내용이 가벼워져(업무명 제거 · 작성예시 compact) 이제 62px 을 지킨다.
+       ⚠️ 높이가 다시 63px 이 되면 이 줄이 아니라 **내용**을 줄여라. */
+    border-bottom:1px solid var(--line-warm);
+    position:sticky;top:0;z-index:20;
+  }
+  /* ⚠️ 2026.08.28 — 74px + 3px 대표색 그라데이션 띠를 **62px + 1px 선**으로 바꿨다(Main 과 같은 문법).
+     ⛔ 그라데이션을 되살리지 마라. 좁은 Accent 라도 9개 화면에서 인상이 갈린다.
+     ⚠️ 선 색은 이 단계에서 **기존 팔레트(`--line-warm`)** 를 그대로 쓴다 — 골격만 판정하려고
+        색은 다음 단계로 미뤘다. 그때 `--m-border` 로 바뀐다.
+  /* ── IDENTITY — 허브 Main 과 **글자까지 같은 lockup** ──
+     ⛔ 여권만의 표기를 만들지 마라. 시민은 같은 키오스크에서 두 화면을 지난다. */
+  .brand{display:flex;align-items:center;gap:11px;min-width:0;flex:0 0 auto;}
+  .brand-tx{display:flex;align-items:center;gap:11px;min-width:0;}
+  .brand b{font-size:var(--m-fs-brand);font-weight:var(--fw-heavy);color:var(--blue);
+    letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .brand-div{width:1px;height:15px;background:var(--m-border);flex:0 0 auto;}
+  .brand h1{margin:0;font-size:var(--m-fs-brand-sub);font-weight:500;color:var(--m-ink-sub);
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* ⛔ BAR 에 업무명 슬롯을 두지 않는다(2026.08.28). 작성 영역이 이미 말한다 —
+     같은 말을 두 번 하면 BAR 이 무거워지고, 상세페이지마다 길이가 달라져 흔들린다. */
+  /* 빈 자리 — 여기가 늘어나고 줄어든다. ⛔ 무엇으로도 채우지 않는다 */
+  .bar-space{flex:1 1 auto;min-width:8px;}
+  .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    justify-content:flex-end;padding:8px 0;}
+  /* ── DATE — 허브 Main 과 **같은 규칙**(2026.08.28) ──
+     ⚠️ Shell 로 옮기면서 이 규칙이 통째로 빠져 있었다. 스타일이 없어 본문 크기(17px)로
+        나왔고, Main(13.5px·faint)과 눈에 띄게 달랐다. ⛔ 여기서 값을 새로 만들지 마라.
+     ⚠️ 시계는 넣지 않는다 — 이 PC 는 날짜가 설치일로 원복되는 이력이 있다. */
+  .today{font-size:var(--m-fs-meta);color:var(--m-ink-faint);white-space:nowrap;
+    font-feature-settings:"tnum";}
+  /* 담당자 도구 — 시민 단추보다 한 치수 작게(자리를 적게 먹는다) */
+  /* Button Role ③ BAR utility(compact) — 담당자 도구. 한 치수 더 작다. */
+  .topbar .btn.compact{font-size:13px;padding:7px 10px;}
+  /* 상단 바의 버튼은 본문 버튼보다 한 치수 작다 — 한 줄에 들어가야 하고,
+     시민이 누를 것은 본문에 있지 여기에 있지 않다(여기는 도구·담당자용이다).
+     ⚠️ `nowrap` — 라벨이 버튼 안에서 두 줄로 접히면 상단 바 높이가 들쭉날쭉해진다. */
+  /* Button Role ③ BAR utility — 허브 Main 의 BAR 단추와 같은 값(14px). */
+  .topbar .btn{font-size:14px;padding:9px 12px;white-space:nowrap;}
+  /* 선 아이콘. ⚠️ 허브(`index.html`)와 **같은 문법**이다 — 24 격자·굵기 1.7·둥근 끝.
+     상단 바는 9개 화면에서 같아 보여야 하므로 한쪽만 고치지 마라. */
+  .btn-ic{flex:0 0 auto;width:16px;height:16px;display:block;}
+  /* ⚠️ 반경 10 → 6(`--m-r-btn`) · **그라데이션 제거**(2026.08.28 단계 4).
+     ⛔ 높이·`disabled` 규칙·문구·순서는 건드리지 않았다. */
+  /* Button Role ② 본문 단추 — 기본값. CTA(`.wiz-nav .btn`)와 BAR 가 이것을 덮는다. */
+  .btn{display:inline-flex;align-items:center;gap:7px;
+    font-family:inherit;font-size:15px;font-weight:700;border:1.5px solid var(--blue);
+    background:var(--m-surface);color:var(--blue);border-radius:var(--m-r-btn);
+    padding:10px 15px;cursor:pointer;
+    transition:background var(--dur-quick) var(--ease-out),
+               border-color var(--dur-quick) var(--ease-out);}
+  .btn:hover{background:var(--m-a06);}
+  .btn.primary{background:var(--blue);color:#fff;border-color:var(--blue);}
+  .btn.primary:hover{background:var(--blue-dark);border-color:var(--blue-dark);}
+  .btn.ghost{border-color:var(--m-border);color:var(--m-ink-sub);background:var(--m-surface);}
+  .btn.ghost:hover{background:var(--m-bg);border-color:var(--m-border-mid);}
+  .btn:disabled{opacity:.45;cursor:default;}
+
+  /* ===== 3영역 레이아웃 (2026.08.21 디자인 개편) =====
+     Writing Desk(질문) · Paper(서식) · Companion Rail(진행·준비물).
+     세 면의 바탕색이 조금씩 달라 선을 긋지 않아도 영역이 갈린다.
+
+     ⚠️ **높이·스크롤은 반드시 `@media screen` 안에 둔다.** 인쇄에 새어 나가면
+        서식이 화면 높이에 잘려 나간다. 인쇄 블록은 `.layout{display:block}` 과
+        `.form-col{position:static;max-height:none;overflow:visible}` 만 되돌린다.
+     ⚠️ 질문면과 레일에 **`.panel-col` 을 함께 붙여 둔다.** 인쇄 CSS가 그 이름으로
+        둘을 숨긴다 — 새 이름만 쓰면 안내면이 종이에 딸려 나간다. */
+  /* ⚠️ 2026.08.28 — Main 과 **같은 프레임**(26/56/18)을 쓴다. 종전에는 공통 토큰
+     `--cols`(2:3:1, 크게 보기에서 5:5:2)를 썼는데, Main 이 26/56/18 로 동결되면서
+     같은 제품인데 페이지마다 기둥 폭이 달라 보였다.
+     ⛔ `html.big` 이 `--cols` 를 5:5:2 로 덮지만 **여기서는 `--m-cols` 를 보므로 무시된다** —
+        크게 보기에서 열 폭이 변하지 않는 것이 그래서다(결정 ②). */
+  .layout{display:grid;gap:0;padding:0;max-width:none;margin:0;
+    grid-template-columns:var(--m-cols);}
+  .form-col{min-width:0;}
+  .panel-col{min-width:0;}
+  /* 화면을 꽉 채우되 **상단 바 높이를 숫자로 빼지 않는다.** 기관명이 길거나 화면이 좁아
+     버튼이 두 줄로 접히면 그만큼 본문이 아래로 밀려 잘린다. body 를 세로 flex 로 두고
+     본문이 남는 높이를 먹게 하면 상단 바가 몇 줄이 되든 어긋나지 않는다. */
+  @media screen and (min-width:861px){
+    body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+    .topbar{flex:0 0 auto;position:static;}
+    .layout{flex:1 1 auto;min-height:0;}
+    .task-col,.form-col,.rail-col{height:100%;min-height:0;}
+  }
+
+  /* ===== 서식 영역(Paper) : 실제 서식 재현 ===== */
+  /* 실제 서식 이미지 위에 값을 얹는 방식 (A4 규격 · 컬러 인쇄) */
+  .paper{background:#fff;box-shadow:0 2px 6px rgba(0,0,0,.06),0 14px 34px rgba(0,0,0,.10);
+    width:210mm;margin:0 auto;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  /* ⚠️ 아래는 전부 **화면 전용**이다. 서식 바닥색·모서리 선·폭 맞춤이 인쇄로 새면
+     종이에 회색 바탕과 선이 찍힌다. `@media screen` 밖으로 내지 마라. */
+  @media screen{
+    .form-col{background:var(--zone);padding:16px 18px 20px;position:relative;overflow:auto;}
+    /* ⚠️ 서식 자리를 가리키던 모서리 선 한 쌍(94px)을 걷었다(2026.08.28) —
+       종이 자체가 이미 그 자리를 말한다. */
+    /* 210mm 보다 좁은 자리에서도 서식이 잘리지 않게 폭을 맞춘다. 안의 값은 전부
+       `%` 와 `cqw`(컨테이너 폭 기준)라 **비율이 그대로 유지된다** — 좌표가 밀리지 않는다. */
+    .form-col .paper{width:min(210mm,100%);}
+  }
+  .stage{position:relative;width:100%;container-type:inline-size;}
+  .stage .bg{display:block;width:100%;height:auto;}
+  .ovl{position:absolute;inset:0;pointer-events:none;}
+  /* 얹는 글자 = 검은 펜 느낌 */
+  .ov{position:absolute;transform:translate(-50%,-50%);color:#111;font-weight:700;line-height:1;white-space:nowrap;}
+  .ov.k{color:#000;font-weight:900;}          /* 체크 ✔ */
+  .ov.t{transform:translateY(-50%);}           /* 좌측정렬 자유 텍스트(세로중앙; wrap 2줄도 칸 중앙) */
+  .cover{position:absolute;background:#fff;pointer-events:none;
+        -webkit-print-color-adjust:exact;print-color-adjust:exact;}  /* 원본 인쇄 안내문 완전히 가림 */
+  .guide{position:absolute;transform:translateY(-50%);color:#c4c4c4;font-weight:400;white-space:nowrap;line-height:1;pointer-events:none;
+        -webkit-print-color-adjust:exact;print-color-adjust:exact;}  /* 옅은 색으로 균일하게 다시 그린 안내문 */
+  /* 지금 적고 있는 칸을 서식 위에서 가리키는 표시(화면 전용 · 인쇄 CSS가 숨긴다).
+     바탕을 대표색에서 뽑은 옅은 색으로 두어 기관 색을 바꿔도 따라온다.
+     ⛔ 노란색은 쓰지 않는다 — 서명란 형광(`.ovhi`)이 이미 노랑이라 뜻이 겹친다. */
+  .ovhl{position:absolute;background:var(--focus-face);opacity:.66;
+    outline:1px solid var(--focus-line);outline-offset:0;border-radius:var(--r-xs);pointer-events:none;}
+  /* 형광펜 하이라이트(서명란): 항상 표시, 인쇄에도 유지. multiply로 밑 글자 살림 */
+  .ovhi{position:absolute;background:var(--marker-sign);border-radius:4px;pointer-events:none;
+    mix-blend-mode:multiply;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+
+  /* 미리보기 모달 */
+  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;flex-direction:column;padding:14px;}
+  .modal-box{display:flex;flex-direction:column;height:100%;max-width:100%;margin:0 auto;}
+  .modal-top{display:flex;justify-content:space-between;align-items:center;color:#fff;gap:10px;padding:4px 2px 10px;}
+  .modal-top b{font-size:18px;}
+  .modal-scroll{flex:1;overflow:auto;display:flex;justify-content:center;background:#5a5a5a;padding:12px;border-radius:var(--r-sm);}
+  .modal-scroll .paper{width:min(210mm,94vw);height:max-content;box-shadow:0 4px 20px rgba(0,0,0,.4);}
+
+  /* ===== 질문면(Writing Desk) =====
+     종전에는 흰 「휴대전화」 카드를 배경 위에 얹었다. 그 은유는 손에 쥐는 화면의 것이라,
+     서서 쓰는 큰 키오스크에서는 화면 한복판에 작은 종이가 떠 있는 꼴이 된다.
+     이제 **작업면 자체가 화면**이고 질문이 그 위에 큰 활자로 놓인다. */
+  /* ⚠️ 질문면이 흰 면이 되면서 바닥과의 명도차가 줄었다 — Main 처럼 **1px 실선**으로
+     구역을 가른다(종전에는 따뜻한 회색끼리의 명도차가 그 몫을 했다). */
+  .task-col{background:var(--work);border-right:1px solid var(--line-warm);}
+  .task{display:flex;flex-direction:column;height:100%;min-height:0;
+    padding:28px 40px 22px;position:relative;}
+  /* 기하학적 포인트 — 머리글 아래를 지나는 선. 왼쪽 짧은 구간만 대표색이다.
+     ⚠️ **머리글에 붙여 둔다.** 종전에는 질문면 위쪽의 고정 위치(`top:96px`)에 그렸는데,
+        제목이 길거나 두 줄이 되면 그 선이 글자를 가로질렀다(첫 화면에서 바로 드러났다).
+        흐름 안에 두면 무슨 글자가 오든 겹칠 수 없다. 두께도 1px → 2px 로 올려
+        「흐릿하게 걸쳐 있는 것」이 아니라 「구분선」으로 읽히게 했다. */
+  /* ⚠️ 2026.08.28 — 아래를 지나던 **2px 대표색 띠를 걷었다**(단계 3). 구분은 선이
+     아니라 여백이 맡는다(Main 과 같은 문법). ⛔ 되살리지 마라 — 화면마다 색 띠가
+     두세 줄씩 생기면 정작 질문이 묻힌다. */
+  /* ══ ASK 상단 navigation · 하단 초기화 — **역할이 다른 두 단추** ══════════
+     ⚠️ 뜻이 다르다 : 메인으로 = **이 업무를 나간다**(되돌릴 수 있다) ·
+        처음부터 = **지금 적은 것을 전부 버린다**(`askConfirm` 으로 한 번 더 묻는다).
+     ⚠️ 둘 다 **hover 없이도 누를 수 있는 것임이 보여야 한다** — 종전에는 글자만 떠 있어서
+        터치 화면에서는 알 길이 아예 없었다(⛔ hover 의존 금지).
+     ⚠️ 2026.08.29 — 뜻이 다르니 **계층도 갈랐다**(현장 의견).
+        메인으로  = **Role ② 본문 단추**(대표색 테두리 · 대표색 글자 · 흰 면)
+        처음부터  = **Role ④ Compact-Tertiary**(회색 테두리 · 잉크 글자) 그대로
+        ⛔ 여기서 새 수치를 만들지 마라. 위 `.btn` 규격을 그대로 쓴다. */
+  .ask-nav{flex:0 0 auto;margin-bottom:14px;}
+  .nav-back,.reset-btn{display:inline-flex;align-items:center;justify-content:center;
+    font-family:inherit;line-height:1;background:var(--m-surface);text-decoration:none;
+    border-radius:var(--m-r-btn);cursor:pointer;
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out),
+               color var(--dur-quick) var(--ease-out);}
+  /* Role ② 본문 단추 — BAR 의 [미리보기]와 **같은 family** 의 테두리 변형이다.
+     ⛔ 채운 대표색(solid)으로 만들지 마라. 이 화면에서 **앞으로 가는 길은 [다음]**이고,
+        위아래에 채운 파란 단추가 둘이면 어느 쪽이 진행인지 흐려진다. */
+  .nav-back{gap:7px;font-size:15px;font-weight:var(--fw-bold);
+    color:var(--blue);border:1.5px solid var(--blue);padding:10px 15px;}
+  .nav-back:hover{background:var(--m-a06);}
+  .nav-back .btn-ic{width:16px;height:16px;}
+  /* Role ④ Compact-Tertiary — 되돌릴 수 없는 행동이라 **가장 조용하다** */
+  .reset-btn{gap:7px;font-size:13.5px;font-weight:var(--fw-bold);
+    color:var(--m-ink-sub);border:1px solid var(--m-border);padding:8px 13px;}
+  .reset-btn .btn-ic{width:15px;height:15px;}
+  html.big .nav-back{font-size:17.5px;padding:12px 18px;}
+  html.big .nav-back .btn-ic{width:18px;height:18px;}
+  html.big .reset-btn{font-size:15px;padding:9px 14px;}
+  html.big .reset-btn .btn-ic{width:17px;height:17px;}
+
+  .topline{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
+    padding-bottom:15px;margin-bottom:26px;flex:0 0 auto;position:relative;}
+  /* 화면 이름 = 지금 무엇을 묻는 묶음인지. 왼쪽 짧은 대표색 막대가 자리를 잡아 준다. */
+  /* ⚠️ 왼쪽 3px 대표색 막대를 걷었다(2026.08.28). 제목은 색과 굵기로 충분히 선다. */
+  .wiz-title{font-size:16px;font-weight:800;color:var(--blue-dark);
+    position:relative;letter-spacing:-.01em;}
+  .wiz-count{font-size:13.5px;font-weight:800;color:var(--muted);white-space:nowrap;}
+  .wiz-body{flex:1 1 auto;min-height:0;overflow:auto;padding:0 2px 6px;}
+  /* ── Human Handoff 자리 (2026.08.28 단계 6) ──
+     질문 영역의 **바닥에 고정**된 보조 행동 영역. 질문이 길어 본문이 굴러도 남는다.
+     ⚠️ 허브 Main 의 `.ask-foot` 과 같은 문법이다 — 위에 실선 하나로 갈라 둔다.
+     ⛔ 이 화면에 탈출구가 없으면 **자리를 차지하지 않는다.** */
+  .ask-foot{flex:0 0 auto;margin-top:10px;padding-top:12px;
+    border-top:1px solid var(--m-border);}
+  .ask-foot:empty{display:none;}
+  /* 「처음부터 다시 작성」 — 파괴적 행동이라 **가장 조용한 톤**이다.
+     ⚠️ Handoff(`.ask-foot`)와 시각 계층이 겹치면 안 된다 — 저기는 판/단추, 여기는 글자.
+     ⛔ 눈에 띄게 만들지 마라. 잘못 누르면 시민이 처음부터 다시 적어야 한다. */
+  /* Navigation Zone 의 셋째 줄 — [이전][다음] **아래**, 가운데. */
+  .ask-reset{flex:0 0 auto;margin-top:10px;display:flex;justify-content:center;}
+  /* 되돌릴 수 없는 행동이라 hover 에서만 경고색이 비친다(평소에는 조용하다). */
+  .reset-btn:hover{border-color:var(--warn-line);background:var(--warn-face);color:var(--warn);}
+  html.big .ask-reset{margin-top:8px;}
+  .ask-foot .card-sub{margin:0;}
+  .ask-foot .ask-box{margin:0;}
+
+  /* ===== 안내 기둥(Companion Rail) =====
+     진행 · 준비물 · 안심 안내. 질문에 답하는 동안 **눈을 돌리지 않아도** 지금 어디쯤인지와
+     무엇을 꺼내 둬야 하는지가 늘 보이게 한다. 종전에는 이 정보가 패널 머리의 얇은 막대
+     하나뿐이었고, 준비물은 아예 없었다. */
+  .rail-col{background:var(--rail);border-left:1px solid var(--line-warm);}
+  /* ⚠️ 여백은 **실측으로 정한 예산**이다(2026.08.28 단계 6). 미성년 경로 + 크게 보기가
+     기준이고, 여기서 조금만 벌리면 진행·준비물이 화면 밖으로 밀린다. */
+  .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
+    padding:20px 18px 16px;}
+  /* 진행 머리 — 캡션(좌) + 큰 숫자(우)를 **한 줄에**(2026.08.28 단계 6).
+     ⚠️ 두 줄이던 것을 한 줄로 묶어 23px 을 벌었다 — 준비물이 여섯 개인 미성년 경로에서
+        그만큼이 기둥 안에 담기느냐 마느냐를 갈랐다. 정보는 그대로다. */
+  .rail-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;}
+  .rail-cap{font-size:12px;letter-spacing:.12em;color:var(--m-ink-muted);font-weight:800;}
+  .rail-num{font-size:var(--fs-rail-num);font-weight:900;letter-spacing:-.04em;line-height:1.05;}
+  .rail-num span{font-size:15px;color:var(--muted);font-weight:800;}
+  .rail-now{font-size:14px;color:var(--blue-dark);font-weight:800;margin-top:5px;}
+  .rail-steps{display:grid;gap:7px;font-size:var(--fs-rail-item);margin-bottom:22px;}
+  .rail-step{display:grid;grid-template-columns:19px 1fr;gap:9px;align-items:center;
+    color:#7b7f7d;background:none;border:0;padding:0;font-family:inherit;text-align:left;
+    width:100%;line-height:1.35;}
+  .ic-dot{display:block;width:12px;height:12px;}
+  .rail-step .dot{width:17px;height:17px;border:1px solid var(--m-border-mid);border-radius:50%;
+    display:grid;place-items:center;font-size:9px;background:#fff;}
+  /* 지나온 묶음은 눌러서 되돌아갈 수 있다(앞으로 건너뛰기는 막는다 — 검증 우회 방지) */
+  .rail-step.done{color:var(--m-ink-read);cursor:pointer;}
+  .rail-step.done .dot{color:var(--blue-dark);border-color:var(--blue);}
+  .rail-step.done:hover{color:var(--blue-dark);}
+  .rail-step.now{font-weight:800;color:var(--ink);}
+  .rail-step.now .dot{background:var(--blue);border-color:var(--blue);}
+  .rail-rule{height:1px;background:var(--line-warm);margin:0 0 14px;}
+  .rail-sec{margin-bottom:14px;}
+  .rail-head{display:flex;align-items:center;gap:8px;font-size:var(--fs-rail-head);font-weight:900;margin-bottom:11px;}
+  .rail-items{display:grid;gap:7px;}
+  .rail-item{display:grid;grid-template-columns:30px 1fr;gap:10px;align-items:center;
+    font-size:var(--fs-rail-item);line-height:1.45;color:var(--m-ink-read);}
+  /* ── compact 준비물 (2026.08.28 단계 6) ──
+     32px 아이콘판 + 이름 한 줄 + 조건 한 줄. ⛔ 조건이 두 줄이 되면 **문구를 줄인다** —
+     칸을 키우면 미성년 경로에서 기둥이 넘친다(실측으로 정한 예산이다). */
+  .rail-ic{width:30px;height:30px;border-radius:var(--m-r-card);
+    background:var(--m-icon-bg);color:var(--m-ink-muted);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;}
+  .ic-rail{display:block;width:19px;height:19px;}
+  /* 꼭 필요한 것은 아이콘판이 대표색을 띤다 — 종전의 「✓」 글자를 대신한다 */
+  .rail-item.req .rail-ic{background:var(--m-a10);color:var(--blue);}
+  .rail-item b{display:block;font-weight:var(--fw-bold);color:var(--m-ink);line-height:1.35;}
+  .rail-item .check{color:var(--m-border-mid);font-weight:900;}
+  /* 꼭 필요한 것만 진하게. 나머지는 한 톤 내려 「없어도 되는 것」임이 눈에 보이게 한다. */
+  .rail-item.req{color:var(--ink);font-weight:700;}
+  .rail-item.req .check{color:var(--blue);}
+  .rail-item small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px;font-weight:400;
+    line-height:1.35;}   /* ⚠️ 조건 한 줄. 줄 간격이 예산에 직접 걸린다(단계 6 실측) */
+  .rail-safe{margin-top:auto;border-top:1px solid var(--line-warm);padding-top:12px;}
+  .rail-safe .rail-head{font-size:var(--fs-rail-item);margin-bottom:7px;}
+  .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:var(--m-ink-read);margin:5px 0;}
+
+  /* 질문 — 이 화면에서 가장 큰 글자. 어르신이 서서 보는 거리에서 한눈에 읽혀야 한다. */
+  /* ══ 한국어 조판 (2026.08.28) ═══════════════════════════════════════════
+     ⛔ **어절 중간에서 줄을 바꾸지 않는다.** 「신청하시나 / 요?」처럼 끊기면 읽는 사람이
+        한 번 멈춘다. 브라우저 기본값은 한글을 글자 단위로 끊으므로 `keep-all` 로 막는다.
+     ⚠️ 대신 아주 긴 **한 낱말**(로마자 이름·주소·전화번호)이 칸을 넘칠 수 있어
+        `overflow-wrap:anywhere` 를 안전망으로 함께 둔다 — **그때만** 쪼갠다.
+     ⛔ 문장마다 `<br>` 을 박아 개행을 맞추지 마라. 문구·글자 크기·기관명이 바뀌면
+        그 자리가 어긋나고, `rebrand.py` 로 이름이 긴 기관에 가면 바로 깨진다.
+     ⛔ 인쇄층(`.ov`·`.paper`)에는 걸지 않는다 — 거기는 좌표로 찍는 자리다.
+        그래서 서식 기둥(`.form-col`)이 아니라 **읽는 두 기둥에만** 건다.
+     ⚠️ 선택자를 나열하지 않고 기둥에 한 번 건다. 나열하면 화면이 늘 때마다 빠뜨리는
+        자리가 생긴다 — 실제로 `.sug-note` 한 줄이 빠져 거기서만 어절이 쪼개졌다. */
+  .task-col,.rail-col{word-break:keep-all;overflow-wrap:anywhere;}
+
+  .coach-q{font-size:var(--fs-question);font-weight:var(--fw-heavy);line-height:1.28;letter-spacing:var(--ls-tight);
+    margin:0 0 14px;max-width:var(--question-max);}
+  /* 「왜 묻는지」 — 상자를 두르는 대신 왼쪽 선 하나로 조용히 붙인다. 상자가 많으면
+     화면이 시끄러워져 정작 질문이 묻힌다.
+     ⚠️ `display:flex` 로 두면 안 된다 — 안내문에 `<b>` 가 섞이는 화면이 있는데
+        그것들이 저마다 flex 칸이 되어 한 문장이 세 토막으로 갈라진다. */
+  .why-box{display:block;font-size:var(--fs-help);color:var(--m-ink-read);background:none;
+    border:0;border-left:3px solid var(--line-warm);border-radius:0;
+    padding:2px 0 2px 14px;margin:0 0 22px;line-height:1.6;max-width:var(--question-max);}
+  /* 「왜 묻는지」 앞의 전구. ⚠️ 글줄 높이를 바꾸지 않게 크기를 못 박는다. */
+  .why-box .ic{margin-right:7px;color:var(--m-ink-muted);}
+  .why-box .ic .ic-svg{display:inline-block;vertical-align:-4px;width:19px;height:19px;}
+  details.terms{margin-bottom:14px;border:1px dashed var(--line);border-radius:var(--r-md);padding:2px 12px;background:#fff;}
+  details.terms summary{cursor:pointer;font-size:14px;font-weight:700;color:var(--blue-dark);padding:9px 0;}
+  details.terms .term{font-size:14px;color:#333;padding:7px 0;border-top:1px solid #eef1f5;line-height:1.55;}
+
+  .fb{font-size:12.5px;border-radius:var(--r-sm);padding:2px 8px;font-weight:700;vertical-align:middle;white-space:nowrap;}
+  /* ⚠️ 뜻은 그대로다 — 필수(Red) · 선택(중립) · 자동(대표색). 값만 눈금에 맞췄다. */
+  .fb-req{color:var(--warn);background:var(--warn-face);border:1px solid var(--warn-line);}
+  .fb-opt{color:var(--m-ink-read);background:var(--m-bg);border:1px solid var(--m-border);}
+  .fb-auto{color:var(--blue);background:var(--m-a07);border:1px solid var(--m-a25);}
+  /* 자동으로 채워지는 칸. ⛔ 흐릿하게(비활성처럼) 만들지 않는다 — 값은 또렷이 읽혀야 한다.
+     면과 커서만 「지금 적는 칸이 아니다」를 말한다. */
+  .text-input.ro{background:var(--m-bg);color:var(--m-ink);cursor:default;}
+
+  .field{margin-bottom:21px;max-width:var(--question-max);}
+  .field-label{display:block;font-size:var(--fs-label);font-weight:var(--fw-heavy);margin-bottom:9px;}
+  .q-help{font-size:14px;color:var(--muted);margin:-2px 0 10px;line-height:1.5;}
+  /* 작은 선택지(renderGroup) — 두 줄 목록. 지금 여권 화면은 큰 카드를 쓰지만,
+     엔진 서식과 공유하는 구조라 스타일은 남겨 둔다. */
+  .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .opt{display:flex;flex-direction:column;align-items:stretch;justify-content:center;
+    font-family:inherit;text-align:left;min-height:60px;
+    padding:14px 17px;border:1.5px solid var(--m-border-mid);
+    background:var(--m-control);color:var(--m-ink);
+    border-radius:var(--m-r-card);cursor:pointer;
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out);}
+  /* hover·포커스는 **얕게** — 고른 것과 헷갈리면 안 된다 */
+  .opt:hover,.opt:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  /* 고른 것 — 대표색 테두리 + 옅은 대표색 면 + 왼쪽 띠 */
+  .opt.selected{border-color:var(--blue);background:var(--m-a10);
+    box-shadow:inset 3px 0 0 var(--blue);}
+  .opt-main{display:flex;align-items:center;gap:8px;}
+  .opt-check{color:var(--blue);font-weight:800;visibility:hidden;}
+  .opt.selected .opt-check{visibility:visible;}
+  .opt-label{font-size:17px;font-weight:600;}
+  .opt.selected .opt-label{color:var(--blue-dark);}
+  .opt-rec{font-size:12px;color:#0a7a2f;background:#e7f6ec;border:1px solid #b6e3c4;border-radius:var(--r-sm);padding:2px 8px;margin-left:auto;}
+  .opt-desc{font-size:14px;color:var(--muted);margin-top:6px;line-height:1.45;}
+  .opt.selected .opt-desc{color:#2c5aa0;}
+
+  /* 글자 칸 — 물리 키보드로 친다. 키가 큰 편이라 칸도 크게 잡는다(높이 64px). */
+  /* 적는 칸 — 흰 면 위에서 **적는 자리**임이 보이게 한 톤 내린 면 + 또렷한 테두리.
+     ⚠️ 높이는 `--touch-field`(64/72px) 그대로다. 손끝 표적을 줄이지 않는다.
+     ⚠️ 반경 12 → 8(`--m-r-card`)로 Main 계열에 맞췄다. */
+  .text-input{width:100%;font-family:inherit;font-size:var(--fs-lead);font-weight:var(--fw-bold);
+    height:var(--touch-field);padding:0 17px;color:var(--m-ink);
+    border:1.5px solid var(--m-border-mid);border-radius:var(--m-r-card);
+    background:var(--m-control);
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out);}
+  /* 적는 중 — 면이 희어지고 테두리가 대표색이 된다(「지금 여기」) */
+  .text-input:focus{outline:none;border-color:var(--blue);background:var(--m-surface);}
+  select.text-input{font-weight:700;}
+  .hint{font-size:14px;color:var(--muted);margin-top:8px;line-height:1.5;}
+
+  /* 안내 상자들 — 질문면이 넓어져서 폭을 묶어 두지 않으면 한 줄이 너무 길어져 읽기 어렵다 */
+  .warn-strong,.note-box,.info-box,.print-tip,.unsure-note,.sug-box,.manual-warn,
+  .staff-list,.age-status,details.terms{max-width:var(--cards-max);}
+  /* ⚠️ 값만 공통 토큰으로 모았다(2026.08.28). **뜻은 그대로** — Red 는 진행 불가·오류. */
+  .warn-strong{background:var(--warn-face);border:1px solid var(--warn-line);color:var(--warn);border-radius:var(--r-md);
+    padding:12px 14px;font-size:14px;line-height:1.6;margin-bottom:14px;}
+  .note-box{background:var(--notice-face);border:1px solid var(--notice-line);color:var(--notice);border-radius:var(--r-md);
+    padding:12px 14px;font-size:14px;margin-bottom:14px;line-height:1.55;}
+  .info-box{background:var(--blue-light);border:1px solid var(--m-a25);color:var(--blue-dark);
+    border-radius:var(--r-md);padding:12px 14px;font-size:14.5px;margin-bottom:14px;line-height:1.6;}
+  /* 인쇄 설정 안내(여백 없음·배율 100%) — 화면 전용, 인쇄엔 안 나옴 */
+  .print-tip{background:#fff4d6;border:2px solid #f0c040;color:#7a5600;border-radius:var(--r-md);
+    padding:12px 14px;font-size:14.5px;line-height:1.6;margin-bottom:12px;}
+  .print-tip b{color:#a12727;}
+  .print-tip.modal{margin:10px 16px 0;}
+  .unsure-note{background:var(--notice-face);border:1px solid var(--notice-line);color:var(--notice);border-radius:var(--r-md);
+    padding:10px 12px;font-size:13px;margin-bottom:14px;}
+  .sug-box{background:var(--m-a06);border:1px solid var(--m-a18);border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px;}
+  .sug-title{font-weight:700;font-size:14px;margin-bottom:8px;color:var(--blue-dark);}
+  .sug-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:15px;}
+  .sug-row b{font-size:16px;letter-spacing:1px;}
+  /* Button Role ② 본문 단추(작은 것) — ⚠️ 굵기가 빠져 있어 400 으로 나오고 있었다. */
+  .sug-btn{font-family:inherit;font-size:13px;font-weight:700;border:1.5px solid var(--blue);
+    background:var(--m-surface);color:var(--blue);border-radius:var(--m-r-btn);
+    padding:6px 10px;cursor:pointer;}
+  .sug-btn:hover{background:var(--blue);color:#fff;}
+  .sug-note{font-size:12.5px;color:var(--muted);margin-top:4px;line-height:1.5;}
+
+  .dunno-btn{width:100%;margin-top:4px;font-family:inherit;font-size:14.5px;font-weight:600;
+    color:var(--m-ink-sub);background:var(--m-bg);border:1.5px dashed var(--m-border-mid);
+    border-radius:var(--m-r-btn);padding:13px;cursor:pointer;}
+  .dunno-btn:hover{border-color:var(--blue);color:var(--blue);background:var(--m-surface);}
+
+  /* 확인·완료 단계 */
+  /* 최종 확인 — 표를 두르지 않고 가로선만으로 줄을 나눈다. 오른쪽에 「수정」을 두어
+     인쇄 전에 그 자리에서 고치러 갈 수 있게 한다(되돌아가기만 허용). */
+  .sum-list{border-top:1px solid var(--line-warm);margin-bottom:20px;max-width:var(--cards-max);}
+  .sum-row{display:grid;grid-template-columns:150px minmax(0,1fr) auto;gap:18px;align-items:center;
+    padding:15px 2px;border-bottom:1px solid var(--line-warm);font-size:16px;}
+  .sum-row .k{color:var(--muted);font-weight:700;font-size:14px;}
+  .sum-row .v{font-weight:700;min-width:0;overflow-wrap:anywhere;}
+  .sum-edit{border:0;background:none;font-family:inherit;font-size:13.5px;font-weight:800;
+    color:var(--blue-dark);text-decoration:underline;text-underline-offset:4px;
+    cursor:pointer;padding:6px 4px;}
+  .sum-edit:hover{color:var(--blue);}
+  .staff-list{background:#fffaf0;border:1px solid #e0b36a;border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px;font-size:14px;color:#7a5600;}
+  .staff-list .st{font-weight:700;margin-bottom:4px;}
+  .staff-list ul{margin:6px 0 0;padding-left:20px;}
+  .staff-list.ok{background:#f1faf3;border-color:#9cc7a6;color:#1e6b34;}
+
+  .step-warn{flex:0 0 auto;margin:12px 0 0;background:var(--warn-face);border:1px solid var(--warn-line);
+    color:var(--warn);border-radius:var(--r-md);padding:11px 14px;font-size:var(--fs-small);max-width:var(--question-max);}
+  .step-warn:empty{display:none;}
+  /* ══ ASK Navigation Zone (2026.08.28) ══════════════════════════════════
+     [← 이전] [다음 →] **같은 크기의 한 쌍**, 그 아래에 조용한 tertiary 하나.
+     ⚠️ 종전에는 `150px 1fr` 이라 [다음]이 세 배 넓었다. 강조는 **색과 면**이 하는 일이지
+        크기가 하는 일이 아니다 — 두 단추가 같은 조형이어야 「짝」으로 읽힌다.
+     ⛔ 어느 한쪽만 폭·높이·반경·글자를 달리하지 마라. 다른 것은 색뿐이다. */
+  .wiz-nav{flex:0 0 auto;display:grid;grid-template-columns:1fr 1fr;gap:12px;
+    padding:20px 0 0;margin-top:auto;max-width:var(--question-max);}
+  /* Button Role ① CTA — 이 화면에서 **가장 큰 단추**. 높이는 `--btn-h`(56/72px). */
+  .wiz-nav .btn{padding:0 16px;height:var(--btn-h);font-size:17px;
+    font-weight:var(--fw-heavy);border-radius:var(--m-r-btn);
+    justify-content:center;line-height:1;}
+  html.big .wiz-nav .btn{font-size:21px;}   /* ⛔ 크게 보기는 종전 값 그대로다 */
+
+  /* 이용 안내 — 레일 맨 아래. 늘 읽는 글이 아니라 조용히 둔다. */
+  .screen-notice{margin-top:14px;background:none;border:0;border-top:1px solid var(--line-warm);
+    /* ⚠️ 이 목록은 허브 Main 의 「이용 안내」와 **같은 내용**이다 — 같은 잉크를 쓴다
+       (2026.08.28 · 종전 #6a706d 하드코딩). */
+    border-radius:0;padding:14px 0 0;font-size:12px;color:var(--m-ink-sub);}
+  .screen-notice h3{margin:0 0 7px;font-size:13px;color:var(--blue-dark);}
+  .screen-notice ul{margin:0;padding-left:16px;}
+  .screen-notice li{margin:3px 0;line-height:1.45;}
+
+  /* ══ 크게 보기 — 글자 (2026.08.28 단계 7) ═══════════════════════════════
+     **프레임은 그대로, 읽어야 하는 글자만 크게.**
+     ⛔ 열 비율(26/56/18) · BAR 62px · 종이 794×1122 는 건드리지 않는다.
+     ⛔ 종이 안의 신청서 글씨는 **확대 대상이 아니다** — 크게 보기는 작성 UI 의
+        가독성 기능이지 법정서식을 키우는 기능이 아니다.
+
+     ⚠️ 이 파일에는 글자 크기가 **하드코딩된 자리가 많다**(2026.07 「어르신 가독성」
+        블록의 유산). 공통 토큰(`--fs-*`)을 쓰는 것만 크게 보기에서 커지고 나머지는
+        그대로였다 — 단계 제목·힌트·Handoff 문구·로마자 판·요약 항목명·안내 상자가
+        전부 0% 였다(실측). 여기서 **역할별로** 올린다.
+
+     ⚠️ 확대율은 역할이 정한다 — ASK(읽고 답하는 곳) +15~18% ·
+        RAIL(곁눈으로 보는 곳) +5~12% · metadata 는 그대로.
+        RAIL 을 일괄로 키우면 **미성년 + 기존 여권 = 준비물 6개**에서 기둥이 넘친다.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ── 1순위 ASK — 읽고 답하는 글자 (+15~18%) ── */
+  html.big .wiz-title{font-size:21px;}
+  html.big .wiz-count{font-size:18px;}
+  html.big .q-help{font-size:18.5px;}
+  html.big .hint{font-size:18px;}
+  html.big .why-box{font-size:20px;}      /* 공통 19 → 20 (+17.6%) — 1순위 읽는 글 */
+  html.big .card-desc{font-size:17.5px;}  /* 공통 17 → 17.5 (+16.7%) */
+  html.big .opt-label{font-size:22px;}
+  html.big .opt-desc{font-size:18.5px;}
+  html.big .opt-rec{font-size:15px;}
+  html.big .fb{font-size:15px;}
+  html.big .age-status{font-size:17.5px;}
+  /* Handoff — 막힌 사람이 찾는 글자다. ASK 와 같은 비율로 키운다 */
+  html.big .ask-tx b{font-size:18.5px;}
+  html.big .ask-tx span{font-size:16px;}
+  html.big .ask-btn{font-size:17.5px;}
+  html.big .card-sub{font-size:18px;}
+  html.big .ask-btn .btn-ic,html.big .card-sub .btn-ic{width:21px;height:21px;}
+  /* 안내·경고 상자 */
+  html.big .info-box{font-size:18.5px;}
+  html.big .warn-strong,html.big .note-box{font-size:18px;}
+  html.big .unsure-note,html.big .step-warn,html.big .staff-list{font-size:17px;}
+  html.big .print-tip{font-size:18px;}
+  html.big .sug-title{font-size:17.5px;}
+  html.big .sug-row{font-size:18.5px;}
+  html.big .sug-note{font-size:17px;}
+  html.big .sug-btn{font-size:17px;}
+  html.big .dunno-btn{font-size:18px;}
+  /* 로마자 화면 — 참고 판과 입력 판 (1열이라 폭에 여유가 있다) */
+  html.big .roman-h{font-size:18.5px;}
+  html.big .roman-p{font-size:16px;}
+  html.big .roman-state{font-size:15.5px;}
+  /* 최종 확인 */
+  html.big .sum-row .k{font-size:17.5px;}
+  html.big .sum-edit{font-size:17px;}
+  html.big details.terms summary,html.big details.terms .term{font-size:18px;}
+
+  /* ── 3순위 RAIL — **차등**으로 올린다 ──
+     ⛔ 일괄 +17~21% 금지(사용자 지시). 곁눈으로 보는 자리이고, 여기가 넘치면
+        진행·준비물이 화면 밖으로 밀린다. 공통 토큰이 주는 값보다 **낮춰** 잡는다. */
+  html.big .rail-num{font-size:37px;}          /* 공통 38 → 37 (+12%) */
+  html.big .rail-now{font-size:15.5px;}        /* 14 → 15.5 (+11%) */
+  html.big .rail-step{font-size:15px;}         /* 공통 15.5 → 15 (+11%) */
+  html.big .rail-head{font-size:16.5px;}       /* 공통 17 → 16.5 (+10%) */
+  html.big .rail-item b{font-size:15px;}       /* 준비물명 13.5 → 15 (+11%) */
+  html.big .rail-item small{font-size:12.3px;} /* 준비물 조건 11.5 → 12.3 (+7%) */
+  html.big .rail-safe p{font-size:13.3px;}     /* 공통 14 → 13.3 (+6%) */
+  html.big .screen-notice{font-size:13.2px;}   /* 12.5 → 13.2 (+6%) */
+  html.big .screen-notice h3{font-size:14px;}
+  /* metadata 는 그대로 — 읽는 글이 아니라 있는 것을 확인하는 자리다 */
+  html.big .rail-cap{font-size:12px;}
+
+  /* ── 2순위 버튼 — 글자만. ⛔ 높이·터치 표적(`--btn-h`·`--touch-*`)은 손대지 않는다 ──
+     ⚠️ 상단 바 버튼은 **키우지 않는다.** BAR 62px 안에서 이미 `.actions` 가 62px 이라
+        글자를 키우면 바가 밀린다(BAR 62 불변). 시민이 누르는 것은 본문 [다음]이다. */
+
+  /* ── 크게 보기의 RAIL 여백 (2026.08.28 단계 6) ──
+     ⚠️ 글자가 커지면 같은 내용이 25px 더 든다(미성년 경로 실측). **글자는 그대로 두고**
+        묶음 사이의 숨만 줄여 기둥 안에 담는다 — 스크롤이 생기면 진행·준비물이 밀린다.
+     ⛔ 크게 보기의 글자 크기는 단계 7 소관이다. 여기서 건드리지 마라. */
+  html.big .rail{padding:16px 16px 14px;}
+  html.big .rail-sec{margin-bottom:10px;}
+  html.big .rail-items{gap:5px;}   /* ⚠️ 단계 7 에서 글자가 커진 만큼 여백을 3px 더 조였다 */
+  html.big .rail-steps{gap:6px;}
+  html.big .rail-rule{margin:0 0 10px;}
+  /* ⚠️ 크게 보기에서 준비물 여섯 개(미성년 + 기존 여권)가 19px 넘쳤다 —
+     **글자 크기는 그대로 두고 줄 간격만** 좁혀 담는다(단계 7 소관과 겹치지 않게). */
+  html.big .rail-item b{line-height:1.25;}
+  html.big .rail-item small{line-height:1.3;}
+  html.big .rail-safe p{margin:4px 0;}
+  html.big .screen-notice{margin-top:12px;}
+
+  /* 모바일 전용: 질문면 안에서 완성된 서식을 확인하는 버튼 (넓은 화면에선 숨김) */
+  .m-preview{display:none;flex:0 0 auto;width:100%;margin:12px 0 0;max-width:var(--question-max);
+    font-family:inherit;font-size:16px;font-weight:700;
+    border:1.5px solid var(--blue);background:#fff;color:var(--blue);
+    border-radius:var(--r-md);padding:13px;cursor:pointer;}
+  .m-preview:hover{background:var(--blue-light);}
+
+  /* ===== 반응형 =====
+     넓은 가로 화면(민원실 키오스크) = 질문 + 서식 + 안내 기둥 3영역.
+     세로 화면(1080×1920) = 위아래로 눕히고 기둥은 가로 띠로 접는다.
+     좁은 화면(어르신 스마트폰 등) = 질문만, 서식은 [미리보기]로 확인.
+
+     ⚠️ 여기 규칙은 전부 `@media screen` 으로 감싼다. 높이·스크롤·바탕색이 인쇄로
+        새면 서식이 화면 높이에 잘리거나 종이에 회색이 깔린다. */
+
+  /* 상단 바가 두 줄로 접히면 그만큼 본문이 좁아진다. 폭이 넉넉하지 않을 때는
+     담당자용 「테스트용」 꼬리표부터 뗀다 — 버튼 이름만으로도 무엇인지 알 수 있다.
+     (세로 키오스크 1080 폭에서 여섯 개가 한 줄에 들어가느냐가 여기서 갈린다.) */
+  @media screen and (max-width:1400px){
+    /* 「민원 서식 작성 도우미」는 가운데 서식 이름 아래에도 적혀 있다. 좁을 때는 한 벌만 남긴다. */
+    .brand .meta{display:none;}
+  }
+
+  /* 좁은 화면(스마트폰·웹 배포본) — 서식을 숨기고 질문만 남긴다 */
+  @media screen and (max-width:860px){
+    body{background:var(--work);}            /* 서식이 없으니 서식 바닥색을 깔 이유도 없다 */
+    .layout{grid-template-columns:minmax(0,1fr);height:auto;}
+    .form-col{display:none;}                 /* 모바일: 서식 숨김 */
+    .rail-col{display:none;}                 /* 진행은 질문면 머리의 N/M 표기로 대신한다 */
+    .task-col{height:auto;}
+    .task{height:auto;padding:22px 18px 18px;}
+    .topline{margin-bottom:20px;}
+    .coach-q{font-size:26px;}
+    .wiz-body{overflow:visible;}
+    .m-preview{display:block;}                /* 모바일 전용 미리보기 버튼 노출 */
+    .wiz-nav{grid-template-columns:1fr 1fr;}
+    /* ⚠️ 카드 격자(`.cards`·`.ready-grid`·`.card`)는 여기서 못 고친다 — 그 규칙이
+       이 파일 **아래쪽**에 있어 나중에 덮인다. 스타일시트 맨 끝의 「좁은 화면 되돌림」
+       블록에서 고친다. */
+    /* 상단바 간결화 — 격자로 두면 버튼 묶음이 줄지 않아 화면 밖으로 밀려난다.
+       가로로 흐르게 두고 자리가 모자라면 접히게 한다. */
+    .topbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;
+      padding:10px 14px;min-height:0;}
+    .brand{flex:1 1 auto;}
+    .actions{flex:0 1 auto;padding:0;}
+    .brand b{font-size:16px;}
+    #btnSampleAdult,#btnSampleMinor{display:none;}   /* 테스트용 작성예시는 모바일에서 숨김 */
+  }
+
+  /* 세로 화면(1080×1920 키오스크) — 두 단을 그대로 세우면 서식이 오른쪽으로 잘린다.
+     (2026.08.19 디자인 검토 자료의 「아는 문제」가 이것이다.)
+     질문을 위, 서식을 아래로 눕히고 안내 기둥은 머리맡 가로 띠로 접는다.
+     준비물은 「작성 전 준비물」 화면에서 이미 한 번 안내하므로 띠에서는 진행만 남긴다. */
+  @media screen and (min-width:861px) and (max-aspect-ratio:9/10){
+    .layout{grid-template-columns:minmax(0,1fr);
+      grid-template-rows:auto minmax(0,1fr) minmax(0,1.15fr);}
+    /* 띠를 **맨 위**로 올린다. DOM 순서는 질문 → 서식 → 기둥이라 그대로 두면
+       진행 표시가 화면 맨 아래로 내려가 눈에 띄지 않는다. */
+    .rail-col{order:1;border-left:0;border-bottom:1px solid var(--line-warm);height:auto;}
+    .task-col{order:2;}
+    .form-col{order:3;}
+    .rail{flex-direction:row;align-items:center;gap:24px;padding:11px 24px;overflow-x:auto;}
+    .rail-prog{display:flex;align-items:center;gap:16px;flex:0 0 auto;}
+    .rail-cap{display:none;}
+    .rail-num{margin:0;font-size:26px;white-space:nowrap;}
+    .rail-now{margin:0;white-space:nowrap;}
+    .rail-steps{display:flex;gap:15px;margin:0;}
+    .rail-step{white-space:nowrap;}          /* 세로 화면에서 「신청인 정 보」로 접히는 것을 막는다 */
+    .rail-info,.rail .screen-notice{display:none;}
+    .task{padding:24px 34px 18px;}
+  }
+
+  /* 넓은 가로 화면 — 질문·서식·기둥 3영역.
+     기본은 질문이 왼쪽, `body.form-left` 면 서식이 왼쪽으로 간다.
+     ⚠️ form-left 는 키오스크 환경설정(Ctrl+Shift+S)이 로드 시 body 에 얹는다 — 지우지 마라.
+     화면의 「↔ 좌우 바꾸기」 버튼은 2026.08.15 에 없앴다(시민이 눌러 뒤집으면 뒷사람이 혼란).
+     안내 기둥은 어느 쪽으로 뒤집어도 **가장자리에 그대로 둔다** — 늘 같은 자리에 있어야
+     시민이 진행 표시를 찾아 헤매지 않는다. */
+  @media screen and (min-width:861px) and (min-aspect-ratio:9/10){
+    .task-col{order:1;} .form-col{order:2;} .rail-col{order:3;}
+    body.form-left .task-col{order:2;}
+    body.form-left .form-col{order:1;}
+    /* 서식을 왼쪽에 두는 기관 설정. **비율은 그대로** 뒤집기만 한다(56/26/18).
+       ⚠️ 종전 고정폭(1.08fr 1fr 252px)은 26/56/18 과 어긋나 서식이 좁은 칸에 들어갔다. */
+    body.form-left .layout{grid-template-columns:var(--m-cols-left);}
+  }
+  /* 좁은 가로(노트북 등) — 기둥과 여백을 줄여 질문 폭을 지킨다 */
+  @media screen and (min-width:861px) and (max-width:1379px) and (min-aspect-ratio:9/10){
+    /* ⚠️ 좁은 가로에서도 **비율은 같다**(`fr` 이라 저절로 줄어든다). 여백·글자만 줄인다. */
+    .layout{grid-template-columns:var(--m-cols);}
+    body.form-left .layout{grid-template-columns:var(--m-cols-left);}
+    .task{padding:24px 28px 18px;}
+    .coach-q{font-size:29px;}
+    .rail{padding:22px 16px 16px;}
+  }
+
+  /* ===== 인쇄: 서식 이미지+값만, A4 꽉 채움 ===== */
+  @media print{
+    @page{size:A4 portrait;margin:0;}
+    html,body{background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+    .topbar,.panel-col,.screen-notice,.modal-top,.ovhl,.print-tip{display:none !important;}
+    .layout{display:block;padding:0;margin:0;max-width:none;}
+    .form-col{display:block !important;width:100%;position:static;max-height:none;overflow:visible;}   /* 모바일에서 숨겼어도 인쇄 시 서식 표시(화면용 고정·스크롤 해제) */
+    /* ⛔ 미리보기 모달은 **인쇄에서 제외**하고 언제나 좌측 서식을 찍는다 (나머지 7종과 같다).
+       예전에는 모달이 열려 있으면 모달 안의 사본을 찍고 좌측을 숨겼는데, 그러면 **백지가 나왔다**
+       (2026.08.13 현장 신고 — 「미리보기 → 인쇄」만 아무것도 안 나옴).
+       모달은 화면용 flex 레이아웃이다: 인쇄에서 `.modal-scroll` 이 `display:flex`·`flex-basis:0%`
+       인 채로 남는데, 그 안의 `.paper{width:100%}` 는 기댈 폭이 없어 **0 으로 붕괴**한다.
+       실측: modal-scroll h=0 · paper w=0 h=0 → 값 66개가 다 0px 안에 갇힌다.
+       미성년(2쪽) 건만 우연히 멀쩡했다 — 동의서의 글자가 내재 폭을 만들어 줘서 붕괴를 면했다.
+       모달의 값은 좌측 서식과 같은 `renderForm()` 이 채우므로, 좌측을 찍으면 내용은 동일하다. */
+    .modal-back{display:none !important;}
+    .paper{box-shadow:none !important;width:100% !important;margin:0;}
+    .ov{color:#000 !important;}
+    /* 첨부서류(동의서/위임장)는 새 쪽(2쪽)에서 시작 */
+    body.needs-consent .consent-page,body.needs-proxy .proxy-page{page-break-before:always;break-before:page;}
+    /* 창구 안내표를 인쇄할 때는 **안내표만** 찍는다. 신청서·동의서가 딸려 나가면
+       개인정보가 그대로 인쇄되고(§19 위반), 서식 용지도 낭비된다. */
+    body.print-slip .paper{display:none !important;}
+    body.print-slip .slip-page{display:block !important;page-break-before:auto;}
+  }
+
+  /* ===== 어르신 가독성 강화(2026-07-09): 큰 글씨·고대비·또렷한 포커스 ===== */
+  /* ⚠️ 2026.08.28 — 종전 `#495059` 하드코딩을 잉크 계층으로 옮겼다. 값은 거의 같고
+     (#4b5563) 이제 Main·허브와 **같은 눈금**을 쓴다. */
+  :root{ --muted:var(--m-ink-read); }
+  /* ⚠️ 2026.08.28 — 이 블록이 **위의 토큰을 되올리던 자리**다. 값만 Main 밀도로 내렸다.
+     ⛔ 선택자를 지우지 마라 — 지우면 앞쪽 규칙(더 큰 값)이 살아나 원위치된다.
+     ⛔ `html.big` 이 같은 선택자를 더 높은 우선순위로 덮으므로 **크게 보기는 그대로**다. */
+  .wiz-count{font-size:13.5px;}
+  .why-box{font-size:var(--fs-help);}
+  .q-help{font-size:14px;}
+  .opt-label{font-size:17px;}
+  .opt-desc{font-size:14px;}
+  .opt-rec{font-size:12px;}
+  .hint{font-size:14px;}
+  .info-box{font-size:14.5px;}
+  .warn-strong{font-size:14.5px;}
+  .note-box{font-size:14.5px;}
+  .unsure-note{font-size:13.5px;}
+  .step-warn{font-size:13.5px;}
+  .sum-row{font-size:var(--fs-sum);}
+  .staff-list{font-size:14px;}
+  details.terms summary{font-size:14px;}
+  details.terms .term{font-size:14px;}
+  .sug-title{font-size:14px;}
+  .sug-row{font-size:15px;}
+  .sug-note{font-size:13.5px;}
+  .sug-btn{font-size:13.5px;padding:8px 12px;}
+  .screen-notice{font-size:12.5px;}      /* 안내 기둥 아래에 조용히 놓인다 */
+  .screen-notice h3{font-size:13px;}
+  .fb{font-size:13px;}
+
+  /* 또렷한 키보드 포커스 링(어르신·키보드 사용자) */
+  .btn:focus-visible,.opt:focus-visible,.text-input:focus-visible,.dunno-btn:focus-visible,
+  .m-preview:focus-visible,.sug-btn:focus-visible,.card:focus-visible,
+  .card-sub:focus-visible,.rail-step:focus-visible,.sum-edit:focus-visible{
+    /* ⚠️ 기관 대표색을 따른다(종전 `#2b7fff` 하드코딩 — 초록 기관에서도 파란 링이 남았다) */
+    outline:3px solid var(--blue);outline-offset:2px;
+  }
+  /* ⚠️ 포커스 링을 **기관 대표색에서 뽑는다**(종전 `rgba(43,127,255,.22)` 하드코딩).
+     대표색을 초록으로 바꾼 기관에서 파란 링만 남던 문제를 없앤다. */
+  .text-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px var(--m-a25);}
+
+  /* 주민등록번호 입력칸 바로 아래의 되짚기.
+     확인은 조용한 한 줄, **어긋남은 눈에 띄는 빨간 판**으로 낸다 — 종전에는 이 자리에
+     노란 안내(5년 자동적용·동의서)가 있고 정작 고쳐야 할 경고는 화면 맨 아래에 있었다. */
+  .age-status{font-size:14px;margin:-2px 0 16px;line-height:1.55;}
+  .age-status:empty{margin:0;}
+  .age-status.ok{color:#1b7a34;font-weight:700;}
+  .age-status.bad{background:#fdecec;border:1px solid #f0a5a5;border-left:5px solid #c0392b;
+    color:#a11c1c;font-weight:700;border-radius:var(--r-md);padding:12px 14px;font-size:14.5px;}
+
+  /* ===== 터치 카드 (2026.08.18 개편 · 2026.08.21 두 칸 배치로) =====
+     손가락으로 한 번에 고르게 한다. 세로 목록이던 것을 **두 칸 격자**로 바꿔
+     한 화면에 선택지가 다 들어오게 했다 — 스크롤해서 찾는 일이 없어야 한다.
+     물리 키보드는 함께 두므로 글자 입력칸은 종전 것을 그대로 쓴다. */
+  .cards{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin:2px 0 18px;max-width:var(--cards-max);}
+  /* 홀수 번째 마지막 카드는 한 줄을 다 쓴다 — 반쪽만 남아 어색해지는 것을 막고,
+     대개 그 자리에 오는 「잘 모르겠습니다」 같은 탈출구가 눈에 잘 띈다. */
+  .cards>.card:last-child:nth-child(odd){grid-column:1 / -1;}
+  /* 손가락으로 고르는 큰 카드. ⚠️ 표적 크기(`--touch-card` 132/150px)는 그대로다.
+     ⛔ 그림자를 두르지 않는다 — 눌리는 것은 면과 테두리로 말한다(Main 과 같은 문법). */
+  .card{display:flex;flex-direction:column;align-items:flex-start;gap:11px;width:100%;
+    min-height:var(--touch-card);padding:20px 22px;
+    background:var(--m-control);border:1.5px solid var(--m-border-mid);
+    border-radius:var(--m-r-row);text-align:left;cursor:pointer;font-family:inherit;
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out),
+               box-shadow var(--dur-quick) var(--ease-out);}
+  .card:hover,.card:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  /* 고른 카드 — 왼쪽 띠 한 줄이 「이것을 골랐다」를 말한다(선택 상태는 hover 보다 진하다) */
+  .card.picked{border-color:var(--blue);background:var(--m-a10);
+    box-shadow:inset 3px 0 0 var(--blue);}
+  /* ⚠️ 이모지 대비책으로 `font-size` 를 남겨 둔다. 표에 없는 이모지가 오면 그것이 쓰인다. */
+  .card-ic{font-size:30px;line-height:1;flex:0 0 auto;color:var(--m-ink-muted);}
+  /* 선 아이콘 — 24 격자를 28px 로 그린다(카드 크기는 그대로다).
+     ⚠️ 색은 **잉크**를 따른다. 고른 카드에서만 대표색이 된다. */
+  .card-ic .ic-svg{display:block;width:28px;height:28px;}
+  .card:hover .card-ic,.card:focus-visible .card-ic{color:var(--blue);}
+  .card.picked .card-ic{color:var(--blue);}
+  /* 글줄 안에 섞이는 작은 아이콘(안내 상자·묶음 머리) */
+  .ic-sm{display:inline-block;vertical-align:-3px;width:18px;height:18px;flex:0 0 auto;}
+  .card-tx{display:flex;flex-direction:column;gap:7px;min-width:0;}
+  .card-label{font-size:var(--fs-card);font-weight:var(--fw-heavy);color:var(--ink);line-height:1.28;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .card-rec{font-size:12px;font-weight:700;color:#fff;background:var(--blue);
+    border-radius:var(--r-pill);padding:2px 9px;}
+  .card-desc{font-size:var(--fs-card-sub);color:var(--muted);line-height:1.5;}
+  /* 준비물 판 — 카드와 같은 격자에 놓되 **누르는 것이 아님**이 드러나게 결을 달리한다
+     (테두리 없음 · 흰 바탕 아님 · 커서 그대로). */
+  .ready-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:2px 0 20px;max-width:700px;}
+  .ready-tile{display:flex;flex-direction:column;gap:5px;padding:15px 18px;
+    background:#fff;border:1px solid var(--line-warm);border-radius:var(--r-md);}
+  /* 꼭 필요한 것은 왼쪽에 대표색 띠를 세워 목록에서 먼저 눈에 걸리게 한다 */
+  .ready-tile.req{border-left:4px solid var(--blue);padding-left:15px;}
+  .ready-tile b{font-size:15.5px;font-weight:800;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+  .ready-tile>span{font-size:13.5px;color:var(--muted);line-height:1.45;}
+  .ready-req{font-size:11.5px;font-weight:800;color:#fff;background:var(--blue);
+    border-radius:var(--r-pill);padding:2px 9px;}
+  .ready-opt{font-size:11.5px;font-weight:700;color:var(--muted);background:var(--work);
+    border:1px solid var(--line-warm);border-radius:var(--r-pill);padding:1px 8px;}
+  /* 로마자 화면 — 왼쪽 참고 · 오른쪽 입력. 비교하면서 적는 자리다. */
+  /* ⚠️ 2026.08.28 단계 4 — **두 칸을 한 칸으로.** 질문면이 495px 이 되면서 두 칸으로는
+     한 칸이 240px 밖에 안 돼 「영문 이름 (Given name)」 같은 라벨이 접히고, 참고 예시와
+     입력칸을 **동시에** 읽기 어려웠다. 한 칸이면 위에서 아래로 읽는 순서가 그대로다 —
+     ① 이렇게 적는 것이 보통입니다(참고) → ② 그래서 이렇게 적겠습니다(입력).
+     ⚠️ 세로로 길어지는 것은 받아들인 결과다. 목적은 스크롤 수치가 아니라 **읽히는 것**이다. */
+  .roman-cols{display:grid;grid-template-columns:1fr;gap:12px;margin:2px 0 16px;
+    max-width:var(--cards-max);align-items:start;}
+  .roman-side{background:var(--m-control);border:1px solid var(--m-border);
+    border-radius:var(--m-r-card);padding:16px 18px;}
+  .roman-side.warn{background:#fff8f6;border-color:#f0c3b8;border-left:4px solid #c0392b;padding-left:17px;}
+  .roman-h{font-size:15px;font-weight:800;margin-bottom:8px;}
+  .roman-side.warn .roman-h{color:#a11c1c;}
+  .roman-p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 12px;}
+  .roman-side .field{margin-bottom:6px;max-width:none;}
+  /* ⛔ 로마자 화면만 입력칸·라벨을 다르게 두지 않는다(2026.08.28). 두 칸이던 시절
+     폭이 좁아 깎아 둔 값인데, 1열이 된 뒤로는 이유가 없어졌다. 값이 갈리면
+     **같은 「이름 적는 칸」이 화면마다 달라 보인다** — 한 입력 체계로 되돌린다.
+     (크게 보기 예외 `html.big .roman-side …` 도 함께 걷었다) */
+  /* 적은 글자의 상태. 「사용 가능」이라 하지 않는다 — 접수 가능 여부는 창구가 판단한다. */
+  .roman-state{font-size:13px;font-weight:700;line-height:1.5;margin:7px 0 14px;min-height:1px;}
+  .roman-state:empty{margin:0 0 14px;}
+  .roman-state.ok{color:#1b7a34;}
+  .roman-state.bad{color:#c0392b;}
+  /* 판 안에 또 판을 두르면 답답하다 — 예시 상자의 테두리·바탕을 벗기고 줄만 남긴다 */
+  .roman-side .sug-box{background:none;border:0;border-radius:0;padding:0;margin:0;max-width:none;}
+  /* 판 제목이 이미 「참고용 권장 로마자 예시」다 — 상자 안의 같은 말은 지운다 */
+  .roman-side .sug-title{display:none;}
+  .roman-side .sug-row{display:flex;align-items:center;gap:10px;margin:0 0 10px;
+    background:var(--work);border:1px solid var(--line-warm);border-radius:var(--r-md);padding:11px 13px;}
+  .roman-side .sug-row b{margin-right:auto;font-size:18px;letter-spacing:1px;}
+  .roman-side .sug-note{margin-top:2px;}
+  .roman-side .note-box,.roman-side .warn-strong{margin-bottom:0;}
+  /* 도움 판 — 헷갈릴 때 직원을 부르는 길. 점선 한 줄로 숨기지 않는다.
+     ⚠️ 2026.08.28 — **가로 한 줄에서 두 줄 격자로.** 질문 기둥이 495px 인데 아이콘·글·
+        단추를 한 줄에 늘어놓으니 글이 들어갈 폭이 220px 밖에 안 남아 제목이 세 줄로
+        접혔다(어절을 지키면서는 더 접힌다). 이제 위는 [아이콘][제목·설명],
+        아래는 **폭을 다 쓰는 단추**다 — 줄 모양(`.card-sub`)과 같은 결이 된다.
+     ⛔ 다시 한 줄로 되돌리지 마라. 기관명·문구가 길어지면 그때 또 접힌다. */
+  .ask-box{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px 12px;
+    align-items:start;max-width:820px;margin-top:6px;
+    background:#fff8ec;border:1px solid #f0d9ae;border-radius:var(--r-lg);padding:15px 18px;}
+  .ask-ic{font-size:26px;line-height:1;flex:0 0 auto;color:var(--blue);}
+  .ask-ic .ic-svg{display:block;width:24px;height:24px;}
+  .ask-tx{min-width:0;}
+  /* ══ Human Handoff Component Family (2026.08.28) ═══════════════════════
+     같은 뜻(「막혔을 때 직원을 부른다」)에 **판**과 **줄** 두 모양이 있다. 내용량이
+     다를 뿐이므로 **조형은 하나**로 둔다 — 글자 눈금·반경 12·아이콘 18·눌림 반응.
+     ⚠️ 톤(판=따뜻한 노랑 · 줄=중립)은 **이번 범위 밖**이다. 색은 Color & Visual
+        Polish 에서 Main 과 함께 본다(`docs/PRODUCT_SKIN_v1.md`).
+     ⛔ 무엇을 낼지·눌렀을 때 어디로 가는지(`toCounter`)는 건드리지 않았다. */
+  .ask-tx b{display:block;font-size:15.5px;font-weight:800;color:#6b4200;}
+  .ask-tx span{display:block;font-size:13.5px;color:#7a5f36;margin-top:3px;line-height:1.45;}
+  /* Handoff 안의 행동 — Button Role ② 본문 단추(반경 6). */
+  .ask-btn{grid-column:1 / -1;width:100%;font-family:inherit;font-size:14.5px;font-weight:800;
+    cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    color:var(--blue-dark);background:#fff;border:1.5px solid var(--line-strong);
+    border-radius:var(--m-r-btn);padding:11px 15px;
+    transition:border-color var(--dur-quick) var(--ease-out),
+               color var(--dur-quick) var(--ease-out);}
+  .ask-btn:hover{border-color:var(--blue);color:var(--blue);}
+  .ask-btn .btn-ic{width:18px;height:18px;}
+  /* 줄 모양 — 판과 **같은 family**. ⚠️ `display:block` 이라 아이콘이 글줄에 어긋나 있었다. */
+  .card-sub{display:flex;align-items:center;justify-content:center;gap:9px;
+    width:100%;max-width:700px;margin-top:4px;padding:14px 16px;
+    font-family:inherit;font-size:15px;font-weight:700;color:#5f6667;background:none;
+    border:1px dashed var(--line-strong);border-radius:var(--r-lg);cursor:pointer;
+    transition:border-color var(--dur-quick) var(--ease-out),
+               color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out);}
+  .card-sub:hover{border-color:var(--blue);color:var(--blue-dark);background:#fff;}
+  .card-sub .btn-ic{width:18px;height:18px;}
+  .bullets{margin:0 0 18px;padding-left:20px;font-size:15.5px;line-height:1.8;color:#3a4148;
+    max-width:640px;}
+  .bullets li{margin:8px 0;}
+  /* 진행 막대 — 경로마다 화면 수가 달라 「N/10」 고정 표기를 버렸다.
+     이제 안내 기둥 안에 놓이므로 바탕이 흰색이 아니라 기둥색 위의 회색이다. */
+  .pbar{height:6px;background:#d9d7d1;border-radius:var(--r-pill);overflow:hidden;margin:14px 0 22px;}
+  .pbar-fill{height:100%;background:var(--blue);border-radius:var(--r-pill);transition:width var(--dur-base) var(--ease-move);}
+  /* 빈칸의 뜻 — 일부러 비운 칸과 빠뜨린 칸을 눈으로 구별한다 */
+  .sum-row .fs-manual{color:#8a4b00;font-weight:700;}
+  .sum-row .fs-existing{color:var(--blue);font-weight:700;}
+  .sum-row .fs-na,.sum-row .fs-missing{color:#8a929c;}
+  /* 「창구에서 확인」은 **오류가 아니라 정상 완료의 한 종류**다(철학 §8). 종전에는 붉은색이라
+     요약에서 실패처럼 읽혔다 — Notice(짙은 갈색)로 내린다(2026.08.24 결정 §3).
+     ⚠️ `fs-manual` 과 색 계열이 가까워졌지만, 두 상태를 가르는 것은 색이 아니라 꼬리표
+        글자다(「✍ 출력 후 직접 작성」 vs 「창구에서 확인」). */
+  .sum-row .fs-counter{color:#7a5600;font-weight:700;}
+  .manual-warn{margin:14px 0;background:#fff7e6;border:1px solid #ffdf9e;border-left:5px solid #e8a33d;
+    border-radius:var(--r-lg);padding:14px 16px;font-size:15px;color:#6b4200;line-height:1.6;}
+  .manual-warn .mw-h{font-weight:800;font-size:16.5px;margin-bottom:6px;}
+  .manual-warn ul{margin:6px 0;padding-left:20px;}
+  /* 창구 전환 화면 — 사진으로 찍는 화면이라 코드를 크게, 개인정보는 한 글자도 두지 않는다 */
+  .counter-wrap{text-align:center;padding:6px 2px 2px;max-width:620px;}
+  .counter-h{font-size:21px;font-weight:800;color:#a3272c;margin-bottom:14px;}
+  .counter-code{font-size:64px;font-weight:900;letter-spacing:2px;color:#16213a;
+    background:#f4f6f9;border:3px solid #16213a;border-radius:var(--r-xl);padding:14px 8px;margin-bottom:16px;}
+  .counter-reason{font-size:18px;font-weight:700;line-height:1.6;color:#2b3444;margin-bottom:18px;}
+  .counter-how{font-size:16px;line-height:1.7;color:#3a4452;margin-bottom:14px;}
+  .counter-priv{font-size:13.5px;color:#1b7a34;background:#f1f9f3;border-radius:var(--r-md);
+    padding:10px 12px;margin-bottom:16px;}
+  .counter-btns{display:flex;gap:10px;}
+  .counter-btns .btn{flex:1;padding:16px;font-size:16px;}
+  .counter-tip{margin-top:12px;font-size:13px;color:var(--muted);line-height:1.6;}
+  /* 안내표(인쇄면) — 큰 글씨 한 장. 개인정보 없음 */
+  .slip-page{display:none;}
+  .slip{padding:28mm 22mm;text-align:center;font-family:'Malgun Gothic','맑은 고딕',sans-serif;}
+  .slip-h{font-size:20pt;font-weight:800;}
+  .slip-sub{font-size:15pt;margin-top:2mm;padding-bottom:6mm;border-bottom:2px solid #000;}
+  .slip-code-k{font-size:12pt;margin-top:12mm;}
+  .slip-code{font-size:54pt;font-weight:900;letter-spacing:3pt;margin:4mm 0 10mm;}
+  .slip-reason-k{font-size:12pt;}
+  .slip-reason{font-size:19pt;font-weight:700;line-height:1.5;margin-top:4mm;}
+  .slip-foot{font-size:12pt;margin-top:16mm;line-height:1.8;}
+  .slip-priv{font-size:10pt;color:#555;margin-top:8mm;}
+
+  /* ===== 법정대리인 동의서(2쪽) — 미성년자 대리 신청 시에만 표시/인쇄 ===== */
+  .consent-page{display:none;}
+  body.needs-consent .consent-page{display:block;}
+  .proxy-page{display:none;}
+  body.needs-proxy .proxy-page{display:block;}
+  .modal-scroll .consent-page,.modal-scroll .proxy-page{margin-top:14px;}
+  /* 본 창(좌측 서식 열)에서 신청서↔첨부서류(동의서/위임장) 사이 페이지 구분 가로선 */
+  .form-col .consent-page,.form-col .proxy-page{position:relative;margin-top:36px;}
+  .form-col .consent-page::before,.form-col .proxy-page::before{
+    content:"";position:absolute;left:0;right:0;top:-19px;border-top:2px dashed #a9b2bd;}
+  /* 위임장 전용: 섹션 헤더 + 행 라벨 셀 */
+  .psec{font-weight:700;font-size:11pt;margin:7mm 0 2mm;}
+  .psub{font-size:8.5pt;font-weight:400;color:#555;}
+  .plab{flex:0 0 24mm;display:flex;align-items:center;justify-content:center;text-align:center;
+    font-weight:600;font-size:9.5pt;background:#f7f8fa;border-right:1px solid #222;padding:2mm;}
+  .cf + .plab{border-left:1px solid #222;}
+  .cdoc{box-sizing:border-box;padding:18mm 16mm;font-family:"Malgun Gothic","맑은 고딕",sans-serif;
+    color:#111;font-size:10.5pt;line-height:1.5;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .cdoc-ref{font-size:8.5pt;color:#333;margin-bottom:9mm;}
+  .cdoc-title{text-align:center;font-size:19pt;font-weight:800;letter-spacing:.35em;margin:0 0 8mm;}
+  .cbox{display:flex;border:1px solid #222;}
+  .cbox + .cbox{border-top:none;}
+  .clabel{flex:0 0 26mm;display:flex;flex-direction:column;justify-content:center;align-items:center;
+    text-align:center;padding:3mm;font-weight:700;font-size:10pt;background:#f7f8fa;border-right:1px solid #222;}
+  .csub{font-size:7.5pt;font-weight:400;color:#555;margin-top:1.5mm;}
+  .cfields{flex:1;display:flex;flex-direction:column;}
+  .cline{display:flex;}
+  .cline + .cline{border-top:1px solid #222;}
+  .cf{flex:1;display:flex;align-items:center;gap:3mm;padding:2.5mm 3mm;min-height:8mm;}
+  .cf + .cf{border-left:1px solid #222;}
+  .cf.full{flex-basis:100%;}
+  .ck{font-size:9pt;color:#333;white-space:nowrap;}
+  .cv{font-weight:700;color:#111;}
+  .cv.blank{display:inline-block;min-width:26mm;border-bottom:1px dotted #aaa;}
+  .cv.blank.wide{min-width:120mm;}
+  .cchk{font-size:11pt;margin-right:1mm;}
+  .cchk.on{font-weight:800;}
+  .cstmt{margin-top:7mm;font-size:10.5pt;}
+  .cdate{text-align:right;margin:9mm 0 2mm;font-size:11pt;}
+  .cdate .cv{font-weight:700;}
+  .csign{font-size:10pt;}
+  .csign-name{margin-left:4mm;}
+  .csign-name .cv{font-size:11pt;}
+  .csign-name .cv.blank{min-width:30mm;}
+  .csign-tag{margin-left:6mm;color:#333;}
+  /* (서명 날인) 형광 표기 — 인쇄에도 유지 */
+  .csign-hl{background:rgba(255,232,0,.6);border-radius:3px;padding:1px 5px;color:#111;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;}
+  .cminister{margin-top:6mm;font-size:12pt;}
+  .cminister b{font-size:14pt;font-weight:800;}
+  .cnotice{margin-top:10mm;border:1px solid #222;}
+  .cnotice-h{text-align:center;font-weight:800;letter-spacing:.4em;background:#eee;padding:2mm;border-bottom:1px solid #222;}
+  .cnotice-b{padding:3mm 4mm;font-size:9.5pt;color:#222;line-height:1.5;}
+
+  /* ===== 화면 폭에 따른 되돌림 (반드시 이 자리) =====
+     ⚠️ 위쪽 「반응형」 블록에 적으면 안 되는 규칙들이다. `.cards`·`.card`·`.pbar` 의
+        기본값이 이 파일 **뒤쪽**(터치 카드 절)에 있어서, 미디어 쿼리라도 앞에 놓으면
+        나중 규칙에 덮인다. 미디어 쿼리는 우선순위를 올려 주지 않는다 — 순서가 전부다. */
+  /* 세로 화면 — 진행 막대가 가로 띠 안으로 들어가므로 폭을 정하고 위아래 여백을 없앤다 */
+  @media screen and (min-width:861px) and (max-aspect-ratio:9/10){
+    .pbar{width:180px;margin:0;flex:0 0 auto;}
+  }
+  /* 좁은 화면 — 두 칸 격자는 글자가 짓눌린다. 한 칸으로 세우고 카드를 눕힌다
+     (아이콘 옆에 글자 — 2026.08.18 개편의 세로 목록과 같은 모양이다). */
+  @media screen and (max-width:860px){
+    .cards,.ready-grid,.roman-cols{grid-template-columns:1fr;gap:11px;}
+    /* ⚠️ 도움 판은 이제 좁은 화면이 아니어도 두 줄 격자다 — 여기서 따로 할 일이 없다. */
+    .cards>.card:last-child:nth-child(odd){grid-column:auto;}
+    .card{flex-direction:row;align-items:center;gap:14px;min-height:88px;padding:16px 18px;}
+    .card-label{font-size:18px;}
+  }
+</style>
+<!--GUNPO-LOGO-->
+<style>
+  .topbar .gunpo-logo{height:38px;width:auto;flex:0 0 auto;display:block;}
+  @media (max-width:640px){ .topbar .gunpo-logo{height:30px;} }
+  @media print{ .topbar .gunpo-logo{display:none;} }
+</style>
+<!--/GUNPO-LOGO--><!--SITE-CONFIG v1-->
+<script>
+/* ── 기관별 설정 적용 (2026.08.19 확산 대응) ─────────────────────────────
+   같은 배포본을 다른 기관이 그대로 쓰게 하려고, 기관 고유값(표기·로고·대표색·
+   취급 서식·업무 정책)을 키오스크 환경설정 창(Ctrl+Shift+S)에서 받는다.
+   preload 가 `window.__kioskCfg` 를 **이 스크립트보다 먼저** 심어 준다.
+   웹(GitHub Pages) 배포본에는 preload 가 없어 설정도 없다 — 그때는 아래가
+   아무것도 하지 않고 서식에 적힌 기본값이 그대로 쓰인다.
+
+   ⛔ **인쇄물은 건드리지 않는다.** 여기서 바꾸는 것은 `.topbar`(인쇄 CSS 가 숨긴다)와
+      화면 전용 색 변수·로고뿐이다. 인쇄에 나가는 값을 이 통로에 얹지 마라 —
+      그 순간 `verify-print.py` 19쪽 0px 안전망이 무너진다.
+   ⚠️ 이 블록은 **8종 + 허브에 똑같이** 들어간다. 고칠 때는 `engine/base.html` 을 고쳐
+      5종을 재빌드하고, 손작성 3종(passport·marriage·divorce)과 `index.html` 에 같은
+      내용을 손수 반영한다(AGENTS.md §1). `sync-kiosk.sh --check` 는 루트↔키오스크
+      드리프트만 본다 — **이 블록끼리의 드리프트는 잡아 주지 못한다.**
+   ==================================================================== */
+(function(){
+  "use strict";
+  var C=(typeof window!=="undefined" && window.__kioskCfg) || {};
+
+  /* 서식 스크립트가 쓰는 창구. 기본값은 **서식이 갖고 있고** 설정은 덮어쓰기만 한다
+     (기본값을 설정 쪽에도 적으면 두 벌이 되어 갈라진다). */
+  window.__site={
+    cfg:C,
+    org:function(def){ var o={},k; for(k in def) o[k]=def[k];
+      if(C.org) for(k in C.org) if(C.org[k]) o[k]=C.org[k];
+      return o; },
+    policy:function(def){ var o={},k; for(k in def) o[k]=def[k];
+      if(C.policy) for(k in C.policy) if(typeof C.policy[k]==="boolean") o[k]=C.policy[k];
+      return o; },
+    formOn:function(key){ return !(C.forms && C.forms[key]===false); },
+    hasKeyboard:C.hasKeyboard!==false
+  };
+
+  /* ── 대표색 하나에서 명암·그라데이션을 만든다 ─────────────────────────
+     기관마다 대표색이 있다. 색을 여러 개 받으면 조합이 어긋나 촌스러워지므로
+     **한 색만 받고 나머지는 계산한다.**
+     ⚠️ 명도를 30~55 로 좁힌다 — 너무 밝으면 버튼 위 흰 글씨가, 너무 어두우면
+        옅은 배경이 읽히지 않는다. 고른 색과 화면 색이 조금 다를 수 있다는 뜻이고,
+        환경설정 창이 조정된 결과를 미리 보여 준다. */
+  function toHsl(hex){
+    var r=parseInt(hex.substr(1,2),16)/255, g=parseInt(hex.substr(3,2),16)/255, b=parseInt(hex.substr(5,2),16)/255;
+    var mx=Math.max(r,g,b), mn=Math.min(r,g,b), d=mx-mn, h=0, l=(mx+mn)/2;
+    var s=d===0?0:d/(1-Math.abs(2*l-1));
+    if(d!==0){
+      if(mx===r) h=60*(((g-b)/d)%6);
+      else if(mx===g) h=60*((b-r)/d+2);
+      else h=60*((r-g)/d+4);
+    }
+    return [Math.round((h+360)%360), Math.round(s*100), Math.round(l*100)];
+  }
+  var hex=String(C.themeColor||"");
+  if(/^#[0-9a-fA-F]{6}$/.test(hex)){
+    var t=toHsl(hex.toLowerCase()), H=t[0], S=Math.max(8,t[1]), L=Math.min(55,Math.max(30,t[2]));
+    var c=function(s,l){ return "hsl("+H+","+s+"%,"+l+"%)"; };
+    var base=c(S,L), dark=c(Math.min(100,S+4),Math.max(18,L-11)), lite=c(Math.min(90,S),95);
+    var st=document.documentElement.style;
+    st.setProperty("--blue",base);
+    st.setProperty("--blue-dark",dark);
+    st.setProperty("--blue-light",lite);
+    st.setProperty("--grad","linear-gradient(135deg,"+c(S,Math.min(70,L+9))+" 0%,"+base+" 52%,"+dark+" 100%)");
+    /* 기하학적 포인트 선(`--hair`)도 대표색에서 뽑는다. 종전에는 CSS 에 기본 파랑이
+       **박혀 있어**, 기관이 대표색을 초록으로 바꿔도 이 선만 파랑으로 남았다.
+       화면 전용이고(인쇄 CSS 가 `.form-col::before` 를 그리지 않는다) 아주 옅은 농도다. */
+    st.setProperty("--hair","hsla("+H+","+S+"%,"+L+"%,.16)");
+  }
+
+  /* 로고 — 설정 폴더의 `logo.png` 가 있으면 서식에 박힌 기본 로고를 갈아 끼운다.
+     (인쇄 CSS 가 `.gunpo-logo{display:none}` 으로 숨기므로 인쇄물과 무관하다) */
+  function onReady(fn){
+    if(document.readyState==="loading") document.addEventListener("DOMContentLoaded",fn);
+    else fn();
+  }
+  if(C.logo){
+    onReady(function(){
+      var n=document.querySelectorAll("img.gunpo-logo"), i;
+      for(i=0;i<n.length;i++){ n[i].src=C.logo; n[i].alt=(C.org&&C.org.orgName)||n[i].alt; }
+    });
+  }
+
+  /* 물리 키보드가 없는 자리 — 이름·주소를 칠 수 없어 그 칸에서 막힌다. 화면 키보드는
+     쓰지 않기로 했으므로(2026.08.13 결정), 대신 **도움을 청하라고 눈에 보이게** 알린다.
+     `.topbar` 안에 넣는다 — 인쇄 CSS 가 통째로 숨기므로 인쇄물에는 나오지 않는다. */
+  if(C.hasKeyboard===false){
+    onReady(function(){
+      document.documentElement.classList.add("no-keyboard");
+      var bar=document.querySelector(".topbar"); if(!bar) return;
+      var n=document.createElement("div");
+      n.className="kb-help";
+      n.style.cssText="flex:1 0 100%;order:9;font-size:13.5px;font-weight:700;color:#8a4b00;"+
+        "background:#fff7e6;border:1px solid #ffdf9e;border-radius:8px;padding:7px 10px;";
+      n.textContent="글자를 적는 칸에서 입력이 어려우시면 창구 직원에게 말씀해 주세요.";
+      bar.appendChild(n);
+    });
+  }
+})();
+</script>
+<!--/SITE-CONFIG-->
+<style>
+/* ══ 엔진 껍데기 보정 (2026.08.29) ══════════════════════════════════════
+   위의 CSS 는 `passport-helper-v1.html` 에서 그대로 뜬 **Product UI v1 원본**이다.
+   공통 엔진(`engine/engine.js`)은 몇 가지를 다른 이름으로 부르므로 여기서 이어 준다.
+   ⛔ 새 조형을 만들지 않는다 — 전부 위에 이미 있는 값을 **이름만 바꿔 잇는 것**이다. */
+
+/* ══ 인쇄층 — ⛔ 엔진이 그리는 오버레이의 **좌표·정렬 규칙**이다 ═══════════
+   ⚠️ 여권은 이 셋을 쓰지 않아 CSS 에 없다. 없으면 **화면은 멀쩡하고 인쇄만 어긋난다** —
+      실제로 「세대주 및 관계」의 이름이 우측정렬을 잃고 밀렸다(2026.08.29 실측).
+   ⛔ 값을 바꾸지 마라. `engine/base.html` 과 **글자까지 같아야** 두 껍데기의 인쇄물이 같다. */
+.ov.o{color:#c0392b;font-weight:900;-webkit-text-stroke:0.5px #c0392b;}  /* 선택항목 영표 ○ */
+.ov.o.blk{color:#111;-webkit-text-stroke-color:#111;}   /* 검정 표기(√표 서식) */
+.ov.r{transform:translate(-100%,-50%);}       /* 우측정렬(기준점=우측 끝) */
+@media print{
+  .ov.o{color:#c0392b !important;}
+  .ov.o.blk{color:#111 !important;}
+}
+
+/* 미리보기 — 엔진은 `body.pv-open` 으로 여닫는다(여권은 노드를 만들었다 지운다) */
+.modal-back{display:none;}
+body.pv-open .modal-back{display:flex;}
+.mstack{display:flex;flex-direction:column;gap:12px;align-items:center;width:100%;}
+/* 첨부 페이지 — 내용이 없으면 화면·인쇄에서 사라진다 */
+.paper.extra:empty{display:none !important;}
+
+/* 고른 것 — 엔진은 `sel`, 여권은 `selected`. 같은 뜻이라 같은 모양을 준다. */
+.opt.sel{border-color:var(--blue);background:var(--m-a10);box-shadow:inset 3px 0 0 var(--blue);}
+.opt.sel .opt-label{color:var(--blue-dark);}
+/* 한 줄로 늘어놓는 선택지(엔진 `choiceHtml`) — 칸 수가 서식마다 달라 격자로 묶지 않는다 */
+.opts.row{display:flex;flex-wrap:wrap;gap:12px;}
+.opts.row .opt{flex:1 1 96px;min-height:56px;justify-content:center;text-align:center;}
+.opts.row .opt-main{justify-content:center;}
+/* 반 칸짜리 입력 두 개를 나란히.
+   ⚠️ `inline-block + 인접 선택자`로는 **셋째부터 짝이 어긋난다**(모든 뒤 형제가 왼쪽 여백을
+      받아 한 칸씩 밀린다 — 실제로 성(한자)·이름(한자)가 세로로 섰다). 질문면을 감싸는
+      쪽을 flex 로 두면 브라우저가 알아서 두 개씩 접는다. */
+.wiz-body{display:flex;flex-wrap:wrap;align-content:flex-start;gap:0 14px;}
+.wiz-body>*{flex:1 1 100%;min-width:0;}
+.wiz-body>.field.half{flex:0 1 calc(50% - 7px);}
+
+/* 선택사항 공통 안내(`OPT_HINT`) — 설명과 같은 글줄 문법에 한 톤 옅게.
+   ⛔ 색·아이콘으로 강조하지 마라. 눈에 띄면 필수 칸까지 「비워도 되나」로 읽힌다. */
+.q-help.opt-hint{color:#7a8088;margin-top:-6px;}
+
+/* 요약 — 엔진은 `.val`, 여권은 `.v` */
+.sum-sec{margin-bottom:18px;}
+.sum-sec h4{margin:0 0 8px;font-size:15px;font-weight:800;color:var(--blue-dark);}
+.sum-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:baseline;
+  padding:11px 2px;border-bottom:1px solid var(--line-warm);font-size:var(--fs-sum);}
+.sum-row .val{font-weight:700;min-width:0;overflow-wrap:anywhere;}
+.sum-row .val.empty{color:var(--m-ink-faint);font-weight:400;}
+
+/* 「이 단계는 잘 모르겠어요」 — ⛔ Handoff 처럼 꾸미지 않는다. 조용한 글자 하나다.
+   📌 창구로 전달되는 것이 아직 없다(`state.unsure` 는 읽는 곳이 없다). 그 사실을
+      화면이 과장하면 시민이 「직원이 알아서 봐 주겠지」로 오해한다. */
+.ask-skip{flex:0 0 auto;margin-top:10px;text-align:center;}
+.skip-link{font-family:inherit;font-size:13px;font-weight:400;color:var(--m-ink-muted);
+  background:none;border:0;padding:4px 8px;cursor:pointer;text-decoration:underline;
+  text-underline-offset:3px;}
+.skip-link:hover{color:var(--blue);}
+html.big .skip-link{font-size:14.5px;}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand">
+    <!--GUNPO-LOGO--><img class="gunpo-logo" src="data:image/png;base64,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" alt="군포시"><!--/GUNPO-LOGO-->
+    <div class="brand-tx">
+      <b id="orgName"></b>
+      <span class="brand-div" aria-hidden="true"></span>
+      <h1>민원 서식 작성 도우미</h1>
+    </div>
+  </div>
+  <!-- FLEXIBLE SPACE — ⛔ 채우지 않는다 -->
+  <div class="bar-space"></div>
+  <!-- DETAIL TOOLS(이 서식에만 있는 것) → COMMON TOOLS(9화면 공통) 순.
+       상세 : [작성예시(성인)] [작성예시(미성년)] [미리보기] │ [크게 보기] [DATE]
+       ⛔ **[크게 보기]와 [DATE] 사이에 아무것도 넣지 마라** — 거기가 오른쪽 기준선이다.
+       ⚠️ **작성의 주 행동(Primary CTA)은 여기가 아니라 ASK 의 [다음]/[신청서 인쇄]다.**
+          지금 [미리보기]만 강조돼 보이는 것은 색 체계 문제라 후속 작업에서 함께 본다. -->
+  <div class="actions">
+    <!-- DETAIL TOOLS — 이 서식에만 있는 것. 담당자 점검용이라 한 치수 작다(`.btn.compact`).
+         ⚠️ 라벨은 `FORM.sampleLabels` 가 넣는다(출생신고는 「작성예시(혼인 중)/(혼인 외)」).
+         ⛔ 시민 화면에 「테스트용」 같은 말을 쓰지 않는다. -->
+    <button class="btn ghost compact" id="btnSampleAdult"
+            title="담당자 점검용 · 가상 인물로 채웁니다"></button>
+    <button class="btn ghost compact" id="btnSampleMinor"
+            title="담당자 점검용 · 가상 인물로 채웁니다"></button>
+    <!-- ⛔ BAR 에 직접 인쇄 단추를 두지 않는다. 인쇄는 **작성 → 미리보기 → 인쇄** 하나로 간다
+         (`docs/PRODUCT_SKIN_v1.md` §1-1). 확인하지 않고 찍으면 종이와 개인정보가 버려진다. -->
+    <button class="btn primary" id="btnPreview"><svg class="btn-ic" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+      aria-hidden="true"><circle cx="10.6" cy="10.6" r="6.6"/><path d="M15.4 15.4L21 21"/></svg>
+      <span>미리보기</span></button>
+    <!-- COMMON TOOLS 의 끝 — ⛔ 여기와 DATE 사이에 아무것도 넣지 마라. 오른쪽 기준선이다. -->
+    <button class="btn ghost" id="btnBig" aria-pressed="false"
+            title="질문과 글자를 크게 봅니다"><svg class="btn-ic" viewBox="0 0 24 24" fill="none"
+      stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+      aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.6"/><path d="M15.4 15.4L21 21"/>
+      </svg><span id="btnBigLabel">크게 보기</span></button>
+</div>
+  <!-- DATE — **최우측 고정**. 단추가 몇 개든 오른쪽 기준선이 움직이지 않는다 -->
+  <span class="today" id="today"></span>
+</header>
+
+<div class="layout">
+  <!-- ① 질문면(Writing Desk) — 한 화면에 한 가지 판단 -->
+  <section class="task-col panel-col" aria-label="신고 내용 입력">
+    <div class="task">
+      <!-- ASK 상단 navigation — 돌아가는 길은 작성 영역의 맨 위다(Product Shell v1).
+           ⛔ BAR 에 두지 않는다 — BAR 는 Main 과 같은 프레임이어야 한다. -->
+      <div class="ask-nav">
+        <a class="nav-back" href="index.html" title="첫 화면으로 돌아갑니다"><svg class="btn-ic"
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5"/>
+          <path d="M10.6 6l-6 6 6 6"/></svg><span>메인으로</span></a>
+      </div>
+      <div class="topline">
+        <div class="wiz-title" id="wizTitle"></div>
+        <div class="wiz-count" id="wizCount"></div>
+      </div>
+      <div class="wiz-body" id="wizBody" aria-live="polite"></div>
+      <!-- Human Handoff 자리 — 그 화면에 탈출구가 없으면 `:empty` 로 0px 이 된다.
+           📌 지금 엔진 서식에는 아직 Handoff 가 없다. **자리만** 여권과 같게 마련해 둔다 —
+              무엇을 어느 화면에 둘지는 업무 판단이라 담당자 확인 뒤에 채운다. -->
+      <div class="ask-foot" id="askFoot"></div>
+      <div class="step-warn" id="stepWarn" role="status"></div>
+      <button type="button" class="m-preview" id="btnPreviewMobile"><svg class="btn-ic" viewBox="0 0 24 24"
+      fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
+      aria-hidden="true"><circle cx="10.6" cy="10.6" r="6.6"/><path d="M15.4 15.4L21 21"/></svg><span>완성된
+      서식 미리보기</span></button>
+      <div class="wiz-nav">
+        <button class="btn ghost" id="btnPrev"><svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 12H5"/><path d="M10.6 6l-6 6 6 6"/></svg><span>이전</span></button>
+        <button class="btn primary" id="btnNext"><span>다음</span><svg class="btn-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12h15"/><path d="M13.4 6l6 6-6 6"/></svg></button>
+      </div>
+      <!-- ⚠️ 「이 단계는 잘 모르겠어요」 — Product UI 로 예쁘게 꾸미지 않는다.
+           필수 우회는 이미 막혀 있고(2026.08.29), 선택 항목은 위의 Hint 가 이미 안내한다.
+           ⛔ 이것을 Handoff 처럼 보이게 만들지 마라 — 창구로 전달되는 것이 아직 없다. -->
+      <div class="ask-skip"><button type="button" class="skip-link" id="btnSkip">이 단계는 잘 모르겠어요 · 나중에 창구에서</button></div>
+      <div class="ask-reset">
+        <button type="button" class="reset-btn" id="btnReset"><svg class="btn-ic" viewBox="0 0 24 24"
+          fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+          stroke-linejoin="round" aria-hidden="true"><path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/>
+          <path d="M3.2 4.2v4.6h4.6"/></svg><span>처음부터 다시 작성</span></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ② 서식(Paper) — ⛔ 이 안의 구조는 인쇄층이 쓴다. 클래스 이름을 바꾸지 마라. -->
+  <section class="form-col" aria-label="서식 미리보기">
+    <div class="paper"><div class="stage"><img class="bg" alt="서식"><div class="ovl"></div></div></div>
+    <div class="paper extra"></div>
+  </section>
+
+  <!-- ③ 안내 기둥(Companion Rail) — 진행 · 준비물 · 안심 · 이용 안내.
+       `.panel-col` 을 함께 붙여 둔다: 인쇄 CSS 가 그 이름으로 숨긴다. -->
+  <aside class="rail-col panel-col" aria-label="진행 상황과 안내">
+    <div class="rail">
+      <div class="rail-prog" id="stepper" role="progressbar"
+           aria-valuemin="1" aria-valuemax="10" aria-valuenow="1"></div>
+      <div class="rail-info" id="railInfo"></div>
+      <div class="screen-notice">
+        <h3>이용 안내</h3>
+        <ul id="noticeList">
+          <li>필요 서류는 직원 확인을 따릅니다.</li>
+          <li>여기서 접수되지는 않습니다.</li>
+        </ul>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- 미리보기 — 인쇄로 가는 **유일한 길**이다(작성 → 미리보기 → 인쇄). -->
+<div class="modal-back" id="modalBack" hidden>
+  <div class="modal-box">
+    <div class="modal-top"><b id="modalTitle"></b>
+      <span><button class="btn primary" id="btnPrintModal">인쇄</button>
+      <button class="btn ghost" id="btnCloseModal">닫기</button></span></div>
+    <div class="modal-scroll"><div class="mstack">
+      <div class="paper"><div class="stage"><img class="bg" alt="서식"><div class="ovl" id="ovlModal"></div></div></div>
+      <div class="paper extra"></div>
+    </div></div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* 실제 서식 앞면 이미지(base64 data URI). 외부 파일 없이 단일 HTML 유지 */
+var FORM_IMG="__BGDATA__";
+document.querySelectorAll(".bg").forEach(function(i){ i.src=FORM_IMG; });
+</script>
+<script>
+"use strict";
+/*{{CONFIG}}*/
+/*{{ENGINE}}*/
+</script>
+
+<script>
+(function(){
+  /* 키오스크 환경설정(Ctrl+Shift+S)에서 정한 값이 있으면 그것을 쓴다.
+     `window.__kioskCfg` 는 키오스크의 preload 가 **이 스크립트보다 먼저** 심어 준다.
+     웹 배포본에는 없으므로 아래 기본값이 그대로 쓰인다. */
+  var KCFG = (typeof window !== "undefined" && window.__kioskCfg) || {};
+  var IDLE_MS = (typeof KCFG.idleMs === "number" && KCFG.idleMs > 0)
+                  ? KCFG.idleMs : 3*60*1000;    // 무동작 대기 시간(기본 3분)
+  var WARN_SEC = 30;          // 초기화 전 경고(마지막 30초 카운트다운)
+  var PRINTED_MS = (typeof KCFG.printedMs === "number" && KCFG.printedMs >= 0)
+                  ? KCFG.printedMs : 5000;      // 인쇄 후 처음 화면으로(기본 5초, 0=즉시)
+  var HOME = "index.html";    // 되돌아갈 처음 화면(허브 메뉴). 이동 시 입력값(메모리) 전부 소멸
+  var warnTimer=null, tickTimer=null, remain=0, ov=null, numEl=null, locked=false;
+
+  function build(){
+    ov=document.createElement("div");
+    ov.id="idleGuard";
+    ov.setAttribute("role","alertdialog");
+    ov.setAttribute("aria-live","assertive");
+    ov.style.cssText="position:fixed;inset:0;z-index:2147483000;display:none;align-items:center;justify-content:center;background:rgba(15,23,42,.72);font-family:'Malgun Gothic','맑은 고딕',sans-serif;";
+    var box=document.createElement("div");
+    box.style.cssText="background:#fff;border-radius:18px;padding:34px 40px;max-width:540px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);";
+    box.innerHTML='<div style="font-size:26px;font-weight:800;color:var(--blue);margin-bottom:12px;">잠시 후 처음 화면으로 돌아갑니다</div>'+
+      '<div style="font-size:19px;color:#333;line-height:1.65;margin-bottom:24px;">개인정보 보호를 위해 <b id="idleNum" style="color:#c0392b;font-size:22px;">30</b>초 후 입력하신 내용이 모두 지워집니다.<br>계속 작성하시려면 화면을 터치하거나 아래 버튼을 누르세요.</div>'+
+      '<button type="button" id="idleStay" style="font-size:20px;font-weight:700;color:#fff;background:var(--blue);border:0;border-radius:12px;padding:14px 32px;cursor:pointer;">계속 작성하기</button>';
+    ov.appendChild(box);
+    document.body.appendChild(ov);
+    numEl=box.querySelector("#idleNum");
+    box.querySelector("#idleStay").addEventListener("click", function(e){ e.stopPropagation(); reset(); });
+  }
+  function goHome(){ try{ location.href=HOME; }catch(e){ location.reload(); } }
+  function showWarn(){
+    if(!ov) build();
+    remain=WARN_SEC; if(numEl) numEl.textContent=remain;
+    ov.style.display="flex";
+    tickTimer=setInterval(function(){
+      remain--; if(numEl) numEl.textContent=remain;
+      if(remain<=0){ clearInterval(tickTimer); tickTimer=null; goHome(); }
+    },1000);
+  }
+  function clearAll(){ if(warnTimer){clearTimeout(warnTimer);warnTimer=null;} if(tickTimer){clearInterval(tickTimer);tickTimer=null;} }
+  function reset(){
+    if(locked) return;        // 인쇄 후 초기화 중이면 타이머를 되살리지 않는다
+    clearAll();
+    if(ov) ov.style.display="none";
+    warnTimer=setTimeout(showWarn, Math.max(0, IDLE_MS - WARN_SEC*1000));
+  }
+
+  /* 인쇄창이 닫히면 화면에 남은 개인정보를 즉시 가리고 처음 화면으로 되돌린다.
+     (뒷사람이 앞사람 신청 내용을 보는 것도 개인정보 유출)
+     주의: 브라우저는 '인쇄함'과 '취소함'을 구분해 알려주지 않는다(afterprint 공통) →
+           취소해도 초기화된다. 인쇄 직전 안내 팝업에서 미리 알린다. */
+  function showPrinted(){
+    if(locked) return;
+    locked=true; clearAll();
+    if(ov) ov.style.display="none";
+    var pg=document.createElement("div");
+    pg.id="printGuard";
+    pg.setAttribute("role","alertdialog");
+    pg.setAttribute("aria-live","assertive");
+    pg.style.cssText="position:fixed;inset:0;z-index:2147483001;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,1);font-family:'Malgun Gothic','맑은 고딕',sans-serif;";
+    pg.innerHTML='<div style="background:#fff;border-radius:18px;padding:34px 40px;max-width:560px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);">'+
+      '<div style="font-size:26px;font-weight:800;color:var(--blue);margin-bottom:14px;">🖨️ 인쇄를 보냈습니다</div>'+
+      '<div style="font-size:20px;font-weight:800;color:#7a5600;line-height:1.6;margin-bottom:14px;">출력물을 꼭 챙겨 가세요.<br>출력물에는 개인정보가 들어 있습니다.</div>'+
+      '<div style="font-size:17px;color:#333;line-height:1.6;">개인정보 보호를 위해 <b>화면을 처음으로 되돌립니다.</b><br>인쇄가 제대로 되지 않았으면 창구 직원에게 말씀해 주세요.</div>'+
+      '</div>';
+    document.body.appendChild(pg);
+    setTimeout(goHome, PRINTED_MS);
+  }
+  window.addEventListener("afterprint", showPrinted);
+  /* 인쇄 직전 안내 — 네이티브 alert 은 크기·색을 바꿀 수 없어(하단이 잘림)
+     화면 모달로 대체한다. 확인을 누르면 그때 실제 인쇄창이 열린다.
+     개인정보 안내를 1번(맨 위)에 둔다 — 민원실 요청.
+     화면이 낮으면(t) 여백·글자를 줄여 스크롤 없이 한 화면에 담는다. */
+  window.__printNotice = function(whyLine, onOk){
+    var old=document.getElementById("printNotice");
+    if(old && old.parentNode) old.parentNode.removeChild(old);
+    var vh=window.innerHeight||900, t=vh<790;              // t = 낮은 화면(720p 등)
+    var PAD   = t?"20px 26px 18px":"30px 34px 26px";
+    var TTL   = t?23:29,  TTLM = t?12:20;                  // 제목 크기·아래 여백
+    var SEC   = t?18:21,  BOXP = t?"11px 16px":"16px 20px";
+    var BASE  = t?18:22,  BIG  = t?20:24, NOTE = t?16:18.5;
+    var PRIV  = t?17:19.5, WHYF = t?15:17, GAP = t?14:22;
+    var BTN   = t?18:21,  BTNP = t?"12px 28px":"15px 36px";
+    var back=document.createElement("div");
+    back.id="printNotice";
+    back.setAttribute("role","dialog");
+    back.setAttribute("aria-modal","true");
+    back.style.cssText="position:fixed;inset:0;z-index:2147483002;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.72);font-family:'Malgun Gothic','맑은 고딕',sans-serif;padding:14px;";
+    back.innerHTML=
+      '<div style="background:#fff;border-radius:20px;max-width:820px;width:100%;max-height:96vh;overflow:auto;padding:'+PAD+';box-shadow:0 24px 70px rgba(0,0,0,.42);text-align:left;">'
+      + '<div style="font-size:'+TTL+'px;font-weight:800;color:var(--blue);margin:0 0 '+TTLM+'px;">🖨️ 인쇄하기 전에 확인해 주세요</div>'
+      + '<div style="font-size:'+SEC+'px;font-weight:800;color:#123f7f;margin:0 0 8px;">1. 개인정보 안내</div>'
+      + '<div style="margin:0 0 '+GAP+'px;padding:'+BOXP+';background:#fff8e6;border:2px solid #ffe19a;border-left:7px solid #7a5600;border-radius:12px;font-size:'+PRIV+'px;line-height:1.6;">'
+      +   '<div style="margin-bottom:6px;"><b style="color:#7a5600;">출력물에는 개인정보가 들어 있습니다. 본인이 직접 수령·관리해 주세요.</b></div>'
+      +   '<div style="margin-bottom:6px;"><b style="color:#7a5600;">공용 PC입니다. 사용 후에는 창을 닫아 개인정보가 남지 않게 해 주세요.</b></div>'
+      +   '<div style="color:#333;">인쇄 창을 닫으면 <b>화면이 처음으로 초기화</b>됩니다. (인쇄를 취소한 경우에도)</div>'
+      + '</div>'
+      + '<div style="font-size:'+SEC+'px;font-weight:800;color:#123f7f;margin:0 0 8px;">2. 인쇄 창에서 이렇게 맞춰 주세요</div>'
+      + '<div style="padding:'+BOXP+';background:#fff8e6;border:2px solid #ffe19a;border-left:7px solid #7a5600;border-radius:12px;font-size:'+BASE+'px;line-height:1.6;">'
+      +   '<div>여백(Margins) : <b style="color:#7a5600;font-size:'+BIG+'px;">없음</b></div>'
+      +   '<div>배율(Scale) : <b style="color:#7a5600;font-size:'+BIG+'px;">100% (실제 크기)</b></div>'
+      +   '<div style="font-size:'+NOTE+'px;font-weight:800;color:#c0392b;margin-top:5px;">※ ‘맞춤(Fit)’ · ‘축소’ 로 하면 안 됩니다</div>'
+      + '</div>'
+      + '<div style="font-size:'+WHYF+'px;color:#5b626c;margin:7px 0 0;">' + (whyLine||"") + '</div>'
+      + '<div style="display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap;margin-top:'+GAP+'px;">'
+      +   '<button type="button" id="pnCancel" style="font-family:inherit;font-size:'+(BTN-2)+'px;font-weight:700;color:var(--blue);background:#fff;border:2px solid var(--blue);border-radius:12px;padding:'+BTNP+';cursor:pointer;">취소</button>'
+      +   '<button type="button" id="pnOk" style="font-family:inherit;font-size:'+BTN+'px;font-weight:800;color:#fff;background:var(--blue);border:0;border-radius:12px;padding:'+BTNP+';cursor:pointer;">인쇄 창 열기</button>'
+      + '</div></div>';
+    document.body.appendChild(back);
+    function close(){
+      if(back && back.parentNode) back.parentNode.removeChild(back);
+      document.removeEventListener("keydown", key, true);
+    }
+    function key(e){
+      if(e.key==="Escape"){ e.preventDefault(); close(); }
+      else if(e.key==="Enter"){ e.preventDefault(); go(); }
+    }
+    /* 모달을 먼저 없앤 뒤 인쇄해야 인쇄물에 안내가 섞이지 않는다 */
+    function go(){ close(); setTimeout(function(){ if(onOk) onOk(); }, 60); }
+    back.querySelector("#pnCancel").addEventListener("click", close);
+    back.querySelector("#pnOk").addEventListener("click", go);
+    back.querySelector("#pnOk").focus();
+    document.addEventListener("keydown", key, true);
+  };
+
+
+  // 사용자 활동 감지 → 타이머 리셋(경고 중이면 취소). 인쇄 대화상자는 별도 처리 불필요.
+  ["mousemove","mousedown","keydown","touchstart","wheel"].forEach(function(ev){
+    window.addEventListener(ev, reset, {passive:true});
+  });
+  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", reset);
+  else reset();
+})();
+</script>
+
+</body>
+</html>

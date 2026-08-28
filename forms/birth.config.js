@@ -81,18 +81,32 @@ function buildSummary(){
 }
 
 var FORM={
+  /* ⛔ 이 한 줄이 껍데기를 정한다. Product UI v1(`engine/base-product.html`)을 쓴다 —
+     ASK 26 / PAPER 56 / RAIL 18 · BAR 62px · Normal/Big · 선 아이콘.
+     ⚠️ 나머지 4종은 아직 옛 껍데기다. 그것들을 옮길 때 이 줄을 더하면 된다. */
+  shell:"product",
   docTitle:"출생신고서 작성 미리보기 도우미",
   formName:"출생신고서",
+
+  /* 안내 기둥의 준비물 — **허브 카탈로그(`index.html`)와 같은 값**이다.
+     근거는 서식 첨부서류 1항(출생증명서)·6항(신분확인)이고, 2~5항은 조건부라 두지 않는다.
+     ⛔ 새 준비물을 지어내지 마라. 확인된 것이 없으면 비워 두고 그 구역을 내지 않는다. */
+  ready:[
+    { t:"신고인 신분증", s:"접수할 때 창구에서 확인합니다", g:"idcard", req:true },
+    { t:"출생증명서 원본", s:"병원에서 받은 것 · 의사·조산사가 작성합니다", g:"cert", req:true }
+  ],
   org:{ orgName:"경기도 군포시", officeName:"군포시청 민원실" },
   sampleLabels:["작성예시(혼인 중)","작성예시(혼인 외)"],
   sampleKinds:["wed","unwed"],
-  // 화면 하단 「이용 안내」 — 출생신고 고유 문구(1·4번째가 기본 문구와 다름)
+  /* 안내 기둥 맨 아래 「이용 안내」 — **2줄**(Product UI v1 · 여권과 같은 문법).
+     ⚠️ 종전 5줄에서 셋을 줄였는데 **버린 것이 아니라 옮겨져 있다** —
+        「저장·전송 안 함」은 위 안심 문단에, 「필요 서류(출생증명서)」는 준비물에,
+        「서명·날인은 인쇄한 뒤」는 마지막 확인 단계의 안내 상자에 있다.
+     ⛔ 다시 늘리지 마라 — 이 기둥이 스크롤되면 정작 진행·준비물이 화면 밖으로 밀린다
+        (크게 보기에서 실제로 8px 넘쳤다). */
   noticeItems:[
-    "본 도구는 출생신고서 작성을 돕기 위한 미리보기 도구입니다.",
-    "입력한 내용은 서버로 전송되지 않으며 저장되지 않습니다.",
-    "공식 신고서와 항목·배치가 다를 수 있습니다.",
-    "실제 접수 가능 여부와 필요 서류(출생증명서 등)는 담당 직원의 확인을 따릅니다.",
-    "서명·날인은 인쇄한 뒤 본인이 직접 해야 합니다."
+    "필요 서류는 직원 확인을 따릅니다.",
+    "여기서 접수되지는 않습니다."
   ],
   rerenderOnSet:["child_birthPlace","reporter_qual"],
   today:{ y:87.8, yx:99.8, mx:145.1, dx:190.3 },
@@ -190,7 +204,15 @@ var FORM={
   },
 
   STEPS:[
+    /* ⛔ **이 화면은 더 이상 보여 주지 않는다**(2026.08.29 Phase 3).
+       허브 Main 에서 「아이 출생 신고하기」를 이미 고르고 들어왔는데 여기서 또
+       「시작하기」를 누르게 하면 같은 결정을 두 번 시키는 것이다.
+       ⚠️ **단계를 지우지 않고 `when` 으로 숨겼다.** `STEP_HL`·`applySample`·`required` 가
+          전부 절대 번호를 쓰고 있어, 번호를 당기면 인쇄 강조와 작성예시가 조용히 어긋난다.
+          ⛔ 이 안내문의 내용(1개월 이내·출생증명서·서명은 인쇄 뒤)은 버린 것이 아니라
+             안내 기둥의 준비물·안심 문단과 마지막 확인 단계에 들어 있다. */
     {n:1, short:"시작", title:"출생신고서 작성 시작",
+      when:function(){ return false; },
       q:"함께 한 단계씩 채워 볼까요?",
       why:"출생신고는 출생 후 1개월 이내에 해야 합니다. 아이 이름·출생 정보와 부모 정보를 안내합니다. 병원에서 받은 출생증명서를 함께 준비하세요. 서명·날인은 인쇄한 뒤 직접 하시면 됩니다.",
       kind:"intro",
@@ -218,8 +240,12 @@ var FORM={
         h+=A.inputHtml({k:"child_surHan", label:"성(한자)", half:true, ph:"金", optHint:true});
         h+=A.inputHtml({k:"child_givenHan", label:"이름(한자)", half:true, ph:"하늘(한자)", optHint:true});
         h+=A.inputHtml({k:"child_bon", label:"본(한자)", ph:"金海 (본관)", help:"성씨의 본관을 한자로.", optHint:true});
-        h+='<div class="field"><label class="field-label">성별</label>'+A.choiceHtml("child_sex",SEX_OPTS)+'</div>';
-        h+='<div class="field"><label class="field-label">혼인 중/외의 출생자</label>'
+        /* ⚠️ 배지와 검증은 **한 쌍**이다. 화면이 「필수」라 하고 넘어가지게 두거나,
+           막으면서 아무 말도 하지 않으면 시민은 왜 막혔는지 모른다(2026.08.29 에 그랬다). */
+        h+='<div class="field"><label class="field-label">성별 <span class="fb fb-req">필수</span></label>'
+          +A.choiceHtml("child_sex",SEX_OPTS)+'</div>';
+        h+='<div class="field"><label class="field-label">혼인 중/외의 출생자'
+          +' <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("child_marital",MARITAL_OPTS,"부모가 혼인신고를 한 사이에 태어났으면 ‘혼인 중’입니다.")+'</div>';
         return h;
       }},
@@ -252,9 +278,13 @@ var FORM={
         var h='';
         h+=A.inputHtml({k:"child_birthDate", label:"출생 연월일", type:"date", req:true, ph:"2026.07.20",
           help:"예: 2026.07.20 (숫자 8자리를 적으면 자동으로 정리됩니다)"});
-        h+=A.inputHtml({k:"child_birthHour", label:"출생 시각 — 시(時)", req:true, half:true, ph:"14",
+        /* ⚠️ 라벨을 「시」·「분」으로 줄였다(2026.08.29). 반 칸이라 폭이 좁은데
+           「출생 시각 — 시(時)」는 크게 보기에서 **필수 배지가 아랫줄로 접혔다.**
+           바로 위가 「출생 연월일」이고 아래 설명이 24시각제를 말하므로 뜻은 그대로다.
+           ⛔ 경고 문구(`required`)는 문장 안에 들어가므로 「출생 시각(시)」를 그대로 쓴다. */
+        h+=A.inputHtml({k:"child_birthHour", label:"시", req:true, half:true, ph:"14",
           help:"24시각제. 오후 2시 → 14"});
-        h+=A.inputHtml({k:"child_birthMin", label:"분(分)", req:true, half:true, ph:"30"});
+        h+=A.inputHtml({k:"child_birthMin", label:"분", req:true, half:true, ph:"30"});
         h+='<div class="field"><label class="field-label">출생 장소 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("child_birthPlace",PLACE_OPTS)+'</div>';
         /* ⚠️ 2026.08.29 — **주소와 「기타」 상세는 다른 것이다**(담당자 요구). 종류를 고르는

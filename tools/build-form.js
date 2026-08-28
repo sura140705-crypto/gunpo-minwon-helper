@@ -26,9 +26,14 @@ function read(rel) {
 // </script> 조기 종료 방지
 function safe(js) { return js.replace(/<\/script/gi, '<\\/script'); }
 
-const base   = read('engine/base.html');
+/* 껍데기 고르기 — config 에 `shell:"product"` 가 있으면 Product UI v1 껍데기를 쓴다.
+   ⚠️ 옛 껍데기(`engine/base.html`)는 아직 4종이 쓴다. 한 서식씩 옮기려고 갈라 두었다.
+   ⛔ 두 껍데기를 하나로 합치지 마라 — 합치는 순간 한 서식을 고칠 때 5종이 함께 움직인다. */
+const config0 = read('forms/' + name + '.config.js');
+const useProduct = /shell\s*:\s*["']product["']/.test(config0);
+const base   = read(useProduct ? 'engine/base-product.html' : 'engine/base.html');
 const engine = read('engine/engine.js');
-const config = read('forms/' + name + '.config.js');
+const config = config0;
 const bg     = read('engine/assets/' + name + '.b64').trim();
 
 let html = base
