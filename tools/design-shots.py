@@ -144,6 +144,23 @@ SHOTS = [
      CLICK + 'click("제 여권"); click("확인했습니다"); click("확인했습니다");'
              'document.getElementById("btnNext").click();',
      "빈칸인 채로 [다음]을 누른 뒤. **그때 처음** 알리고, 어느 칸인지 이름을 불러 준다."),
+    # ⚠️ 2026.08.28 — 회귀 대표 세트에 둘을 더했다.
+    #    ① 법정대리인 : 입력칸이 가장 많은 화면(495px 질문면에서 가장 먼저 넘친다)
+    #    ② 최악 RAIL  : 미성년 + 기존 여권 = **준비물 6개**. RAIL 세로 예산의 한계선이고
+    #       Product Skin 을 건드릴 때 **가장 먼저 깨질 자리**다(크게 보기까지 함께 본다).
+    ("pass-12-법정대리인", "passport-helper-v1.html", {},
+     'fillSample("minor"); state.step=flow().indexOf("guardian")+1; renderAll();',
+     "법정대리인 정보 — 입력칸이 가장 많은 화면. 495px 질문면에서 잘리는 것이 없는지 본다."),
+    ("pass-13-최악RAIL", "passport-helper-v1.html", {},
+     'fillSample("minor"); state.data.hasPassport="있음";'
+     'state.step=flow().indexOf("recv")+1; renderAll();',
+     "미성년 + 기존 여권 = **준비물 6개**. 오른쪽 기둥의 세로 예산 한계선이다 — "
+     "여기서 스크롤이 생기면 진행·준비물이 화면 밖으로 밀린다(단계 6 합격 조건)."),
+    ("pass-13b-최악RAIL-크게", "passport-helper-v1.html", {},
+     'fillSample("minor"); state.data.hasPassport="있음";'
+     'state.step=flow().indexOf("recv")+1; renderAll();'
+     'document.getElementById("btnBig").click();',
+     "같은 화면 — 크게 보기. 글자가 커져도 기둥이 넘치지 않아야 한다(단계 7 합격 조건)."),
     ("pass-09-로마자이름", "passport-helper-v1.html", {},
      'fillSample("adult"); state.data.romanSur=""; state.data.romanGiven="";'
      'state.step=flow().indexOf("roman")+1; renderAll();',

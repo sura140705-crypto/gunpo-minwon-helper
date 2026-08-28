@@ -469,13 +469,22 @@ html.big{
      대표색은 기관 표기와 선택 상태에만 남긴다(결정 ③ border/ink hierarchy).
      ⚠️ `.topbar` 를 3열 격자로 두는 것은 SITE-CONFIG 가 키보드 없는 자리에
         `.kb-help` 를 **자식으로 덧붙이기** 때문이다(`order:9` 로 마지막 줄에 붙는다). */
+  /* ══ Product Shell v1 — BAR (2026.08.28) ═══════════════════════════════
+     **IDENTITY │ FLEXIBLE SPACE │ COMMON TOOLS** — 상세는 COMMON 앞에 자기 도구를 끼운다.
+     ⛔ COMMON 의 끝은 `[크게 보기][DATE]` 이고 **그 사이에 상세 도구를 넣지 않는다.**
+     ⛔ 좌·중·우 3등분을 쓰지 않는다. 가운데에 무엇을 「정중앙」으로 놓지 않는다 —
+        오른쪽 단추 수가 화면마다 다른데, 3등분이면 **단추가 늘 때마다 제목이 움직인다.**
+     ⚠️ 이 구조는 Main·여권·나머지 7종이 **함께 쓰는 규칙**이다(`docs/PRODUCT_SKIN_v1.md`).
+     ⚠️ `flex-wrap` 은 SITE-CONFIG 가 붙이는 `.kb-help`(키보드 없는 자리 안내)가
+        `order:9` 로 **아랫줄에 붙게** 하기 위한 것이다. 지우지 마라. */
   .topbar{
-    display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) auto;
-    align-items:center;gap:8px 20px;
+    display:flex;align-items:center;flex-wrap:wrap;gap:8px 18px;
     padding:0 28px;min-height:var(--m-bar-h);background:var(--m-surface);
     border-bottom:1px solid var(--m-border);
     position:sticky;top:0;z-index:20;
   }
+  /* 빈 자리 — 여기가 늘어나고 줄어든다. ⛔ 무엇으로도 채우지 않는다 */
+  .bar-space{flex:1 1 auto;min-width:8px;}
   .brand{display:flex;align-items:center;gap:11px;min-width:0;}
   .brand-tx{display:flex;align-items:center;gap:11px;min-width:0;}
   .brand b{font-size:var(--m-fs-brand);font-weight:var(--fw-heavy);color:var(--blue);
@@ -484,7 +493,8 @@ html.big{
   .brand-div{width:1px;height:15px;background:var(--m-border);flex:0 0 auto;}
   .brand h1{margin:0;font-size:var(--m-fs-brand-sub);font-weight:500;color:var(--m-ink-sub);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .topbar .gunpo-logo{height:28px;}
+  /* ⚠️ 로고 높이는 **공통 `GUNPO-LOGO` 블록(38px)** 이 정한다 — 그 블록이 뒤에 와서
+     여기서 값을 적어도 늘 졌다(2026.08.28 실측으로 확인). 죽은 규칙을 지웠다. */
   .actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
     justify-content:flex-end;padding:8px 0;}
   /* ⚠️ 날짜만 둔다. **시계는 넣지 않는다** — 이 PC 는 날짜가 설치일로 원복되는
@@ -836,9 +846,10 @@ html.big{
       <h1>민원 서식 작성 도우미</h1>
     </div>
   </div>
-  <div></div>
+  <!-- FLEXIBLE SPACE — ⛔ 채우지 않는다 -->
+  <div class="bar-space"></div>
+  <!-- ACTIONS — 오른쪽 정렬 -->
   <div class="actions">
-    <span class="today" id="today"></span>
     <!-- ⚠️ 아이콘과 글자를 갈라 둔다. 글자만 「일반 보기로」로 바뀌므로,
          한 덩어리로 두면 JS 가 매번 아이콘까지 다시 그려야 한다. -->
     <button class="btn" id="btnBig" aria-pressed="false"
@@ -847,6 +858,8 @@ html.big{
       aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.6"/><path d="M15.4 15.4L21 21"/>
       </svg><span id="btnBigLabel">크게 보기</span></button>
   </div>
+  <!-- DATE — **최우측 고정**. 단추가 몇 개든 오른쪽 기준선이 움직이지 않는다 -->
+  <span class="today" id="today"></span>
 </header>
 
 <!-- ═══ 네 구역 — BAR(위) + LEFT 26% / CENTER 56% / RIGHT 18%.
