@@ -468,6 +468,10 @@ html.big{
   .fb-req{color:#c0392b;background:#fdecec;border:1px solid #f3b4b4;}
   .fb-opt{color:#5b626c;background:#eef1f5;border:1px solid #d5d9df;}
   .q-help{font-size:14px;color:var(--muted);margin:-2px 0 8px;line-height:1.5;}
+  /* 선택사항 공통 안내(`OPT_HINT`) — 그 칸을 비워도 되는 이유를 말하는 한 줄.
+     ⚠️ 설명(`.q-help`)과 **같은 글줄 문법**을 쓰되 한 톤 옅게 둔다 — 지시가 아니라 안심이다.
+     ⛔ 색·아이콘으로 강조하지 마라. 눈에 띄면 필수 칸까지 「비워도 되나」로 읽힌다. */
+  .q-help.opt-hint{color:#7a8088;margin-top:-6px;}
   .text-input{width:100%;font-family:inherit;font-size:17px;padding:12px 13px;border:1.6px solid var(--line);
     border-radius:10px;background:#fff;color:var(--ink);}
   .text-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,95,192,.18);outline:none;}

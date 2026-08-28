@@ -11,6 +11,15 @@
           node tools/build-form.js birth
           python tools/verify-print.py        ← 반드시 0px 확인
    ===================================================================== */
+/* ══ 업무규칙 (2026.08.29 담당자 확인) ═══════════════════════════════════
+   가족관계등록 신고서는 **모든 사항을 적어야 한다.** 다만 시민이 그 자리에서 알기
+   어려운 세 가지 — **등록기준지 · 본 · 한자** — 는 선택으로 두고 창구가 채운다.
+   ⛔ 그 셋을 필수로 바꾸지 마라. 모르면 앞으로 나아갈 수 없게 되어, 정작 창구에서
+      1분이면 알려 줄 것 때문에 작성 자체를 포기한다.
+   ⚠️ 아래 문구는 **그 셋에만** 붙인다. 아무 데나 붙이면 「비워도 되는구나」로 읽힌다. */
+/* 이 값을 고르면 아버지(부) 단계와 성·본 협의 질문이 사라진다(아래 `when` 참조) */
+var UNWED="혼인 외";
+
 var EDU=["학력 없음","초등학교","중학교","고등학교","대학(교)","대학원 이상"];
 var SEX_OPTS=["남","여"];
 var MARITAL_OPTS=["혼인 중","혼인 외"];
@@ -19,25 +28,33 @@ var YN_OPTS=["예","아니요"];
 var QUAL_OPTS=["부","모","동거친족","기타"];
 
 // ② 부모 인적사항
+/* 부·모 공통 항목. ⚠️ 성명·주민등록번호는 **양쪽 다 필수**다 —
+   아버지 단계 자체가 혼인 중일 때만 나오므로(아래 `when`), 나왔다면 적어야 한다.
+   ⛔ 본·한자·등록기준지는 필수로 만들지 마라(`OPT_HELP` 참조). */
 function parentFields(p){
   var isM=(p==="m");
   return [
-    {k:p+"_name", label:"성명(한글)", req:isM, ph:isM?"이순자":"김철수"},
-    {k:p+"_nameHan", label:"성명(한자)", ph:isM?"李順子":"金哲洙"},
-    {k:p+"_bon", label:"본(한자)", ph:isM?"全州":"金海", help:"성씨의 본관을 한자로. 모르면 비워 두세요."},
-    {k:p+"_jumin", label:"주민등록번호", type:"jumin", req:isM, ph:"800101-0000000",
+    {k:p+"_name", label:"성명(한글)", req:true, ph:isM?"이순자":"김철수"},
+    {k:p+"_nameHan", label:"성명(한자)", ph:isM?"李順子":"金哲洙", optHint:true},
+    {k:p+"_bon", label:"본(한자)", ph:isM?"全州":"金海", help:"성씨의 본관을 한자로.", optHint:true},
+    {k:p+"_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"800101-0000000",
       help:"외국인은 외국인등록번호를 적습니다."},
-    {k:p+"_regBase", label:"등록기준지", req:isM, ph:"경기도 군포시 …",
-      help:"가족관계등록부의 기준이 되는 주소. 외국인은 국적을 적습니다."}
+    {k:p+"_regBase", label:"등록기준지", ph:"경기도 군포시 …",
+      help:"가족관계등록부의 기준이 되는 주소. 외국인은 국적을 적습니다.", optHint:true}
   ];
 }
+/* 신고인란은 **이메일만 선택**이다(2026.08.29 담당자 확인). 창구가 신분증과 대조하는
+   자리라 성명·주민등록번호·주소·전화가 다 있어야 한다. */
 function reporterFields(){
   return [
     {k:"reporter_name", label:"신고인 성명", req:true, ph:"김철수"},
-    {k:"reporter_jumin", label:"주민등록번호", type:"jumin", ph:"800101-0000000"},
-    {k:"reporter_addr", label:"주소", ph:"경기도 군포시 …"},
+    {k:"reporter_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"800101-0000000"},
+    {k:"reporter_addr", label:"주소", req:true, ph:"경기도 군포시 …"},
     {k:"reporter_phone", label:"전화번호", type:"phone", req:true, ph:"010-0000-0000"},
-    {k:"reporter_email", label:"이메일", ph:"name@example.com"}
+    /* ⚠️ 이메일만 선택이다. 다른 선택 칸과 달리 **창구가 대신 채워 줄 수 없어서**
+       공통 안내(`optHint`)를 붙이지 않는다 — 「접수 시 알려드리겠습니다」가 말이 안 된다. */
+    {k:"reporter_email", label:"이메일", ph:"name@example.com",
+      help:"없으면 비워 두셔도 됩니다."}
   ];
 }
 function childName(){ return ((state.child_surKor||"")+(state.child_givenKor||"")).trim(); }
@@ -47,7 +64,8 @@ function buildSummary(){
   h+='<div class="sum-sec"><h4>출생자</h4>';
   h+=sumRow("이름", childName()+(d.child_sex?" · "+d.child_sex:""));
   h+=sumRow("출생일시", [d.child_birthDate, (d.child_birthHour?d.child_birthHour+"시":"")+(d.child_birthMin?" "+d.child_birthMin+"분":"")].filter(function(x){return x&&x.trim();}).join(" "));
-  h+=sumRow("출생장소", d.child_birthPlace+(d.child_birthPlace==="기타"&&d.child_birthPlaceEtc?" · "+d.child_birthPlaceEtc:""));
+  h+=sumRow("출생장소", [d.child_birthPlace, d.child_birthPlaceEtc, d.child_birthPlaceAddr]
+    .filter(function(x){ return x && x.trim(); }).join(" · "));
   h+=sumRow("등록기준지", d.child_regBase);
   h+=sumRow("주소", d.child_addr);
   h+='</div>';
@@ -82,7 +100,7 @@ var FORM={
   stateKeys:[].concat(
     ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon",
      "child_sex","child_marital","child_birthDate","child_birthHour","child_birthMin",
-     "child_birthPlace","child_birthPlaceEtc","child_regBase","child_addr",
+     "child_birthPlace","child_birthPlaceAddr","child_birthPlaceEtc","child_regBase","child_addr",
      "child_headName","child_headRel","child_dualNat"],
     ["f_name","f_nameHan","f_bon","f_jumin","f_regBase","f_edu"],
     ["m_name","m_nameHan","m_bon","m_jumin","m_regBase","m_edu"],
@@ -99,7 +117,11 @@ var FORM={
       "birthY":{x:178.0,y:174.9,a:"c",size:7.5,nb:true}, "birthMo":{x:217.0,y:174.9,a:"c",size:7.5,nb:true},
       "birthD":{x:255.5,y:174.9,a:"c",size:7.5,nb:true}, "birthH":{x:290.0,y:174.9,a:"c",size:7.5,nb:true},
       "birthMin":{x:325.0,y:174.9,a:"c",size:7.5,nb:true},
-      "child_birthPlaceEtc":{x:297.0,y:193.8,a:"l",size:7,w:241.0},
+      /* ⚠️ 서식의 이 줄에는 ①②③ 오른쪽에 **넓은 칸 하나뿐**이다(284.6~550.8pt).
+         그래서 「기타 상세」와 「주소」를 **한 줄로 합쳐** 이 칸에 찍는다(`birthPlaceCell`).
+         ⛔ 좌표를 옮기지 마라 — Phase 1 에서 판면을 기준으로 확정한 자리다.
+         📌 두 값을 한 칸에 함께 찍는 것이 맞는지는 담당자 확인 항목이다. */
+      "birthPlaceCell":{x:297.0,y:193.8,a:"l",size:7,w:241.0},
       "child_regBase":{x:209.3,y:213.7,a:"l",size:7,w:314.0,wrap:true,nb:true},
       "child_addr":{x:128.6,y:238.8,a:"l",size:7,w:222.0,wrap:true,nb:true},
       "child_headName":{x:483.6,y:238.8,a:"r",size:7}, "child_headRel":{x:504.2,y:238.8,a:"l",size:7},
@@ -145,7 +167,7 @@ var FORM={
   buildVals:function(state){
     var d=state, v={};
     ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon",
-     "child_birthPlaceEtc","child_regBase","child_addr","child_headName","child_headRel","child_dualNat",
+     "child_regBase","child_addr","child_headName","child_headRel","child_dualNat",
      "f_name","f_nameHan","f_bon","f_regBase","m_name","m_nameHan","m_bon","m_regBase",
      "closed_name","closed_regBase","etc","reporter_name","reporter_qualEtc","reporter_email","sub_name"
     ].forEach(function(k){ v[k]=d[k]||""; });
@@ -153,6 +175,9 @@ var FORM={
     ["f_jumin","m_jumin","closed_jumin","reporter_jumin","sub_jumin"].forEach(function(f){
       v[f+"1"]=j1(d[f]); v[f+"2"]=j2(d[f]);
     });
+    /* 「기타」였다면 무엇이었는지를 앞에 두고 주소를 뒤에 붙인다 */
+    v.birthPlaceCell=[d.child_birthPlaceEtc, d.child_birthPlaceAddr]
+      .filter(function(x){ return x && String(x).trim(); }).join(" · ");
     var b=ymd(d.child_birthDate); v.birthY=b[0]; v.birthMo=b[1]; v.birthD=b[2];
     v.birthH=digits(d.child_birthHour); v.birthMin=digits(d.child_birthMin);
     return v;
@@ -181,14 +206,18 @@ var FORM={
       required:function(s){ var m=[];
         if(!String(s.child_surKor||"").trim()) m.push("성(한글)");
         if(!String(s.child_givenKor||"").trim()) m.push("이름(한글)");
+        if(!s.child_sex) m.push("성별");
+        /* ⚠️ 이 답이 뒤의 흐름을 가른다 — 「혼인 외」면 아버지(부) 단계와 성·본 협의가
+           사라진다. 비워 둔 채로 넘어가면 그 갈림길이 정해지지 않는다. */
+        if(!s.child_marital) m.push("혼인 중/외의 출생자");
         return m; },
       body:function(A){
         var h='';
         h+=A.inputHtml({k:"child_surKor", label:"성(한글)", req:true, half:true, ph:"김"});
         h+=A.inputHtml({k:"child_givenKor", label:"이름(한글)", req:true, half:true, ph:"하늘"});
-        h+=A.inputHtml({k:"child_surHan", label:"성(한자)", half:true, ph:"金"});
-        h+=A.inputHtml({k:"child_givenHan", label:"이름(한자)", half:true, ph:"하늘(한자)"});
-        h+=A.inputHtml({k:"child_bon", label:"본(한자)", ph:"金海 (본관)", help:"성씨의 본관을 한자로. 모르면 비워 두세요."});
+        h+=A.inputHtml({k:"child_surHan", label:"성(한자)", half:true, ph:"金", optHint:true});
+        h+=A.inputHtml({k:"child_givenHan", label:"이름(한자)", half:true, ph:"하늘(한자)", optHint:true});
+        h+=A.inputHtml({k:"child_bon", label:"본(한자)", ph:"金海 (본관)", help:"성씨의 본관을 한자로.", optHint:true});
         h+='<div class="field"><label class="field-label">성별</label>'+A.choiceHtml("child_sex",SEX_OPTS)+'</div>';
         h+='<div class="field"><label class="field-label">혼인 중/외의 출생자</label>'
           +A.choiceHtml("child_marital",MARITAL_OPTS,"부모가 혼인신고를 한 사이에 태어났으면 ‘혼인 중’입니다.")+'</div>';
@@ -200,47 +229,87 @@ var FORM={
       kind:"childBirth",
       required:function(s){ var m=[];
         if(!String(s.child_birthDate||"").trim()) m.push("출생 연월일");
+        /* 출생 시각은 가족관계등록부에 그대로 올라간다 — 비워 두면 창구에서 되돌아온다 */
+        if(!String(s.child_birthHour||"").trim()) m.push("출생 시각(시)");
+        if(!String(s.child_birthMin||"").trim()) m.push("출생 시각(분)");
+        if(!s.child_birthPlace) m.push("출생 장소");
+        if(!String(s.child_birthPlaceAddr||"").trim()) m.push("출생 장소 주소");
+        /* 조건부로 나타난 칸도 나타난 이상 필수다(담당자 요구) */
+        if(s.child_birthPlace==="기타" && !String(s.child_birthPlaceEtc||"").trim())
+          m.push("출생 장소(기타) 상세");
         if(!String(s.child_addr||"").trim()) m.push("주소");
+        if(!String(s.child_headName||"").trim()) m.push("세대주 성명");
+        if(!String(s.child_headRel||"").trim()) m.push("세대주와의 관계");
+        return m; },
+      /* 비어 있는지가 아니라 **말이 되는 값인지**를 본다. 출생 시각은 24시각제라
+         25시·70분 같은 값이 그대로 가족관계등록부에 올라가면 창구에서 되돌아온다. */
+      invalid:function(s){ var m=[];
+        var hh=String(s.child_birthHour||"").trim(), mi=String(s.child_birthMin||"").trim();
+        if(hh && (!/^\d{1,2}$/.test(hh) || +hh>23)) m.push("출생 시각(시)은 0~23 사이 숫자로 적어 주세요");
+        if(mi && (!/^\d{1,2}$/.test(mi) || +mi>59)) m.push("출생 시각(분)은 0~59 사이 숫자로 적어 주세요");
         return m; },
       body:function(A){
         var h='';
         h+=A.inputHtml({k:"child_birthDate", label:"출생 연월일", type:"date", req:true, ph:"2026.07.20",
           help:"예: 2026.07.20 (숫자 8자리를 적으면 자동으로 정리됩니다)"});
-        h+=A.inputHtml({k:"child_birthHour", label:"출생 시각 — 시(時)", half:true, ph:"14",
+        h+=A.inputHtml({k:"child_birthHour", label:"출생 시각 — 시(時)", req:true, half:true, ph:"14",
           help:"24시각제. 오후 2시 → 14"});
-        h+=A.inputHtml({k:"child_birthMin", label:"분(分)", half:true, ph:"30"});
+        h+=A.inputHtml({k:"child_birthMin", label:"분(分)", req:true, half:true, ph:"30"});
         h+='<div class="field"><label class="field-label">출생 장소 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("child_birthPlace",PLACE_OPTS)+'</div>';
+        /* ⚠️ 2026.08.29 — **주소와 「기타」 상세는 다른 것이다**(담당자 요구). 종류를 고르는
+           칸(`child_birthPlace`) · 어디인지 적는 칸(`child_birthPlaceAddr`) ·
+           「기타」가 무엇인지 적는 칸(`child_birthPlaceEtc`) 셋을 섞지 않는다.
+           ⛔ 주소칸을 조건부로 만들지 마라 — 자택·병원이어도 주소는 있어야 한다. */
+        h+=A.inputHtml({k:"child_birthPlaceAddr", label:"출생 장소 주소", req:true,
+          ph:"예: 경기도 군포시 산본로 000 △△병원",
+          help:"태어난 곳의 주소. 병원이면 병원 이름까지 적으면 좋습니다."});
         if(A.state.child_birthPlace==="기타")
-          h+=A.inputHtml({k:"child_birthPlaceEtc", label:"출생 장소(기타) 상세", ph:"예: 이동 중 차량 안"});
+          h+=A.inputHtml({k:"child_birthPlaceEtc", label:"출생 장소(기타) 상세", req:true,
+            ph:"예: 이동 중 차량 안",
+            help:"자택·병원이 아닌 어떤 곳이었는지 적습니다."});
         h+=A.inputHtml({k:"child_regBase", label:"부모가 정한 등록기준지", ph:"경기도 군포시 …",
-          help:"아이의 가족관계등록부 기준이 되는 주소."});
+          help:"아이의 가족관계등록부 기준이 되는 주소.", optHint:true});
         h+=A.inputHtml({k:"child_addr", label:"주소", req:true, ph:"경기도 군포시 …",
           help:"아이가 실제로 살(주민등록) 주소."});
-        h+=A.inputHtml({k:"child_headName", label:"세대주 성명", half:true, ph:"김철수",
+        h+=A.inputHtml({k:"child_headName", label:"세대주 성명", req:true, half:true, ph:"김철수",
           help:"아이가 속할 세대의 세대주."});
-        h+=A.inputHtml({k:"child_headRel", label:"세대주와의 관계", half:true, ph:"자녀(자·녀)"});
+        h+=A.inputHtml({k:"child_headRel", label:"세대주와의 관계", req:true, half:true, ph:"자녀(자·녀)"});
         h+=A.inputHtml({k:"child_dualNat", label:"복수국적 시 취득한 외국 국적", ph:"예: 미국",
           help:"아이가 복수국적자인 경우에만 적습니다."});
         return h;
       }},
+    /* ⚠️ **혼인 외 출생이면 이 단계를 통째로 건너뛴다**(2026.08.29 담당자 확인).
+       종전에는 늘 보여 주고 안내문으로만 「비워 둘 수 있습니다」라고 했는데,
+       「모든 항목 필수」로 바꾸는 순간 **적을 수 없는 분들이 갇힌다.**
+       ⛔ 이 `when` 을 지우려면 아래 `required` 도 함께 봐라 — 둘이 한 쌍이다. */
     {n:4, short:"부(父)", title:"② 아버지(부) 정보",
+      when:function(s){ return s.child_marital!==UNWED; },
       q:"아버지(부)의 정보를 입력하세요.",
-      why:"혼인 외 출생자를 어머니가 신고하는 경우에는 아버지 정보를 비워 둘 수 있습니다.",
+      why:"혼인 중의 출생자는 아버지 정보를 함께 적습니다. 본·한자·등록기준지는 모르면 비워 두세요.",
       kind:"fields",
+      required:function(s){ var m=[];
+        if(!String(s.f_name||"").trim()) m.push("아버지 성명(한글)");
+        if(!String(s.f_jumin||"").trim()) m.push("아버지 주민등록번호");
+        return m; },
       body:function(A){ var h='', ff=parentFields("f"); for(var i=0;i<ff.length;i++) h+=A.inputHtml(ff[i]); return h; }},
     {n:5, short:"모(母)", title:"② 어머니(모) 정보",
       q:"어머니(모)의 정보를 입력하세요.", kind:"mother",
       required:function(s){ var m=[];
         if(!String(s.m_name||"").trim()) m.push("어머니 성명(한글)");
         if(!String(s.m_jumin||"").trim()) m.push("어머니 주민등록번호");
-        if(!String(s.m_regBase||"").trim()) m.push("어머니 등록기준지");
+        /* ⛔ 등록기준지는 필수가 아니다 — 모르면 창구가 알려 준다(`OPT_HELP`). */
+        if(s.child_marital!==UNWED && !s.sonbon_consent) m.push("성·본 협의서 제출 여부");
         return m; },
       body:function(A){
         var h='', mf=parentFields("m");
         for(var j=0;j<mf.length;j++) h+=A.inputHtml(mf[j]);
-        h+='<div class="field"><label class="field-label">혼인신고 시 성·본 협의서 제출 여부</label>'
-          +A.choiceHtml("sonbon_consent",YN_OPTS,"자녀의 성·본을 어머니의 성·본으로 하는 협의서를 냈으면 ‘예’.")+'</div>';
+        /* ⚠️ 서식 문구가 「**혼인신고 시** …」라 혼인 중에만 뜻이 있다. 혼인 외에는 묻지 않는다
+           (2026.08.29 담당자 확인). ⛔ 항상 묻도록 되돌리지 마라. */
+        if(A.state.child_marital!==UNWED)
+          h+='<div class="field"><label class="field-label">혼인신고 시 성·본 협의서 제출 여부'
+            +' <span class="fb fb-req">필수</span></label>'
+            +A.choiceHtml("sonbon_consent",YN_OPTS,"자녀의 성·본을 어머니의 성·본으로 하는 협의서를 냈으면 ‘예’.")+'</div>';
         return h;
       }},
     {n:6, short:"기타", title:"③④ 특정사항·기타사항",
@@ -253,7 +322,7 @@ var FORM={
         h+='<div class="sum-sec"><h4>③ 폐쇄등록부상 특정사항 (드문 경우)</h4>';
         h+=A.inputHtml({k:"closed_name", label:"성명", half:true});
         h+=A.inputHtml({k:"closed_jumin", label:"주민등록번호", type:"jumin", half:true});
-        h+=A.inputHtml({k:"closed_regBase", label:"등록기준지"})+'</div>';
+        h+=A.inputHtml({k:"closed_regBase", label:"등록기준지", optHint:true})+'</div>';
         h+=A.inputHtml({k:"etc", label:"④ 기타사항", help:"후순위 신고, 태아인지 관련 등 특별히 밝힐 내용."});
         return h;
       }},
@@ -263,7 +332,11 @@ var FORM={
       kind:"reporter",
       required:function(s){ var m=[];
         if(!String(s.reporter_name||"").trim()) m.push("신고인 성명");
+        if(!String(s.reporter_jumin||"").trim()) m.push("신고인 주민등록번호");
+        if(!String(s.reporter_addr||"").trim()) m.push("신고인 주소");
         if(!String(s.reporter_phone||"").trim()) m.push("전화번호");
+        if(!s.reporter_qual) m.push("신고인 자격");
+        if(s.reporter_qual==="기타" && !String(s.reporter_qualEtc||"").trim()) m.push("기타 자격 상세");
         return m; },
       body:function(A){
         var h='', rf=reporterFields();
@@ -271,7 +344,7 @@ var FORM={
         h+='<div class="field"><label class="field-label">신고인 자격 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("reporter_qual",QUAL_OPTS,"신고인이 아이와 어떤 관계인지 선택하세요.")+'</div>';
         if(A.state.reporter_qual==="기타")
-          h+=A.inputHtml({k:"reporter_qualEtc", label:"기타 자격 상세", ph:"예: 후견인"});
+          h+=A.inputHtml({k:"reporter_qualEtc", label:"기타 자격 상세", req:true, ph:"예: 후견인"});
         return h;
       }},
     {n:8, short:"제출인", title:"⑥ 제출인",
@@ -284,13 +357,23 @@ var FORM={
         h+=A.inputHtml({k:"sub_jumin", label:"제출인 주민등록번호", type:"jumin", half:true});
         return h;
       }},
+    /* ⚠️ 2026.08.29 — 신서식은 이 조사의 주체를 「통계청」이 아니라 **「국가데이터처」**로 적는다.
+       ⛔ 나머지 3종(사망·혼인·이혼)의 서식 원본은 아직 통계청 표기다 — 거기 문구는 건드리지 마라. */
     {n:9, short:"인구동향", title:"인구동향조사(통계)",
-      q:"통계청 인구동향조사 항목입니다.",
+      q:"국가데이터처 인구동향조사 항목입니다.",
       why:"성실응답 의무가 있는 통계 항목이며, 개인정보는 보호됩니다. 부모의 최종 졸업학교를 선택하세요.", kind:"survey",
+      required:function(s){ var m=[];
+        /* 아버지 학력은 아버지 단계가 나온 경우에만 묻는다(혼인 중) */
+        if(s.child_marital!==UNWED && !s.f_edu) m.push("아버지 최종 졸업학교");
+        if(!s.m_edu) m.push("어머니 최종 졸업학교");
+        return m; },
       body:function(A){
         var h='';
-        h+='<div class="field"><label class="field-label">㉮ 최종 졸업학교 — 아버지(부)</label>'+A.choiceHtml("f_edu",EDU)+'</div>';
-        h+='<div class="field"><label class="field-label">㉮ 최종 졸업학교 — 어머니(모)</label>'+A.choiceHtml("m_edu",EDU)+'</div>';
+        if(A.state.child_marital!==UNWED)
+          h+='<div class="field"><label class="field-label">㉮ 최종 졸업학교 — 아버지(부)'
+            +' <span class="fb fb-req">필수</span></label>'+A.choiceHtml("f_edu",EDU)+'</div>';
+        h+='<div class="field"><label class="field-label">㉮ 최종 졸업학교 — 어머니(모)'
+          +' <span class="fb fb-req">필수</span></label>'+A.choiceHtml("m_edu",EDU)+'</div>';
         return h;
       }},
     {n:10, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
@@ -307,7 +390,9 @@ var FORM={
       child_surKor:"김", child_givenKor:"하늘", child_surHan:"金", child_givenHan:"하늘",
       child_bon:"金海", child_sex:"여", child_marital:"혼인 중",
       child_birthDate:"2026.07.20", child_birthHour:"14", child_birthMin:"30",
-      child_birthPlace:"병원", child_regBase:"경기도 군포시 산본로 000",
+      child_birthPlace:"병원",
+      child_birthPlaceAddr:"경기도 군포시 산본로 000 △△여성병원",
+      child_regBase:"경기도 군포시 산본로 000",
       child_addr:"경기도 군포시 산본로 000, 101동 1001호",
       child_headName:"김철수", child_headRel:"자녀(녀)",
       f_name:"김철수", f_nameHan:"金哲洙", f_bon:"金海", f_jumin:"8803151000000",

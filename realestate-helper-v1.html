@@ -468,6 +468,10 @@ html.big{
   .fb-req{color:#c0392b;background:#fdecec;border:1px solid #f3b4b4;}
   .fb-opt{color:#5b626c;background:#eef1f5;border:1px solid #d5d9df;}
   .q-help{font-size:14px;color:var(--muted);margin:-2px 0 8px;line-height:1.5;}
+  /* 선택사항 공통 안내(`OPT_HINT`) — 그 칸을 비워도 되는 이유를 말하는 한 줄.
+     ⚠️ 설명(`.q-help`)과 **같은 글줄 문법**을 쓰되 한 톤 옅게 둔다 — 지시가 아니라 안심이다.
+     ⛔ 색·아이콘으로 강조하지 마라. 눈에 띄면 필수 칸까지 「비워도 되나」로 읽힌다. */
+  .q-help.opt-hint{color:#7a8088;margin-top:-6px;}
   .text-input{width:100%;font-family:inherit;font-size:17px;padding:12px 13px;border:1.6px solid var(--line);
     border-radius:10px;background:#fff;color:var(--ink);}
   .text-input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(27,95,192,.18);outline:none;}
@@ -1742,6 +1746,14 @@ function renderExtras(){
 var el={};
 function num(i){ return "①②③④⑤⑥⑦⑧⑨⑩".charAt(i); }
 
+/* ══ 선택사항 공통 안내 (2026.08.29 담당자 요구) ═══════════════════════
+   가족관계등록 신고서는 원칙적으로 **모든 사항이 필수**다. 다만 **등록기준지·본·한자**는
+   시민이 그 자리에서 알기 어려워 창구가 채운다 — 그 칸에는 아래 한 문장을 붙인다.
+   ⛔ **화면마다 비슷한 말을 새로 짓지 마라.** 문구는 여기 하나뿐이고, 서식은
+      `{optHint:true}` 로 부르기만 한다. 말이 조금씩 달라지면 시민은 「이 칸은 좀 다른가」로 읽는다.
+   ⚠️ 아무 칸에나 붙이지 마라. 붙는 순간 「비워도 되는 칸」이 된다. */
+var OPT_HINT="모를 경우 비워두세요. 접수 시 알려드리겠습니다.";
+
 function inputHtml(f){
   var v=state[f.k]||"", req=f.req?'<span class="fb fb-req">필수</span>':'<span class="fb fb-opt">선택</span>';
   // 재렌더(단계 이동·조건부 갱신) 때도 입력 중과 같은 형식으로 보이게 한다
@@ -1751,6 +1763,7 @@ function inputHtml(f){
   var cls="field"+(f.half?" half":"");
   var h='<div class="'+cls+'"><label class="field-label" for="in_'+f.k+'">'+esc(f.label)+req+'</label>';
   if(f.help) h+='<div class="q-help">'+esc(f.help)+'</div>';
+  if(f.optHint) h+='<div class="q-help opt-hint">'+esc(OPT_HINT)+'</div>';
   h+='<input class="text-input" id="in_'+f.k+'" data-f="'+f.k+'" data-t="'+(f.type||"text")+'" '
     +'value="'+esc(v)+'" '
     +(f.type==="jumin"||f.type==="phone"||f.type==="money"?'inputmode="numeric" ':'')+'autocomplete="off"></div>';
@@ -1796,11 +1809,14 @@ function renderStepBody(step){
       앞으로 건너뛰기는 `gotoStep` 쪽에서 막는다. 7종의 요약 화면에는 아직
       줄마다 「수정」이 없어서, 이 길을 없애면 [이전]을 여러 번 눌러야 한다. */
 function renderStepper(){
-  var cur=state.step, STEPS=FORM.STEPS, TOTAL=STEPS.length, h='';
+  var cur=state.step, STEPS=FORM.STEPS, h='';
+  /* ⚠️ 세는 것은 **활성 단계**다. 숨긴 단계까지 세면 「진행 5 / 10」인데 다섯 번만
+     누르면 끝나는 식이 되어 시민이 남은 양을 잘못 짐작한다. */
+  var act=activeSteps(), TOTAL=act.length, pos=act.indexOf(cur)+1;
   var fill=document.getElementById("pbarFill");
-  if(fill) fill.style.width = Math.round(cur/TOTAL*100)+"%";
-  for(var i=0;i<TOTAL;i++){
-    var n=i+1, done=n<cur, now=n===cur;
+  if(fill) fill.style.width = Math.round((pos||1)/(TOTAL||1)*100)+"%";
+  for(var ai=0; ai<act.length; ai++){
+    var n=act[ai], i=n-1, done=n<cur, now=n===cur;
     var cls="stp"+(done?" done":(now?" cur":""));
     var tick='<span class="tick" aria-hidden="true">'+(done?"✓":(now?"▶":"·"))+'</span>';
     var lab='<span>'+esc(STEPS[i].short)+'</span>';
@@ -1810,26 +1826,64 @@ function renderStepper(){
       : '<span class="'+cls+'">'+tick+lab+'</span>';
   }
   el.stepper.innerHTML=h;
-  el.stepper.setAttribute("aria-valuenow", cur);
-  el.stepper.setAttribute("aria-valuetext", cur+" / "+TOTAL+" 단계 · "+STEPS[cur-1].short);
+  el.stepper.setAttribute("aria-valuemax", TOTAL);
+  el.stepper.setAttribute("aria-valuenow", pos);
+  el.stepper.setAttribute("aria-valuetext", pos+" / "+TOTAL+" 단계 · "+STEPS[cur-1].short);
 }
 function renderStep(){
-  var def=FORM.STEPS[state.step-1], TOTAL=FORM.STEPS.length;
+  var def=FORM.STEPS[state.step-1];
+  var act=activeSteps(), TOTAL=act.length, pos=act.indexOf(state.step)+1;
   el.wizTitle.textContent=def.title;
-  el.wizCount.textContent="진행 "+state.step+" / "+TOTAL;   // 여권과 같은 문구
+  el.wizCount.textContent="진행 "+pos+" / "+TOTAL;   // 여권과 같은 문구
   el.wizBody.innerHTML=renderStepBody(state.step);
   el.stepWarn.textContent="";
-  el.btnPrev.disabled = state.step===1;
-  el.btnNext.textContent = state.step===TOTAL ? "인쇄하기 🖨️" : "다음 →";
+  el.btnPrev.disabled = !prevActive(state.step);
+  el.btnNext.textContent = isLastStep() ? "인쇄하기 🖨️" : "다음 →";
   el.btnSkip.style.display = (def.kind==="intro"||def.kind==="summary") ? "none" : "block";
   renderStepper();
 }
-function renderAll(){ renderStep(); renderForm(); }
+function renderAll(){ normalizeStep(); renderStep(); renderForm(); }
 
 /* 6) 검증 · 네비게이션 */
+
+/* ══ 조건부 단계 (2026.08.29) ═══════════════════════════════════════════
+   서식이 단계에 `when:function(state){…}` 를 달면 **거짓일 때 그 단계를 건너뛴다.**
+   출생신고의 「아버지(부) 정보」가 첫 사례다 — 혼인 외 출생이면 적을 것이 없는데도
+   화면이 나와서, 「모든 항목 필수」로 바꾸는 순간 **그분들이 갇힌다.**
+
+   ⚠️ `state.step` 은 **`FORM.STEPS` 의 절대 번호**를 그대로 쓴다. 걸러낸 목록의 번호로
+      바꾸지 않는다 — `STEP_HL`·`applySample`·`required` 가 전부 절대 번호를 쓰고 있어
+      한 곳만 어긋나도 조용히 엉뚱한 단계가 강조된다.
+   ⚠️ 화면에 보이는 「진행 n / N」과 진행 막대는 **활성 단계 기준**으로 센다.
+   ⛔ `when` 이 없는 서식(나머지 4종)은 전부 활성이라 지금과 완전히 같다. */
+function stepActive(n){
+  var d=FORM.STEPS[n-1];
+  return !!d && (!d.when || !!d.when(state));
+}
+function activeSteps(){
+  var a=[];
+  for(var i=1;i<=FORM.STEPS.length;i++) if(stepActive(i)) a.push(i);
+  return a;
+}
+/* 지금 서 있는 단계가 조건이 바뀌어 사라졌으면 **앞쪽에서 가장 가까운 활성 단계**로 옮긴다.
+   (예: 4단계에 서 있다가 2단계로 돌아가 「혼인 외」로 바꾸고 다시 온 경우) */
+function normalizeStep(){
+  if(stepActive(state.step)) return;
+  var a=activeSteps(); if(!a.length) return;
+  for(var i=0;i<a.length;i++) if(a[i]>state.step){ state.step=a[i]; return; }
+  state.step=a[a.length-1];
+}
 function requiredMissing(step){
   var def=FORM.STEPS[step-1];
   return def.required ? (def.required(state)||[]) : [];
+}
+/* 「비었는가」가 아니라 「값이 말이 되는가」를 본다(예: 출생 시각 25시).
+   ⚠️ `required` 와 나눠 둔 이유는 **안내 문장이 다르기 때문**이다 —
+      비었으면 「입력해 주세요」, 틀렸으면 그 자리에서 무엇이 잘못인지 말해야 한다.
+   ⛔ 이 훅이 없는 서식은 아무 일도 일어나지 않는다(나머지 4종). */
+function stepInvalid(step){
+  var def=FORM.STEPS[step-1];
+  return def.invalid ? (def.invalid(state)||[]) : [];
 }
 // 인쇄 직전 알림: 여백 없음·배율 100%(실제 크기)로 인쇄해야 서식이 정확히 출력됨
 function doPrint(){
@@ -1837,19 +1891,42 @@ function doPrint(){
   if(window.__printNotice){ window.__printNotice(why, function(){ window.print(); }); return; }
   window.print();
 }
+function nextActive(n){ var a=activeSteps(); for(var i=0;i<a.length;i++) if(a[i]>n) return a[i]; return 0; }
+function prevActive(n){ var a=activeSteps(); for(var i=a.length-1;i>=0;i--) if(a[i]<n) return a[i]; return 0; }
+function isLastStep(){ var a=activeSteps(); return a.length ? state.step===a[a.length-1] : true; }
 function goNext(){
-  var TOTAL=FORM.STEPS.length;
-  if(state.step===TOTAL){ doPrint(); return; }
+  if(isLastStep()){ doPrint(); return; }
   var miss=requiredMissing(state.step);
   if(miss.length){
     el.stepWarn.textContent="다음 항목을 입력해 주세요: "+miss.join(", ");
     return;
   }
-  state.step++; renderAll(); scrollTop();
+  var bad=stepInvalid(state.step);
+  if(bad.length){ el.stepWarn.textContent=bad.join(" · "); return; }
+  var n=nextActive(state.step); if(!n) return;
+  state.step=n; renderAll(); scrollTop();
 }
-function goPrev(){ if(state.step>1){ state.step--; renderAll(); scrollTop(); } }
-function gotoStep(n){ if(n>=1 && n<state.step){ state.step=n; renderAll(); scrollTop(); } }
-function skipStep(){ var TOTAL=FORM.STEPS.length; state.unsure[state.step]=true; if(state.step<TOTAL){ state.step++; renderAll(); scrollTop(); } }
+function goPrev(){ var n=prevActive(state.step); if(n){ state.step=n; renderAll(); scrollTop(); } }
+function gotoStep(n){ if(n>=1 && n<state.step && stepActive(n)){ state.step=n; renderAll(); scrollTop(); } }
+/* ⛔ **필수 항목을 건너뛰어 완성하는 길을 두지 않는다**(2026.08.29 담당자 요구).
+      종전에는 이 단추가 `required` 를 통째로 넘겨서, 반드시 있어야 할 값이 빈 채로
+      인쇄까지 갔다. 창구에서 되돌아오면 시민이 처음부터 다시 적는다.
+   ⚠️ 그래서 지금 이 단추는 **선택 항목만** 건너뛴다. 필수가 비어 있으면 [다음]과 똑같이 막는다.
+   📌 「정말로 판단이 어려운 자리」는 건너뛰기가 아니라 **직원을 부르는 길**이어야 한다 —
+      Product UI v1 의 Human Handoff 로 옮기는 것이 Phase 3 과제다.
+   📌 `state.unsure` 는 아직 **적히기만 하고 아무도 읽지 않는다.** 창구로 전달되지 않으므로
+      이 기능은 완성된 것이 아니다(Phase 3에서 함께 정리한다). */
+function skipStep(){
+  var miss=requiredMissing(state.step);
+  if(miss.length){
+    el.stepWarn.textContent="이 항목은 비워 둘 수 없습니다: "+miss.join(", ");
+    return;
+  }
+  var bad=stepInvalid(state.step);
+  if(bad.length){ el.stepWarn.textContent=bad.join(" · "); return; }
+  state.unsure[state.step]=true;
+  var n=nextActive(state.step); if(n){ state.step=n; renderAll(); scrollTop(); }
+}
 function scrollTop(){ el.wizBody.scrollTop=0; window.scrollTo(0,0); }
 
 /* 7) 이벤트 */
@@ -1874,8 +1951,12 @@ function onClick(e){
   if(t.hasAttribute("data-set")){
     var k=t.getAttribute("data-set"), val=t.getAttribute("data-val");
     state[k]=(state[k]===val)?"":val;   // 같은 항목 다시 누르면 해제(토글)
-    if((FORM.rerenderOnSet||[]).indexOf(k)>=0){ renderStep(); renderForm(); }
-    else renderAll();
+    /* ⚠️ 선택 하나로 **다음 단계의 존재 여부**가 바뀔 수 있다(조건부 단계).
+       그래서 언제나 `renderAll()` 로 진행 표시까지 다시 센다.
+       📌 `FORM.rerenderOnSet` 은 이제 하는 일이 없다 — 종전에도 두 갈래가
+          `renderStep(); renderForm();` 으로 **똑같았다.** 5종 config 에 남아 있어
+          지우지 않고 둔다(지우려면 5종을 함께 봐야 한다). */
+    renderAll();
   }
   else if(t.hasAttribute("data-toggle")){ var kk=t.getAttribute("data-toggle"); state[kk]=!state[kk]; renderAll(); }
   else if(t.hasAttribute("data-next")){ goNext(); }
@@ -2017,8 +2098,9 @@ function init(){
     document.head.appendChild(st);
   }
   bind();
+  /* ⛔ 여기서 `aria-valuemax` 를 따로 넣지 않는다 — `renderStepper()` 가 **활성 단계 수**로
+     매번 다시 넣는다. 조건부 단계가 생긴 뒤로는 전체 개수가 답이 아니다(2026.08.29). */
   renderAll();
-  el.stepper.setAttribute("aria-valuemax", FORM.STEPS.length);
 }
 init();
 
