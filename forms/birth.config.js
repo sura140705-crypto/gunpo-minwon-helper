@@ -1,8 +1,15 @@
 /* =====================================================================
    출생신고서(양식 제1호) — FORM 설정
    engine/engine.js와 함께 build-form.js가 자체완결 HTML로 인라인한다.
-   재생성: python tools/prep-bg.py birth 서식원본/출생신고서.pdf
+
+   ⛔ **인쇄층의 원본은 `서식원본/출생신고서(20260828).pdf` 하나다.**
+      같은 폴더의 `출생신고서.pdf` 는 **구본(통계청 표기 시절)** 이고 대조용으로만 남겨 뒀다.
+      ⚠️ 그것으로 배경을 다시 만들면 **판면이 달라 좌표 69개가 전부 어긋난다** —
+         화면은 멀쩡하고 **인쇄물만** 어긋나므로 눈치채기 어렵다(2026.08.29).
+
+   재생성: python tools/prep-bg.py birth "서식원본/출생신고서(20260828).pdf"
           node tools/build-form.js birth
+          python tools/verify-print.py        ← 반드시 0px 확인
    ===================================================================== */
 var EDU=["학력 없음","초등학교","중학교","고등학교","대학(교)","대학원 이상"];
 var SEX_OPTS=["남","여"];
@@ -70,7 +77,7 @@ var FORM={
     "서명·날인은 인쇄한 뒤 본인이 직접 해야 합니다."
   ],
   rerenderOnSet:["child_birthPlace","reporter_qual"],
-  today:{ y:88, yx:128, mx:173, dx:218 },
+  today:{ y:87.8, yx:99.8, mx:145.1, dx:190.3 },
 
   stateKeys:[].concat(
     ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon",
@@ -86,53 +93,53 @@ var FORM={
 
   CO:{
     texts:{
-      "child_surKor":{x:186,y:112,a:"c",size:8}, "child_givenKor":{x:238,y:112,a:"c",size:8},
-      "child_surHan":{x:186,y:147,a:"c",size:8}, "child_givenHan":{x:238,y:147,a:"c",size:8},
-      "child_bon":{x:336,y:130,a:"c",size:7.5},
-      "birthY":{x:206,y:175,a:"c",size:7.5,nb:true}, "birthMo":{x:245,y:175,a:"c",size:7.5,nb:true},
-      "birthD":{x:283,y:175,a:"c",size:7.5,nb:true}, "birthH":{x:318,y:175,a:"c",size:7.5,nb:true},
-      "birthMin":{x:353,y:175,a:"c",size:7.5,nb:true},
-      "child_birthPlaceEtc":{x:300,y:194,a:"l",size:7,w:215},
-      "child_regBase":{x:236,y:214,a:"l",size:7,w:280,wrap:true,nb:true},
-      "child_addr":{x:156,y:239,a:"l",size:7,w:198,wrap:true,nb:true},
-      "child_headName":{x:472,y:239,a:"r",size:7}, "child_headRel":{x:488,y:239,a:"l",size:7},
-      "child_dualNat":{x:385,y:264,a:"l",size:6.5,w:135},
-      "f_name":{x:170,y:284,a:"c",size:7.5}, "f_nameHan":{x:250,y:284,a:"c",size:7},
-      "f_bon":{x:356,y:284,a:"c",size:7}, "f_jumin1":{x:465,y:284,a:"c",size:6.5}, "f_jumin2":{x:504,y:284,a:"c",size:6.5},
-      "m_name":{x:170,y:303,a:"c",size:7.5}, "m_nameHan":{x:250,y:303,a:"c",size:7},
-      "m_bon":{x:356,y:303,a:"c",size:7}, "m_jumin1":{x:465,y:303,a:"c",size:6.5}, "m_jumin2":{x:504,y:303,a:"c",size:6.5},
-      "f_regBase":{x:196,y:322,a:"l",size:7,w:320,wrap:true,nb:true},
-      "m_regBase":{x:196,y:342,a:"l",size:7,w:320,wrap:true,nb:true},
-      "closed_name":{x:274,y:399,a:"c",size:7}, "closed_jumin1":{x:418,y:399,a:"c",size:7}, "closed_jumin2":{x:490,y:399,a:"c",size:7},
-      "closed_regBase":{x:260,y:418,a:"l",size:7,w:255,wrap:true,nb:true},
-      "etc":{x:150,y:437,a:"l",size:7.5,w:365,wrap:true},
-      "reporter_name":{x:190,y:456,a:"c",size:8}, "reporter_jumin1":{x:418,y:456,a:"c",size:7}, "reporter_jumin2":{x:490,y:456,a:"c",size:7},
-      "reporter_qualEtc":{x:340,y:475,a:"l",size:6.5,w:110},
-      "reporter_addr":{x:150,y:500,a:"l",size:7.5,w:365,wrap:true,nb:true},
-      "reporter_phone":{x:200,y:525,a:"c",size:7.5}, "reporter_email":{x:330,y:525,a:"l",size:6.5,w:190},
-      "sub_name":{x:230,y:543,a:"c",size:8}, "sub_jumin1":{x:395,y:543,a:"c",size:7}, "sub_jumin2":{x:483,y:543,a:"c",size:7}
+      "child_surKor":{x:158.1,y:111.8,a:"c",size:8}, "child_givenKor":{x:210.4,y:111.8,a:"c",size:8},
+      "child_surHan":{x:158.1,y:146.9,a:"c",size:8}, "child_givenHan":{x:210.4,y:146.9,a:"c",size:8},
+      "child_bon":{x:322.0,y:129.9,a:"c",size:7.5},
+      "birthY":{x:178.0,y:174.9,a:"c",size:7.5,nb:true}, "birthMo":{x:217.0,y:174.9,a:"c",size:7.5,nb:true},
+      "birthD":{x:255.5,y:174.9,a:"c",size:7.5,nb:true}, "birthH":{x:290.0,y:174.9,a:"c",size:7.5,nb:true},
+      "birthMin":{x:325.0,y:174.9,a:"c",size:7.5,nb:true},
+      "child_birthPlaceEtc":{x:297.0,y:193.8,a:"l",size:7,w:241.0},
+      "child_regBase":{x:209.3,y:213.7,a:"l",size:7,w:314.0,wrap:true,nb:true},
+      "child_addr":{x:128.6,y:238.8,a:"l",size:7,w:222.0,wrap:true,nb:true},
+      "child_headName":{x:483.6,y:238.8,a:"r",size:7}, "child_headRel":{x:504.2,y:238.8,a:"l",size:7},
+      "child_dualNat":{x:367.5,y:263.7,a:"l",size:6.5,w:151.0},
+      "f_name":{x:144.4,y:283.8,a:"c",size:7.5}, "f_nameHan":{x:234.8,y:283.8,a:"c",size:7},
+      "f_bon":{x:340.2,y:283.8,a:"c",size:7}, "f_jumin1":{x:460.4,y:283.8,a:"c",size:6.5}, "f_jumin2":{x:519.9,y:283.8,a:"c",size:6.5},
+      "m_name":{x:144.4,y:302.7,a:"c",size:7.5}, "m_nameHan":{x:234.8,y:302.7,a:"c",size:7},
+      "m_bon":{x:340.2,y:302.7,a:"c",size:7}, "m_jumin1":{x:460.4,y:302.7,a:"c",size:6.5}, "m_jumin2":{x:519.9,y:302.7,a:"c",size:6.5},
+      "f_regBase":{x:168.9,y:321.6,a:"l",size:7,w:359.0,wrap:true,nb:true},
+      "m_regBase":{x:168.9,y:341.7,a:"l",size:7,w:359.0,wrap:true,nb:true},
+      "closed_name":{x:249.5,y:398.8,a:"c",size:7}, "closed_jumin1":{x:425.9,y:398.8,a:"c",size:7}, "closed_jumin2":{x:510.6,y:398.8,a:"c",size:7},
+      "closed_regBase":{x:233.4,y:418.6,a:"l",size:7,w:286.0,wrap:true,nb:true},
+      "etc":{x:122.7,y:438.4,a:"l",size:7.5,w:410.0,wrap:true},
+      "reporter_name":{x:164.5,y:458.3,a:"c",size:8}, "reporter_jumin1":{x:425.9,y:458.3,a:"c",size:7}, "reporter_jumin2":{x:510.6,y:458.3,a:"c",size:7},
+      "reporter_qualEtc":{x:322.0,y:478.3,a:"l",size:6.5,w:123.0},
+      "reporter_addr":{x:122.7,y:503.4,a:"l",size:7.5,w:410.0,wrap:true,nb:true},
+      "reporter_phone":{x:172.2,y:529.1,a:"c",size:7.5}, "reporter_email":{x:326.7,y:529.1,a:"l",size:6.5,w:213.0},
+      "sub_name":{x:202.3,y:548.3,a:"c",size:8}, "sub_jumin1":{x:376.6,y:548.3,a:"c",size:7}, "sub_jumin2":{x:495.3,y:548.3,a:"c",size:7}
     },
     checks:{
-      "child_sex":{"남":[405,121],"여":[405,139]},
-      "child_marital":{"혼인 중":[437,121],"혼인 외":[437,139]},
-      "child_birthPlace":{"자택":[191,194],"병원":[226,194],"기타":[261,194]},
-      "sonbon_consent":{"예":[455.6,361.5],"아니요":[494.4,361.5]},
-      "reporter_qual":{"부":[156,475],"모":[186,475],"동거친족":[216,475],"기타":[276,475]},
-      "f_edu":{"학력 없음":[159,682],"초등학교":[224,682],"중학교":[285,682],"고등학교":[336,682],"대학(교)":[397,682],"대학원 이상":[456,682]},
-      "m_edu":{"학력 없음":[159,707],"초등학교":[224,707],"중학교":[285,707],"고등학교":[336,707],"대학(교)":[397,707],"대학원 이상":[456,707]}
+      "child_sex":{"남":[409.0,120.9],"여":[409.0,138.9]},
+      "child_marital":{"혼인 중":[454.3,120.9],"혼인 외":[454.3,138.9]},
+      "child_birthPlace":{"자택":[167.0,193.8],"병원":[209.5,193.8],"기타":[252.0,193.8]},
+      "sonbon_consent":{"예":[459.0,361.1],"아니요":[508.0,361.1]},
+      "reporter_qual":{"부":[128.0,478.3],"모":[160.5,478.3],"동거친족":[193.0,478.3],"기타":[255.5,478.3]},
+      "f_edu":{"학력 없음":[163.5,677.2],"초등학교":[230.5,677.2],"중학교":[293.0,677.2],"고등학교":[345.5,677.2],"대학(교)":[408.0,677.2],"대학원 이상":[468.0,677.2]},
+      "m_edu":{"학력 없음":[163.5,700.8],"초등학교":[230.5,700.8],"중학교":[293.0,700.8],"고등학교":[345.5,700.8],"대학(교)":[408.0,700.8],"대학원 이상":[468.0,700.8]}
     },
     attend:{}
   },
 
   STEP_HL:{
-    2:[[101,95,524,166]],
-    3:[[101,166,524,274]],
-    4:[[101,274,524,293],[101,313,524,332]],
-    5:[[101,293,524,313],[101,332,524,371]],
-    6:[[72,371,524,447]],
-    7:[[72,447,524,534]],
-    8:[[72,534,524,553]],
-    9:[[72,672,524,712]]
+    2:[[72.7,94.8,550.6,165.9]],
+    3:[[72.7,165.9,550.5,273.8]],
+    4:[[72.7,273.8,550.5,292.7],[72.7,312.6,550.6,331.7]],
+    5:[[72.7,292.7,550.5,312.6],[72.7,331.7,550.6,370.7]],
+    6:[[43.5,370.7,550.6,448.5]],
+    7:[[43.5,448.5,550.6,538.8]],
+    8:[[43.5,538.8,550.5,559.0]],
+    9:[[43.4,667.8,552.1,705.5]]
   },
 
   buildVals:function(state){
@@ -153,7 +160,7 @@ var FORM={
 
   signatureHI:function(v){
     var HI=[];
-    if(v.reporter_name) HI.push([248,449,318,464]);
+    if(v.reporter_name) HI.push([225.7,450.6,299.7,467.0]);
     return HI;
   },
 
