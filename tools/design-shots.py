@@ -32,6 +32,23 @@ CHROME_CANDIDATES = [
     r"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe",
 ]
 
+# ⚠️ **시계를 고정한다**(2026.08.28). 서식은 로드 시점에 오늘 날짜를 붙잡아 신청일·동의일
+#    칸에 찍고, 상단 바에도 날짜를 적는다. 고정하지 않으면 **코드를 한 줄도 안 고쳐도 갈무리가
+#    매일 달라져** 33장이 통째로 diff 로 잡힌다 — 화면 회귀를 갈무리로 볼 수 없게 된다.
+#    `verify-print.py` 가 2026.08.06 에 같은 함정을 이미 겪었다(`docs/GOTCHAS.md ㉛`).
+#    ⛔ `</body>` 뒤에 넣으면 늦다. **`<head>` 첫머리**에 넣어야 서식이 그것을 읽는다.
+FIXED_DATE = (2026, 8, 4)          # verify-print.py 와 **같은 날**로 맞춘다
+CLOCK_FREEZE = """<script>(function(){
+  var D=Date, F=new D(%d,%d,%d,10,0,0).getTime();
+  function K(){
+    if(!(this instanceof K)) return new D(F).toString();
+    if(arguments.length===0) return new D(F);
+    return new (D.bind.apply(D,[null].concat([].slice.call(arguments))))();
+  }
+  K.prototype=D.prototype; K.now=function(){return F;}; K.parse=D.parse; K.UTC=D.UTC;
+  window.Date=K;
+})();</script>""" % (FIXED_DATE[0], FIXED_DATE[1] - 1, FIXED_DATE[2])
+
 # 서식 안에서 카드를 누르는 공용 함수 (여권 시나리오가 쓴다)
 CLICK = '''
 function click(t){ var n=[].filter.call(document.querySelectorAll(".card"),
@@ -182,6 +199,7 @@ def chrome():
 
 def build(src, cfg, script):
     s = io.open(os.path.join(ROOT, src), encoding="utf-8").read()
+    s = s.replace("<head>", "<head>" + CLOCK_FREEZE, 1)      # ⚠️ 날짜 고정이 먼저다
     if cfg:
         s = s.replace("<head>", "<head><script>window.__kioskCfg=%s;</script>"
                       % json.dumps(cfg, ensure_ascii=False), 1)
