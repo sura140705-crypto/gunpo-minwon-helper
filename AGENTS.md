@@ -104,6 +104,30 @@ node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 - 성격이 다른 변경은 커밋을 나눈다(코드 / 이동·정리 / 문서).
 - 현장에서 온 의견을 반영했으면 `CHANGELOG.md` 에 **무엇을·왜·어디를·확인** 형식으로 남긴다.
 
+## 5-1. 화면 조형 — **Product UI v1 이 기준점이다** (커밋 `1d735fc` · 2026.08.28)
+
+여권에서 **Product Shell**(상단 BAR) · **Product Typography** · **ASK Component System**
+(Button Role 4종·Navigation Zone) · **Handoff Family** · **크게 보기** · **한국어 조판**을
+확정했다. 값은 전부 [`docs/PRODUCT_SKIN_v1.md`](docs/PRODUCT_SKIN_v1.md) 에 있다.
+
+⛔ **이것들을 재설계하지 마라.** 새 서식을 붙일 때 UI 값을 새로 만들지 말고 **이식만** 한다 —
+이식은 판단이 아니라 복제다. 서식마다 값이 갈라지면 「같은 제품」이 무너진다.
+
+서식 하나를 붙이는 순서는 **다섯 단계**다(`docs/EXPANSION_PLAYBOOK.md` 가 각 단계의 세부):
+
+1. **실제 서식·업무규칙 확인** — 법정 별지서식·소관 부서 기준
+2. **질문 흐름·조건 정의** — 무엇을 언제 묻고 어디서 갈라지는지
+3. **Product UI v1 이식** — `PRODUCT_SKIN_v1.md` 를 한 번에 적용
+4. **인쇄 좌표 검증** — `verify-print.py --update` 로 기준선에 넣고 이유를 `CHANGELOG.md` 에
+5. **회귀검증** — §2 의 도구 전부
+
+⛔ 기존 공통 component 를 **서식별로 변형하지 마라.** Product UI v1 로 표현할 수 없는
+**실제 업무 요구**가 나왔을 때만 새 component·variant 를 **제안하고 승인을 받는다.**
+⛔ 여권 화면은 `1d735fc` 이후 **기능·업무규칙·인쇄·개인정보·접근성 결함**일 때만 연다.
+미관상의 이유로 다시 열지 않는다.
+📌 **Color & Visual Polish**(BAR tint·primary/secondary 위계·미리보기 강조도·Handoff 두
+variant 의 톤·전체 색 농도)는 **별도 backlog** 다 — 서식 하나에서 색만 손대지 마라.
+
 ## 6. 다른 기관에 확산할 때
 
 지역 고유값(기관명·부서·연락처·로고·앱 이름)은 `python tools/rebrand.py` 로 일괄 교체한다.

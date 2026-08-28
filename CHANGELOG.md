@@ -16,6 +16,33 @@
 
 ---
 
+## 2026.08.29
+
+### [반영] 여권 상세의 **「← 메인으로」가 눈에 안 걸리던 것**  · 현장 의견
+
+- 무엇을: 「← 메인으로」를 **Role ④ Compact-Tertiary → Role ② Body Button** 으로 올렸다.
+  회색 1px 테두리 · 잉크 글자(13.5px) → **대표색 1.5px 테두리 · 대표색 글자 · 흰 면(15px)**.
+  BAR 의 [미리보기]와 **같은 family 의 테두리 변형**이다.
+  실측 104×33 → **115×38**(크게 보기 114×37 → 133×44).
+- 왜: 「미리보기처럼 좀 눈에 띄면 좋겠다」는 의견. 종전 값은 초기화와 같은 계층이었는데,
+  **뜻이 다르다** — 메인으로는 되돌릴 수 있는 이동이고 초기화는 되돌릴 수 없는 파기다.
+  계층이 같으면 그 차이가 보이지 않는다.
+- ⛔ **새 수치를 만들지 않았다.** 이미 있던 `.btn`(Role ② 보조 버튼) 규격을 그대로 썼다.
+- ⛔ **채운 대표색(solid)으로 하지 않았다.** 이 화면에서 앞으로 가는 길은 [다음]이고,
+  위아래에 채운 파란 단추가 둘이면 어느 쪽이 진행인지 흐려진다.
+- ⛔ **「처음부터 다시 작성」은 그대로 두었다**(Role ④). 되돌릴 수 없는 행동이라 가장 조용해야 한다.
+- 어디를: `passport-helper-v1.html`(`.nav-back`·`.reset-btn` 분리) · `kiosk-app/app/`(동기화) ·
+  `tests/screen-baseline.json` · `docs/디자인검토/shots/`(재생성) ·
+  `docs/PRODUCT_SKIN_v1.md` §3-1·§3-3 · `docs/UIUX_HANDOFF.md` §4-2-3·§4-2-4.
+- 확인: `verify-print` 19쪽 0px · `--electron` 19쪽 0px · `measure-screen` 15화면
+  (가로 넘침 0 · 종이 794×1122) · `verify-site-config` 6 ·
+  `check-design-tokens`·`check-site-block` 9화면 동일 · `sync-kiosk --check` ·
+  질문칸 높이 643→636(일반)·613→604(크게) · RAIL 넘침 0.
+- 📌 나머지 색 문제(BAR tint · [미리보기] 강조도 · Handoff 두 variant 의 톤)는 여전히
+  **Color & Visual Polish** backlog 다.
+
+---
+
 ## 2026.08.28 (3)
 
 ### [완료] **Passport / Product UI v1** — Main 의 디자인 언어를 여권에 그대로 옮기고 값을 동결했다  · 사용자 지시
