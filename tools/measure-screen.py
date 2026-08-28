@@ -59,8 +59,17 @@ SCENARIOS = [
     ("pass-01-경로선택",     "passport-helper-v1.html", {}, "", (W, H)),
     ("pass-03-입력화면",     "passport-helper-v1.html", {},
      CLICK + 'click("제 여권"); click("확인했습니다"); goNext();', (W, H)),
+    # ⚠️ 2026.08.28 단계 4 — 두 화면을 정식 시나리오로 올렸다. 여태 임시로 재던 자리인데
+    #    ① 주민번호는 **카드와 입력칸이 한 화면에** 있는 유일한 형태이고
+    #    ② 법정대리인은 **입력칸이 가장 많은 화면**(495px 질문면에서 가장 먼저 넘친다).
+    #    ⛔ 화면 수를 늘리려고 시나리오를 더 붙이지 마라 — 재는 데 드는 시간만큼 안 돌린다.
+    ("pass-02-주민번호",     "passport-helper-v1.html", {},
+     CLICK + 'click("제 여권"); click("확인했습니다"); '
+             'state.data.nameKor="홍길동"; goNext(); goNext();', (W, H)),
     ("pass-04-최종확인",     "passport-helper-v1.html", {},
      'fillSample("adult"); renderAll(); state.step=flow().length; renderAll();', (W, H)),
+    ("pass-07-법정대리인",   "passport-helper-v1.html", {},
+     'fillSample("minor"); state.step=flow().indexOf("guardian")+1; renderAll();', (W, H)),
     ("pass-08-공동친권자",   "passport-helper-v1.html", {},
      'fillSample("minor"); state.data.guardian2Name=""; state.data.guardian2Rel="";'
      'state.step=flow().indexOf("guardian2")+1; renderAll();', (W, H)),
@@ -89,20 +98,28 @@ function m(sel){
           ox:n.scrollWidth-n.clientWidth, oy:n.scrollHeight-n.clientHeight};
 }
 /* 가로로 넘치는 요소 — **글자가 잘리는 자리**다. 세로 넘침은 스크롤로 읽을 수 있지만
-   가로 넘침은 키오스크에서 사실상 못 읽는다. */
+   가로 넘침은 키오스크에서 사실상 못 읽는다.
+
+   ⚠️ **입력칸(`input`·`textarea`·`select`)은 빼고 센다**(2026.08.28에 오탐을 잡았다).
+      적은 값이 칸보다 길면 브라우저가 칸 **안에서** 가로로 굴린다 — 캐럿을 따라 보이므로
+      잘린 것이 아니다. 실제로 법정대리인 화면의 주소 예시가 9px 넘쳤는데, 단계 3에서도
+      똑같이 넘쳤다(조형 변경과 무관). 이것을 실패로 세면 매 단계 거짓 경보가 난다.
+      대신 아래 `입력칸넘침` 으로 **보고만** 한다 — 칸이 정말 좁아지면 눈에 걸리게. */
+function isField(n){ var t=n.tagName; return t==="INPUT"||t==="TEXTAREA"||t==="SELECT"; }
 function wide(){
-  var out=[], all=document.querySelectorAll("body *");
+  var out=[], fields=[], all=document.querySelectorAll("body *");
   for(var i=0;i<all.length;i++){
     var n=all[i];
     if(n.scrollWidth - n.clientWidth > 1 && n.clientWidth > 0){
       var c=getComputedStyle(n);
       if(c.overflowX==="auto"||c.overflowX==="scroll") continue;   // 구르라고 만든 자리
-      out.push((n.className&&n.className.baseVal===undefined&&n.className
+      var name=(n.className&&n.className.baseVal===undefined&&n.className
                 ? "."+String(n.className).trim().split(/\s+/)[0]
-                : n.tagName.toLowerCase())+" +"+(n.scrollWidth-n.clientWidth));
+                : n.tagName.toLowerCase())+" +"+(n.scrollWidth-n.clientWidth);
+      (isField(n) ? fields : out).push(name);
     }
   }
-  return out.slice(0,8);
+  return [out.slice(0,8), fields.slice(0,8)];
 }
 function tok(n){ return getComputedStyle(document.documentElement).getPropertyValue(n).trim(); }
 var paper=[].filter.call(document.querySelectorAll(".form-col .paper, .paper-fit .gp-img"),
@@ -118,7 +135,7 @@ var out={
   네비:nav?{w:Math.round(nav.getBoundingClientRect().width),
             h:Math.round(nav.getBoundingClientRect().height),
             열:getComputedStyle(nav).gridTemplateColumns}:null,
-  가로넘침:wide(),
+  가로넘침:wide()[0], 입력칸넘침:wide()[1],
   토큰:{cols:tok("--cols")||null, m_cols:tok("--m-cols")||null,
         topbar:tok("--topbar-h")||null, m_bar:tok("--m-bar-h")||null,
         big:document.documentElement.classList.contains("big")}
@@ -202,6 +219,8 @@ def judge(name, cur, prev):
 def note(name, cur):
     """실패는 아니지만 눈에 두어야 하는 것."""
     out = []
+    if cur.get("입력칸넘침"):
+        out.append("입력칸 안에서 값이 구른다(잘림 아님) %s" % ", ".join(cur["입력칸넘침"]))
     p = cur.get("종이")
     if p and (p["w"], p["h"]) != PAPER_IDEAL and abs(p["w"] - PAPER_IDEAL[0]) > 1:
         out.append("종이 %dx%d — A4 1:1(794x1122)보다 작다" % (p["w"], p["h"]))

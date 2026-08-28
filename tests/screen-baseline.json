@@ -48,6 +48,7 @@
   },
   "네비": null,
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -105,6 +106,7 @@
   },
   "네비": null,
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,5fr) minmax(0,5fr) minmax(0,2fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -162,6 +164,7 @@
   },
   "네비": null,
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -226,6 +229,7 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -290,6 +294,72 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
+  "토큰": {
+   "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
+   "topbar": "74px",
+   "m_bar": "62px",
+   "big": false
+  }
+ },
+ "pass-02-주민번호": {
+  "뷰포트": [
+   1904,
+   985
+  ],
+  "BAR": {
+   "w": 1904,
+   "h": 62,
+   "x": 0,
+   "y": 0,
+   "ox": 0,
+   "oy": 0
+  },
+  "ASK": {
+   "w": 495,
+   "h": 923,
+   "x": 0,
+   "y": 62,
+   "ox": 0,
+   "oy": 0
+  },
+  "PAPER": {
+   "w": 1066,
+   "h": 923,
+   "x": 495,
+   "y": 62,
+   "ox": 0,
+   "oy": 235
+  },
+  "RAIL": {
+   "w": 343,
+   "h": 923,
+   "x": 1561,
+   "y": 62,
+   "ox": 0,
+   "oy": 0
+  },
+  "종이": {
+   "w": 794,
+   "h": 1122
+  },
+  "질문칸": {
+   "w": 414,
+   "h": 722,
+   "x": 40,
+   "y": 159,
+   "ox": 0,
+   "oy": 0
+  },
+  "목록칸": null,
+  "네비": {
+   "w": 414,
+   "h": 82,
+   "열": "150px 252.031px"
+  },
+  "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -354,6 +424,74 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
+  "토큰": {
+   "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
+   "topbar": "74px",
+   "m_bar": "62px",
+   "big": false
+  }
+ },
+ "pass-07-법정대리인": {
+  "뷰포트": [
+   1904,
+   985
+  ],
+  "BAR": {
+   "w": 1904,
+   "h": 62,
+   "x": 0,
+   "y": 0,
+   "ox": 0,
+   "oy": 0
+  },
+  "ASK": {
+   "w": 495,
+   "h": 923,
+   "x": 0,
+   "y": 62,
+   "ox": 0,
+   "oy": 0
+  },
+  "PAPER": {
+   "w": 1066,
+   "h": 923,
+   "x": 495,
+   "y": 62,
+   "ox": 0,
+   "oy": 1218
+  },
+  "RAIL": {
+   "w": 343,
+   "h": 923,
+   "x": 1561,
+   "y": 62,
+   "ox": 0,
+   "oy": 0
+  },
+  "종이": {
+   "w": 794,
+   "h": 1122
+  },
+  "질문칸": {
+   "w": 414,
+   "h": 722,
+   "x": 40,
+   "y": 159,
+   "ox": 0,
+   "oy": 196
+  },
+  "목록칸": null,
+  "네비": {
+   "w": 414,
+   "h": 82,
+   "열": "150px 252.031px"
+  },
+  "가로넘침": [],
+  "입력칸넘침": [
+   ".text-input +9"
+  ],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -418,6 +556,7 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -473,7 +612,7 @@
    "x": 40,
    "y": 159,
    "ox": 0,
-   "oy": 161
+   "oy": 279
   },
   "목록칸": null,
   "네비": {
@@ -482,6 +621,7 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -546,6 +686,7 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -610,6 +751,7 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,5fr) minmax(0,5fr) minmax(0,2fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -674,6 +816,7 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,5fr) minmax(0,5fr) minmax(0,2fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -738,6 +881,7 @@
    "열": "150px 252.031px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
@@ -802,6 +946,7 @@
    "열": "150px 478px"
   },
   "가로넘침": [],
+  "입력칸넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
    "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
