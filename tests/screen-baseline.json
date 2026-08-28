@@ -228,9 +228,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  },
@@ -292,9 +292,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  },
@@ -356,9 +356,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  },
@@ -420,9 +420,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  },
@@ -484,9 +484,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  },
@@ -548,9 +548,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  },
@@ -612,9 +612,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,5fr) minmax(0,5fr) minmax(0,2fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": true
   }
  },
@@ -676,9 +676,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,5fr) minmax(0,5fr) minmax(0,2fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": true
   }
  },
@@ -740,9 +740,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  },
@@ -804,9 +804,9 @@
   "가로넘침": [],
   "토큰": {
    "cols": "minmax(0,2fr) minmax(0,3fr) minmax(0,1fr)",
-   "m_cols": null,
+   "m_cols": "minmax(0,26fr) minmax(0,56fr) minmax(0,18fr)",
    "topbar": "74px",
-   "m_bar": null,
+   "m_bar": "62px",
    "big": false
   }
  }

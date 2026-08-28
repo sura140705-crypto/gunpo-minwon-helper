@@ -279,6 +279,155 @@ html.big{
 @media print{ #idleGuard,#printGuard,#printNotice{display:none !important;} }
 </style>
 <!--/DESIGN-TOKENS-->
+<!--MAIN-SKIN v1-->
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Main 전용 스킨 (2026.08.28) — Figma Make Main 원형 이식
+
+   ⛔ **이 블록은 허브(Main)에만 있다.** 9개 화면 공통 블록이 아니다 —
+      위의 `DESIGN-TOKENS` 는 한 글자도 건드리지 않았다(`check-design-tokens.py`).
+      Main 과 Writing 의 시각언어 통일은 **여권 상세 UI 개편 단계**에서 한다(2026.08.28 결정 ③).
+   ⛔ Figma 의 `#2563EB` 를 박지 마라. 기관 대표색은 여전히 `--blue`(SITE-CONFIG 주입)이고,
+      알파 파생은 Figma `accentAt(hex, a)` 규칙을 `color-mix` 로 옮긴 것이다.
+      ⚠️ `color-mix` 를 모르는 브라우저에서는 아래 rgba 폴백(기본 대표색)이 남는다 —
+         대표색을 바꾼 기관에서 색이 조금 어긋날 뿐 화면은 깨지지 않는다.
+   ⚠️ 글자 크기는 **공통 토큰(`--fs-*`)을 그대로 쓴다.** 그래야 크게 보기가 열 폭을
+      건드리지 않고 글자만 커진다(결정 ② — 크게 보기는 zoom 도 비율 변경도 아니다).
+      Figma 의 11.5~14px 밀도는 서서 쓰는 키오스크에 그대로 옮기지 않았다.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* ── Figma neutral palette (차가운 무채색) ─────────────────────────────
+     ⚠️ 공통 토큰의 따뜻한 회색(`--surface-work` 계열)과 **다른 계열**이다.
+        지금은 Main 만 이 계열이고, 8종은 그대로다 — 의도된 갈림이다(결정 ③). */
+  --m-bg:#f2f4f7;            /* CENTER 바닥 */
+  --m-surface:#ffffff;       /* LEFT·RIGHT·카드 면 */
+  --m-border:#e5e7eb;        /* 기본선 */
+  --m-border-mid:#d1d5db;    /* 한 단 진한 선 — 그래픽 윤곽·hover */
+  --m-hairline:#f3f4f6;      /* 항목 사이 아주 옅은 선 */
+  /* ── 잉크 계층 (2026.08.28 — 고령·저시력 이용자 기준으로 보정) ──────────
+     ⛔ Figma 의 연한 gray 위계를 그대로 쓰지 않는다. 여기는 서서 읽는 공공 민원실이다.
+     ⚠️ **역할이 곧 하한선이다.** 흰 면(#fff) 위 대비:
+          `--m-ink`        17.7:1  제목 · 목록 민원명 · 카드 이름
+          `--m-ink-sub`    10.1:1  묶음 머리 · 안내 목록
+          `--m-ink-read`    7.6:1  **실제로 읽어야 하는 설명**(준비물 보조·안심 문장 …)
+          `--m-ink-muted`   4.9:1  secondary 하한선. 이보다 연한 글자를 만들지 마라
+          `--m-ink-faint`   2.5:1  ⛔ 글자에는 **날짜 같은 비핵심 metadata 에만.**
+                                   그 밖에는 아이콘·그래픽 선처럼 **글자가 아닌 것**에만 쓴다
+     ⛔ 미선택 항목의 글자를 흐리게 해서 선택 상태를 만들지 마라 — 8개 중 7개가
+        읽기 어려워진다. 선택은 **배경·테두리·대표색**으로만 말한다. */
+  --m-ink:#111827;
+  --m-ink-sub:#374151;
+  --m-ink-read:#4b5563;
+  --m-ink-muted:#6b7280;
+  --m-ink-faint:#9ca3af;
+  --m-icon-bg:#f3f4f6;
+  --m-photo:#e9eaec;         /* 미니 그래픽의 사진 자리 */
+  --m-photo-fill:#c4c9d4;
+  --m-chip:#f8f9fa;          /* 미니 그래픽의 카드 몸통 */
+
+  /* ── 대표색 알파 파생 (Figma accentAt) ── */
+  --m-a06:rgba(27,95,192,.06); --m-a07:rgba(27,95,192,.07);
+  --m-a08:rgba(27,95,192,.08); --m-a10:rgba(27,95,192,.10);
+  --m-a12:rgba(27,95,192,.12); --m-a18:rgba(27,95,192,.18);
+  --m-a20:rgba(27,95,192,.20); --m-a25:rgba(27,95,192,.25);
+  --m-a30:rgba(27,95,192,.30); --m-a35:rgba(27,95,192,.35);
+  --m-a55:rgba(27,95,192,.55);
+
+  /* ── 골격 ──
+     ⚠️ 26 / 56 / 18 (2026.08.28 결정 ②). Figma 의 LEFT 340px 고정은 채택하지 않았다 —
+        LEFT 가 Main 의 1차 행동영역이고 긴 민원명과 크게 보기를 받아야 한다.
+     ⛔ `fr` 은 `calc()` 안에서 못 쓴다. 트랙 목록을 통째로 담는다(공통 토큰 §Layout 참조).
+     ⚠️ `html.big` 이 이 값을 **덮지 않는다.** 크게 보기에서 열 폭은 그대로다. */
+  --m-cols:minmax(0,26fr) minmax(0,56fr) minmax(0,18fr);
+  /* Figma 의 얇은 BAR 인상을 받되 52px 을 그대로 복사하지 않았다(결정 ②).
+     로고 28px + 위아래 여백이 들어가는 최소 높이다. 60~64px 구간에서 실물로 조정한다. */
+  --m-bar-h:62px;
+  --m-center-max:720px;      /* CENTER 콘텐츠 읽는 폭 상한 — 여백은 장식으로 채우지 않는다 */
+  --m-r-card:8px;            /* 준비물·신청서 카드 */
+  --m-r-row:10px;            /* LEFT 목록 줄 */
+  --m-r-btn:6px;             /* CTA */
+  --m-r-chip:4px;            /* 서식명 배지 */
+
+  /* ── 글자 크기 — **역할별로** 둔다 (2026.08.28) ──────────────────────
+     ⚠️ 공통 토큰(`--fs-*`)을 그대로 쓰면 크게 보기의 배율이 8종과 묶여 버린다.
+        Main 은 열 폭을 **고정한 채** 글자만 키워야 하므로 자기 눈금이 필요하다
+        (결정 ② — 프레임은 그대로, 글자를 크게).
+     ⚠️ 아래가 **일반 보기**이고, `html.big` 이 같은 이름을 덮는다.
+     ⛔ 카드·미니그래픽·열 폭은 이 눈금에 딸려 커지지 않는다. */
+  --m-fs-ask:22px;           /* LEFT 「무엇을 하러 오셨나요?」 */
+  --m-fs-ask-sub:15px;       /* 그 아래 한 줄 */
+  --m-fs-menu:19px;          /* LEFT 민원명 — 시민의 말 */
+  --m-fs-menu-sub:14px;      /* LEFT 서식명 — 행정명칭 */
+  --m-fs-handoff:15px;       /* 직원에게 여쭤보는 단추 */
+  --m-fs-badge:13.5px;       /* CENTER 서식명 배지 */
+  --m-fs-title:30px;         /* CENTER 큰 제목 — Figma 26px 를 키오스크 거리로 올림 */
+  --m-fs-lead:16px;          /* 그 아래 한 줄 */
+  --m-fs-item:15px;          /* 준비물 이름 */
+  --m-fs-item-sub:13.5px;    /* 준비물 조건 */
+  --m-fs-form:15px;          /* 작성할 신청서 이름 */
+  --m-fs-form-sub:13.5px;    /* 그 곁의 두 줄 */
+  --m-fs-cta:18px;           /* [작성 시작하기] */
+  --m-fs-note:13.5px;        /* 조용한 한 줄 · 직원 안내쪽지 */
+  --m-fs-rail-head:15px;     /* RIGHT 묶음 머리 */
+  --m-fs-rail-title:13.5px;  /* RIGHT 항목 제목 */
+  --m-fs-rail-sub:12.5px;    /* RIGHT 안내문 — 실제로 읽는 줄 */
+  --m-fs-brand:16.5px;       /* 기관 표기 */
+  --m-fs-brand-sub:14px;     /* 제품 이름 */
+  --m-fs-btn:14px;           /* [크게 보기] */
+  --m-fs-chip:12px;          /* 「선택」 칩 */
+  /* ⚠️ metadata(날짜·기관표기 푸터)는 **거의 키우지 않는다.** 읽을 것이 아니라
+     있는 것을 확인하는 자리다 — 키우면 본문과 다툰다. */
+  --m-fs-meta:13.5px;
+}
+@supports (color: color-mix(in srgb, red 50%, transparent)){
+  :root{
+    --m-a06:color-mix(in srgb,var(--blue) 6%,transparent);
+    --m-a07:color-mix(in srgb,var(--blue) 7%,transparent);
+    --m-a08:color-mix(in srgb,var(--blue) 8%,transparent);
+    --m-a10:color-mix(in srgb,var(--blue) 10%,transparent);
+    --m-a12:color-mix(in srgb,var(--blue) 12%,transparent);
+    --m-a18:color-mix(in srgb,var(--blue) 18%,transparent);
+    --m-a20:color-mix(in srgb,var(--blue) 20%,transparent);
+    --m-a25:color-mix(in srgb,var(--blue) 25%,transparent);
+    --m-a30:color-mix(in srgb,var(--blue) 30%,transparent);
+    --m-a35:color-mix(in srgb,var(--blue) 35%,transparent);
+    --m-a55:color-mix(in srgb,var(--blue) 55%,transparent);
+  }
+}
+/* ══ 크게 보기 (2026.08.28) ═══════════════════════════════════════════════
+   **프레임은 그대로, 글자를 크게.**
+   ⛔ 열 폭(`--m-cols` 26/56/18)을 바꾸지 않는다.
+   ⛔ 화면 전체 zoom 이 아니다. 카드·미니그래픽을 비례확대하지 않는다.
+   ⚠️ 읽는 글자는 **+15~21%**, metadata 는 거의 그대로다 — 그래야 위계가 유지된다.
+   ⚠️ 늘어난 글자가 한 화면에 남게 **여백만** 조인다(아래 `html.big` 규칙).
+      1920×1080 에서 LEFT 8줄 + 직원 단추, RIGHT 세 묶음이 스크롤 없이 들어가야 한다. */
+html.big{
+  --m-fs-ask:26px;
+  --m-fs-ask-sub:17px;
+  --m-fs-menu:23px;
+  --m-fs-menu-sub:17px;
+  --m-fs-handoff:17px;
+  --m-fs-badge:15.5px;
+  --m-fs-title:36px;
+  --m-fs-lead:19px;
+  --m-fs-item:18px;
+  --m-fs-item-sub:16px;
+  --m-fs-form:18px;
+  --m-fs-form-sub:16px;
+  --m-fs-cta:21px;
+  --m-fs-note:15px;
+  --m-fs-rail-head:17px;
+  --m-fs-rail-title:16px;
+  --m-fs-rail-sub:15px;
+  --m-fs-brand:18px;
+  --m-fs-brand-sub:15px;
+  --m-fs-btn:15.5px;
+  --m-fs-chip:13px;
+  --m-fs-meta:14px;
+  --m-center-max:820px;
+}
+</style>
+<!--/MAIN-SKIN-->
 <style>
   :root{
     /* 대표색 3종 + 그라데이션. 기관 대표색을 환경설정에서 넣으면 아래 SITE-CONFIG
