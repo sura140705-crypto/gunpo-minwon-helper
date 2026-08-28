@@ -840,13 +840,86 @@ html.big{
   .screen-notice ul{margin:0;padding-left:16px;}
   .screen-notice li{margin:3px 0;line-height:1.45;}
 
+  /* ══ 크게 보기 — 글자 (2026.08.28 단계 7) ═══════════════════════════════
+     **프레임은 그대로, 읽어야 하는 글자만 크게.**
+     ⛔ 열 비율(26/56/18) · BAR 62px · 종이 794×1122 는 건드리지 않는다.
+     ⛔ 종이 안의 신청서 글씨는 **확대 대상이 아니다** — 크게 보기는 작성 UI 의
+        가독성 기능이지 법정서식을 키우는 기능이 아니다.
+
+     ⚠️ 이 파일에는 글자 크기가 **하드코딩된 자리가 많다**(2026.07 「어르신 가독성」
+        블록의 유산). 공통 토큰(`--fs-*`)을 쓰는 것만 크게 보기에서 커지고 나머지는
+        그대로였다 — 단계 제목·힌트·Handoff 문구·로마자 판·요약 항목명·안내 상자가
+        전부 0% 였다(실측). 여기서 **역할별로** 올린다.
+
+     ⚠️ 확대율은 역할이 정한다 — ASK(읽고 답하는 곳) +15~18% ·
+        RAIL(곁눈으로 보는 곳) +5~12% · metadata 는 그대로.
+        RAIL 을 일괄로 키우면 **미성년 + 기존 여권 = 준비물 6개**에서 기둥이 넘친다.
+     ═══════════════════════════════════════════════════════════════════════ */
+
+  /* ── 1순위 ASK — 읽고 답하는 글자 (+15~18%) ── */
+  html.big .wiz-title{font-size:21px;}
+  html.big .wiz-count{font-size:18px;}
+  html.big .q-help{font-size:18.5px;}
+  html.big .hint{font-size:18px;}
+  html.big .why-box{font-size:20px;}      /* 공통 19 → 20 (+17.6%) — 1순위 읽는 글 */
+  html.big .card-desc{font-size:17.5px;}  /* 공통 17 → 17.5 (+16.7%) */
+  html.big .opt-label{font-size:22px;}
+  html.big .opt-desc{font-size:18.5px;}
+  html.big .opt-rec{font-size:15px;}
+  html.big .fb{font-size:15px;}
+  html.big .age-status{font-size:17.5px;}
+  /* Handoff — 막힌 사람이 찾는 글자다. ASK 와 같은 비율로 키운다 */
+  html.big .ask-tx b{font-size:18.5px;}
+  html.big .ask-tx span{font-size:16px;}
+  html.big .ask-btn{font-size:17.5px;}
+  html.big .card-sub{font-size:18px;}
+  /* 안내·경고 상자 */
+  html.big .info-box{font-size:18.5px;}
+  html.big .warn-strong,html.big .note-box{font-size:18px;}
+  html.big .unsure-note,html.big .step-warn,html.big .staff-list{font-size:17px;}
+  html.big .print-tip{font-size:18px;}
+  html.big .sug-title{font-size:17.5px;}
+  html.big .sug-row{font-size:18.5px;}
+  html.big .sug-note{font-size:17px;}
+  html.big .sug-btn{font-size:17px;}
+  html.big .dunno-btn{font-size:18px;}
+  /* 로마자 화면 — 참고 판과 입력 판 (1열이라 폭에 여유가 있다) */
+  html.big .roman-h{font-size:18.5px;}
+  html.big .roman-p{font-size:16px;}
+  html.big .roman-side .field-label{font-size:18.5px;}
+  html.big .roman-side .text-input{font-size:23px;}
+  html.big .roman-state{font-size:15.5px;}
+  /* 최종 확인 */
+  html.big .sum-row .k{font-size:17.5px;}
+  html.big .sum-edit{font-size:17px;}
+  html.big details.terms summary,html.big details.terms .term{font-size:18px;}
+
+  /* ── 3순위 RAIL — **차등**으로 올린다 ──
+     ⛔ 일괄 +17~21% 금지(사용자 지시). 곁눈으로 보는 자리이고, 여기가 넘치면
+        진행·준비물이 화면 밖으로 밀린다. 공통 토큰이 주는 값보다 **낮춰** 잡는다. */
+  html.big .rail-num{font-size:37px;}          /* 공통 38 → 37 (+12%) */
+  html.big .rail-now{font-size:15.5px;}        /* 14 → 15.5 (+11%) */
+  html.big .rail-step{font-size:15px;}         /* 공통 15.5 → 15 (+11%) */
+  html.big .rail-head{font-size:16.5px;}       /* 공통 17 → 16.5 (+10%) */
+  html.big .rail-item b{font-size:15px;}       /* 준비물명 13.5 → 15 (+11%) */
+  html.big .rail-item small{font-size:12.3px;} /* 준비물 조건 11.5 → 12.3 (+7%) */
+  html.big .rail-safe p{font-size:13.3px;}     /* 공통 14 → 13.3 (+6%) */
+  html.big .screen-notice{font-size:13.2px;}   /* 12.5 → 13.2 (+6%) */
+  html.big .screen-notice h3{font-size:14px;}
+  /* metadata 는 그대로 — 읽는 글이 아니라 있는 것을 확인하는 자리다 */
+  html.big .rail-cap{font-size:12px;}
+
+  /* ── 2순위 버튼 — 글자만. ⛔ 높이·터치 표적(`--btn-h`·`--touch-*`)은 손대지 않는다 ──
+     ⚠️ 상단 바 버튼은 **키우지 않는다.** BAR 62px 안에서 이미 `.actions` 가 62px 이라
+        글자를 키우면 바가 밀린다(BAR 62 불변). 시민이 누르는 것은 본문 [다음]이다. */
+
   /* ── 크게 보기의 RAIL 여백 (2026.08.28 단계 6) ──
      ⚠️ 글자가 커지면 같은 내용이 25px 더 든다(미성년 경로 실측). **글자는 그대로 두고**
         묶음 사이의 숨만 줄여 기둥 안에 담는다 — 스크롤이 생기면 진행·준비물이 밀린다.
      ⛔ 크게 보기의 글자 크기는 단계 7 소관이다. 여기서 건드리지 마라. */
   html.big .rail{padding:16px 16px 14px;}
   html.big .rail-sec{margin-bottom:10px;}
-  html.big .rail-items{gap:6px;}
+  html.big .rail-items{gap:5px;}   /* ⚠️ 단계 7 에서 글자가 커진 만큼 여백을 3px 더 조였다 */
   html.big .rail-steps{gap:6px;}
   html.big .rail-rule{margin:0 0 10px;}
   /* ⚠️ 크게 보기에서 준비물 여섯 개(미성년 + 기존 여권)가 19px 넘쳤다 —
