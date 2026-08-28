@@ -437,15 +437,27 @@ html.big{
           그 블록은 8종+허브에 글자까지 똑같아야 한다(`check-site-block.py`). */
     --blue:#1b5fc0; --blue-dark:#164e9e; --blue-light:#eaf1fb;
     --grad:linear-gradient(135deg,hsl(215,75%,52%) 0%,hsl(215,75%,43%) 52%,hsl(215,79%,32%) 100%);
-    --line:#d5d9df; --bg:#f2f4f7; --muted:#5b626c; --ink:#1a1c1f;
+    --line:var(--m-border); --bg:var(--m-bg);
+    /* 잉크 — 역할별 하한선(Main 과 같은 계층). `--muted` 는 **읽어야 하는 설명**이
+       대부분이라 `--m-ink-read`(#4b5563 · 7.6:1)로 맞춘다. 날짜 같은 metadata 는
+       아래에서 따로 `--m-ink-muted` 로 내린다. */
+    --muted:var(--m-ink-read); --ink:var(--m-ink);
     /* ── 작업면 중립색 (2026.08.21 디자인 개편) ─────────────────────────
        대표색과 무관한 따뜻한 무채색. 기관이 대표색을 무엇으로 바꾸든 이 값들은
        그대로여서, 색을 갈아 끼워도 화면이 무너지지 않는다.
          --work  질문을 적는 작업면   --zone  서식이 놓이는 바닥
          --rail  오른쪽 안내 기둥     --head  상단 바
        세 면의 명도를 조금씩 달리해 **선을 긋지 않고도 영역이 갈리게** 한다. */
-    --work:#f7f6f3; --zone:#e4e1db; --rail:#f1f0ec; --head:#fbfaf7;
-    --line-strong:#b9b6b0; --line-warm:#d2cfc9;
+    /* ⚠️ 2026.08.28 — **Main 계열로 갈아 끼웠다**(단계 3). 이름은 그대로 두고 값만
+       `MAIN-SKIN` 토큰을 가리키게 했다. 이 파일의 CSS 가 이미 이 이름들로 쓰여 있어
+       40여 곳이 한 번에 옮겨간다 — 규칙을 하나씩 고치면 빠뜨리는 자리가 생긴다.
+       ⛔ 이름을 바꾸지 마라(`--work`·`--zone`…). 인쇄 CSS·세로 배치도 이 이름을 쓴다. */
+    --work:var(--m-surface);   /* 질문면 — 따뜻한 회색 → 흰 면 */
+    --zone:var(--m-bg);        /* 서식이 놓이는 바닥 */
+    --rail:var(--m-surface);   /* 안내 기둥 */
+    --head:var(--m-surface);   /* 상단 바 */
+    --line-strong:var(--m-border-mid);
+    --line-warm:var(--m-border);
     --hair:rgba(27,95,192,.16);          /* 기하학적 포인트 선 — 대표색의 아주 옅은 농도 */
     /* 서식을 왼쪽에 두는 기관용 — `--m-cols`(26/56/18)를 **뒤집은 것**이다.
        ⛔ `MAIN-SKIN` 블록 안에 넣지 마라. 그 블록은 허브와 글자까지 같아야 하고,
@@ -474,7 +486,9 @@ html.big{
     display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
     align-items:center;gap:12px 20px;
     padding:0 24px;min-height:var(--m-bar-h);background:var(--head);
-    border-bottom:1px solid var(--line-warm);
+    /* ⚠️ 경계선을 `border` 로 두면 **높이에 1px 이 더해진다**(내용이 이미 62px 이라
+       바깥 실측이 63px 이 됐다). 안쪽 그림자로 그려 62px 을 정확히 지킨다. */
+    box-shadow:inset 0 -1px 0 var(--line-warm);
     position:sticky;top:0;z-index:20;
   }
   /* ⚠️ 2026.08.28 — 74px + 3px 대표색 그라데이션 띠를 **62px + 1px 선**으로 바꿨다(Main 과 같은 문법).
@@ -492,13 +506,13 @@ html.big{
   .brand-tx{min-width:0;}
   .brand b{display:block;font-size:17px;color:var(--blue-dark);letter-spacing:-.02em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .brand .meta{font-size:13px;color:var(--muted);
+  .brand .meta{font-size:13px;color:var(--m-ink-muted);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   /* 가운데 — 지금 작성 중인 서식. 화면 폭이 좁으면 사라진다(도구가 먼저다). */
   .doc-name{text-align:center;min-width:0;}
   .doc-name h1{margin:0;font-size:18px;letter-spacing:-.02em;white-space:nowrap;
     overflow:hidden;text-overflow:ellipsis;}
-  .doc-name small{display:block;font-size:12.5px;color:var(--muted);letter-spacing:.01em;
+  .doc-name small{display:block;font-size:12.5px;color:var(--m-ink-muted);letter-spacing:.01em;
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
   .actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;padding:10px 0;}
   /* 상단 바의 버튼은 본문 버튼보다 한 치수 작다 — 한 줄에 들어가야 하고,
@@ -557,9 +571,8 @@ html.big{
      종이에 회색 바탕과 선이 찍힌다. `@media screen` 밖으로 내지 마라. */
   @media screen{
     .form-col{background:var(--zone);padding:16px 18px 20px;position:relative;overflow:auto;}
-    /* 기하학적 포인트 — 서식이 놓인 자리를 가리키는 모서리 선 한 쌍 */
-    .form-col::before{content:"";position:absolute;left:17px;top:17px;width:94px;height:94px;
-      border-left:1px solid var(--hair);border-top:1px solid var(--hair);pointer-events:none;}
+    /* ⚠️ 서식 자리를 가리키던 모서리 선 한 쌍(94px)을 걷었다(2026.08.28) —
+       종이 자체가 이미 그 자리를 말한다. */
     /* 210mm 보다 좁은 자리에서도 서식이 잘리지 않게 폭을 맞춘다. 안의 값은 전부
        `%` 와 `cqw`(컨테이너 폭 기준)라 **비율이 그대로 유지된다** — 좌표가 밀리지 않는다. */
     .form-col .paper{width:min(210mm,100%);}
@@ -596,7 +609,9 @@ html.big{
      종전에는 흰 「휴대전화」 카드를 배경 위에 얹었다. 그 은유는 손에 쥐는 화면의 것이라,
      서서 쓰는 큰 키오스크에서는 화면 한복판에 작은 종이가 떠 있는 꼴이 된다.
      이제 **작업면 자체가 화면**이고 질문이 그 위에 큰 활자로 놓인다. */
-  .task-col{background:var(--work);}
+  /* ⚠️ 질문면이 흰 면이 되면서 바닥과의 명도차가 줄었다 — Main 처럼 **1px 실선**으로
+     구역을 가른다(종전에는 따뜻한 회색끼리의 명도차가 그 몫을 했다). */
+  .task-col{background:var(--work);border-right:1px solid var(--line-warm);}
   .task{display:flex;flex-direction:column;height:100%;min-height:0;
     padding:28px 40px 22px;position:relative;}
   /* 기하학적 포인트 — 머리글 아래를 지나는 선. 왼쪽 짧은 구간만 대표색이다.
@@ -604,15 +619,15 @@ html.big{
         제목이 길거나 두 줄이 되면 그 선이 글자를 가로질렀다(첫 화면에서 바로 드러났다).
         흐름 안에 두면 무슨 글자가 오든 겹칠 수 없다. 두께도 1px → 2px 로 올려
         「흐릿하게 걸쳐 있는 것」이 아니라 「구분선」으로 읽히게 했다. */
+  /* ⚠️ 2026.08.28 — 아래를 지나던 **2px 대표색 띠를 걷었다**(단계 3). 구분은 선이
+     아니라 여백이 맡는다(Main 과 같은 문법). ⛔ 되살리지 마라 — 화면마다 색 띠가
+     두세 줄씩 생기면 정작 질문이 묻힌다. */
   .topline{display:flex;justify-content:space-between;align-items:baseline;gap:16px;
     padding-bottom:15px;margin-bottom:26px;flex:0 0 auto;position:relative;}
-  .topline::after{content:"";position:absolute;left:0;right:0;bottom:0;height:2px;
-    background:linear-gradient(90deg,var(--blue) 0 72px,var(--line-warm) 72px 100%);}
   /* 화면 이름 = 지금 무엇을 묻는 묶음인지. 왼쪽 짧은 대표색 막대가 자리를 잡아 준다. */
+  /* ⚠️ 왼쪽 3px 대표색 막대를 걷었다(2026.08.28). 제목은 색과 굵기로 충분히 선다. */
   .wiz-title{font-size:18px;font-weight:800;color:var(--blue-dark);
-    padding-left:12px;position:relative;letter-spacing:-.01em;}
-  .wiz-title::before{content:"";position:absolute;left:0;top:3px;width:3px;height:19px;
-    background:var(--blue);border-radius:2px;}
+    position:relative;letter-spacing:-.01em;}
   .wiz-count{font-size:15.5px;font-weight:800;color:var(--muted);white-space:nowrap;}
   .wiz-body{flex:1 1 auto;min-height:0;overflow:auto;padding:0 2px 6px;}
 
@@ -623,7 +638,7 @@ html.big{
   .rail-col{background:var(--rail);border-left:1px solid var(--line-warm);}
   .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
     padding:26px 20px 20px;}
-  .rail-cap{font-size:12px;letter-spacing:.12em;color:var(--muted);font-weight:800;}
+  .rail-cap{font-size:12px;letter-spacing:.12em;color:var(--m-ink-muted);font-weight:800;}
   .rail-num{font-size:var(--fs-rail-num);font-weight:900;letter-spacing:-.04em;margin-top:4px;line-height:1.05;}
   .rail-num span{font-size:15px;color:var(--muted);font-weight:800;}
   .rail-now{font-size:14px;color:var(--blue-dark);font-weight:800;margin-top:5px;}
@@ -631,10 +646,10 @@ html.big{
   .rail-step{display:grid;grid-template-columns:19px 1fr;gap:9px;align-items:center;
     color:#7b7f7d;background:none;border:0;padding:0;font-family:inherit;text-align:left;
     width:100%;line-height:1.35;}
-  .rail-step .dot{width:17px;height:17px;border:1px solid #b7b5af;border-radius:50%;
+  .rail-step .dot{width:17px;height:17px;border:1px solid var(--m-border-mid);border-radius:50%;
     display:grid;place-items:center;font-size:9px;background:#fff;}
   /* 지나온 묶음은 눌러서 되돌아갈 수 있다(앞으로 건너뛰기는 막는다 — 검증 우회 방지) */
-  .rail-step.done{color:#4f585a;cursor:pointer;}
+  .rail-step.done{color:var(--m-ink-read);cursor:pointer;}
   .rail-step.done .dot{color:var(--blue-dark);border-color:var(--blue);}
   .rail-step.done:hover{color:var(--blue-dark);}
   .rail-step.now{font-weight:800;color:var(--ink);}
@@ -644,15 +659,15 @@ html.big{
   .rail-head{display:flex;align-items:center;gap:8px;font-size:var(--fs-rail-head);font-weight:900;margin-bottom:11px;}
   .rail-items{display:grid;gap:11px;}
   .rail-item{display:grid;grid-template-columns:16px 1fr;gap:8px;font-size:var(--fs-rail-item);line-height:1.45;
-    color:#7b7f7d;}
-  .rail-item .check{color:#b7b5af;font-weight:900;}
+    color:var(--m-ink-read);}
+  .rail-item .check{color:var(--m-border-mid);font-weight:900;}
   /* 꼭 필요한 것만 진하게. 나머지는 한 톤 내려 「없어도 되는 것」임이 눈에 보이게 한다. */
   .rail-item.req{color:var(--ink);font-weight:700;}
   .rail-item.req .check{color:var(--blue);}
   .rail-item small{display:block;color:var(--muted);font-size:11.5px;margin-top:2px;font-weight:400;}
   .rail-safe{margin-top:auto;border-top:1px solid var(--line-warm);padding-top:16px;}
   .rail-safe .rail-head{font-size:var(--fs-rail-item);margin-bottom:7px;}
-  .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:#5f6667;margin:6px 0;}
+  .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:var(--m-ink-read);margin:6px 0;}
 
   /* 질문 — 이 화면에서 가장 큰 글자. 어르신이 서서 보는 거리에서 한눈에 읽혀야 한다. */
   .coach-q{font-size:var(--fs-question);font-weight:var(--fw-heavy);line-height:1.28;letter-spacing:var(--ls-tight);
@@ -661,7 +676,7 @@ html.big{
      화면이 시끄러워져 정작 질문이 묻힌다.
      ⚠️ `display:flex` 로 두면 안 된다 — 안내문에 `<b>` 가 섞이는 화면이 있는데
         그것들이 저마다 flex 칸이 되어 한 문장이 세 토막으로 갈라진다. */
-  .why-box{display:block;font-size:var(--fs-help);color:#4d5560;background:none;
+  .why-box{display:block;font-size:var(--fs-help);color:var(--m-ink-read);background:none;
     border:0;border-left:3px solid var(--line-warm);border-radius:0;
     padding:2px 0 2px 14px;margin:0 0 22px;line-height:1.6;max-width:var(--question-max);}
   .why-box .ic{opacity:.75;margin-right:7px;}
@@ -707,20 +722,21 @@ html.big{
   /* 안내 상자들 — 질문면이 넓어져서 폭을 묶어 두지 않으면 한 줄이 너무 길어져 읽기 어렵다 */
   .warn-strong,.note-box,.info-box,.print-tip,.unsure-note,.sug-box,.manual-warn,
   .staff-list,.age-status,details.terms{max-width:var(--cards-max);}
-  .warn-strong{background:#fdecec;border:1px solid #f0a5a5;color:#a11c1c;border-radius:var(--r-md);
+  /* ⚠️ 값만 공통 토큰으로 모았다(2026.08.28). **뜻은 그대로** — Red 는 진행 불가·오류. */
+  .warn-strong{background:var(--warn-face);border:1px solid var(--warn-line);color:var(--warn);border-radius:var(--r-md);
     padding:12px 14px;font-size:14px;line-height:1.6;margin-bottom:14px;}
-  .note-box{background:#fff8e6;border:1px solid #ffe19a;color:#7a5600;border-radius:var(--r-md);
+  .note-box{background:var(--notice-face);border:1px solid var(--notice-line);color:var(--notice);border-radius:var(--r-md);
     padding:12px 14px;font-size:14px;margin-bottom:14px;line-height:1.55;}
-  .info-box{background:var(--blue-light);border:1px solid #bcd3f2;color:var(--blue-dark);
+  .info-box{background:var(--blue-light);border:1px solid var(--m-a25);color:var(--blue-dark);
     border-radius:var(--r-md);padding:12px 14px;font-size:15px;margin-bottom:14px;line-height:1.6;}
   /* 인쇄 설정 안내(여백 없음·배율 100%) — 화면 전용, 인쇄엔 안 나옴 */
   .print-tip{background:#fff4d6;border:2px solid #f0c040;color:#7a5600;border-radius:var(--r-md);
     padding:12px 14px;font-size:15.5px;line-height:1.6;margin-bottom:12px;}
   .print-tip b{color:#a12727;}
   .print-tip.modal{margin:10px 16px 0;}
-  .unsure-note{background:#fff8e6;border:1px solid #ffe19a;color:#7a5600;border-radius:var(--r-md);
+  .unsure-note{background:var(--notice-face);border:1px solid var(--notice-line);color:var(--notice);border-radius:var(--r-md);
     padding:10px 12px;font-size:13.5px;margin-bottom:14px;}
-  .sug-box{background:#f0f7ff;border:1px solid #bcd3f2;border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px;}
+  .sug-box{background:var(--m-a06);border:1px solid var(--m-a18);border-radius:var(--r-md);padding:12px 14px;margin-bottom:14px;}
   .sug-title{font-weight:700;font-size:14px;margin-bottom:8px;color:var(--blue-dark);}
   .sug-row{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px;font-size:15px;}
   .sug-row b{font-size:17px;letter-spacing:1px;}
@@ -730,7 +746,7 @@ html.big{
   .sug-note{font-size:13px;color:var(--muted);margin-top:4px;line-height:1.5;}
 
   .dunno-btn{width:100%;margin-top:4px;font-family:inherit;font-size:15px;font-weight:600;
-    color:var(--muted);background:#f4f6f9;border:1.5px dashed var(--line);border-radius:var(--r-lg);padding:13px;cursor:pointer;}
+    color:var(--muted);background:var(--m-bg);border:1.5px dashed var(--line);border-radius:var(--r-lg);padding:13px;cursor:pointer;}
   .dunno-btn:hover{border-color:var(--blue);color:var(--blue);background:#fff;}
 
   /* 확인·완료 단계 */
@@ -750,7 +766,7 @@ html.big{
   .staff-list ul{margin:6px 0 0;padding-left:20px;}
   .staff-list.ok{background:#f1faf3;border-color:#9cc7a6;color:#1e6b34;}
 
-  .step-warn{flex:0 0 auto;margin:12px 0 0;background:#fdecec;border:1px solid #f5b5b5;
+  .step-warn{flex:0 0 auto;margin:12px 0 0;background:var(--warn-face);border:1px solid var(--warn-line);
     color:var(--warn);border-radius:var(--r-md);padding:11px 14px;font-size:var(--fs-small);max-width:var(--question-max);}
   .step-warn:empty{display:none;}
   /* 이전은 작게·다음은 넓게. 크기가 곧 「어느 쪽이 앞으로 가는 길인지」를 말해 준다. */
@@ -760,7 +776,9 @@ html.big{
 
   /* 이용 안내 — 레일 맨 아래. 늘 읽는 글이 아니라 조용히 둔다. */
   .screen-notice{margin-top:18px;background:none;border:0;border-top:1px solid var(--line-warm);
-    border-radius:0;padding:14px 0 0;font-size:12px;color:#6a706d;}
+    /* ⚠️ 이 목록은 허브 Main 의 「이용 안내」와 **같은 내용**이다 — 같은 잉크를 쓴다
+       (2026.08.28 · 종전 #6a706d 하드코딩). */
+    border-radius:0;padding:14px 0 0;font-size:12px;color:var(--m-ink-sub);}
   .screen-notice h3{margin:0 0 7px;font-size:13px;color:var(--blue-dark);}
   .screen-notice ul{margin:0;padding-left:16px;}
   .screen-notice li{margin:4px 0;line-height:1.5;}
@@ -890,7 +908,9 @@ html.big{
   }
 
   /* ===== 어르신 가독성 강화(2026-07-09): 큰 글씨·고대비·또렷한 포커스 ===== */
-  :root{ --muted:#495059; }                     /* 보조텍스트 대비 강화(회색을 더 진하게) */
+  /* ⚠️ 2026.08.28 — 종전 `#495059` 하드코딩을 잉크 계층으로 옮겼다. 값은 거의 같고
+     (#4b5563) 이제 Main·허브와 **같은 눈금**을 쓴다. */
+  :root{ --muted:var(--m-ink-read); }
   .wiz-count{font-size:15.5px;}
   .why-box{font-size:var(--fs-help);}
   .q-help{font-size:16px;}
