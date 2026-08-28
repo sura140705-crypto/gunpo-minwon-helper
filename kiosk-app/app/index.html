@@ -521,10 +521,17 @@ html.big{
   .ask-q{margin:0;font-size:var(--m-fs-ask);font-weight:var(--fw-heavy);
     color:var(--m-ink);line-height:1.3;letter-spacing:-.03em;}
   .ask-sub{margin:6px 0 0;font-size:var(--m-fs-ask-sub);color:var(--m-ink-read);line-height:1.5;}
-  .ask-body{flex:1 1 auto;min-height:0;overflow-y:auto;
-    display:flex;flex-direction:column;padding:0 14px 18px;}
+  /* 목록만 구르는 칸. ⚠️ `min-height:0` 이 없으면 flex 자식이 안 줄어들어 기둥을 넘친다. */
+  .ask-body{flex:1 1 auto;min-height:0;overflow-y:auto;padding:0 14px 8px;}
+  /* 기둥 바닥 — 직원 단추 자리. **목록이 길어져도 여기 남는다.**
+     ⚠️ 목록이 구를 때만 위에 실선을 그어 「위에 더 있다」를 알린다(JS 가 `.scrolls` 를 붙인다).
+        서식이 몇 종이든 화면이 같아 보이도록, 구르지 않을 때는 선이 보이지 않는다. */
+  .ask-foot{flex:0 0 auto;padding:10px 14px 16px;
+    border-top:1px solid transparent;
+    transition:border-color var(--dur-base) var(--ease-out);}
+  .task-col.scrolls .ask-foot{border-top-color:var(--m-border);}
   /* 목록 카드 — **큰 글씨 = 시민이 하려는 일 / 작은 글씨 = 행정명칭**(철학 §3) */
-  .cards{display:flex;flex-direction:column;gap:5px;margin:0 0 14px;}
+  .cards{display:flex;flex-direction:column;gap:5px;margin:0 0 6px;}
   .card{display:flex;align-items:center;gap:13px;width:100%;
     min-height:var(--row-h);padding:11px 13px;
     background:#fafafa;border:1.5px solid var(--m-border);border-radius:var(--m-r-row);
@@ -563,7 +570,7 @@ html.big{
      ⚠️ Figma 시안에는 이 단추가 없다. **빠뜨리지 않고 그대로 지켰다.** */
   .btn-ic{flex:0 0 auto;width:16px;height:16px;display:block;}
   .card-sub{display:flex;align-items:center;justify-content:center;gap:9px;
-    width:100%;margin:auto 0 0;padding:13px;
+    width:100%;margin:0;padding:13px;
     font-family:inherit;font-size:var(--m-fs-handoff);font-weight:var(--fw-bold);
     color:var(--m-ink-sub);background:var(--m-bg);
     border:1.5px dashed var(--m-border-mid);border-radius:var(--m-r-row);cursor:pointer;}
@@ -852,10 +859,16 @@ html.big{
       <h2 class="ask-q">무엇을 하러 오셨나요?</h2>
       <p class="ask-sub">필요한 민원을 선택해 주세요.</p>
     </div>
+    <!-- ⚠️ **목록만** 구른다. 아래 직원 단추는 기둥 바닥에 고정이다 — 취급 서식이 많은
+         기관에서 단추가 목록에 딸려 화면 밖으로 밀리면 안 된다(2026.08.28 실측: 10종부터
+         밀렸다). 8종인 군포에서는 스크롤 자체가 생기지 않는다. -->
     <div class="ask-body">
       <div class="cards" id="cards" role="list"></div>
-      <!-- Human Handoff — 여기 없으면 시민이 갇힌다(철학 §8).
-           ⚠️ Figma 시안에 없던 것이고, **그대로 지켰다.** -->
+    </div>
+    <!-- Human Handoff — 여기 없으면 시민이 갇힌다(철학 §8).
+         ⚠️ Figma 시안에 없던 것이고, **그대로 지켰다.**
+         ⛔ 스크롤 안으로 다시 넣지 마라. 스크롤을 모르는 분에게는 없는 것과 같다. -->
+    <div class="ask-foot">
       <button type="button" class="card-sub" id="btnStaff"><svg class="btn-ic" viewBox="0 0 24 24"
         fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
         stroke-linejoin="round" aria-hidden="true"><circle cx="8.8" cy="7.4" r="3"/><path
@@ -1356,9 +1369,16 @@ var ICONS = {
   realestate:'<path d="M3.6 11.1L12 4.3l8.4 6.8"/><path d="M6.1 9.4V20.4h11.8V9.4"/>'+
              '<path d="M10.2 20.4v-5.1h3.6v5.1"/>'
 };
+/* ⚠️ 다른 기관이 **새 서식을 늘리면** 여기 없는 `key` 가 온다. 그때 아이콘 자리가
+   비면 목록이 고장 난 것처럼 보이므로, 카탈로그의 `icon`(이모지) → **기본 서류 아이콘**
+   순으로 물러난다. ⛔ 빈 칸으로 두지 마라. */
+var ICON_FALLBACK = '<path d="M6.5 3h7.2L18 7.3V21H6.5z"/><path d="M13.7 3v4.3H18"/>'+
+                    '<path d="M9.3 12.4h5.4M9.3 15.6h3.6"/>';
 function iconHtml(f){
   var d = ICONS[f.key];
-  return d ? '<svg '+ICON_ATTR+'>'+d+'</svg>' : esc(f.icon||"");
+  if(d) return '<svg '+ICON_ATTR+'>'+d+'</svg>';
+  if(f.icon) return esc(f.icon);
+  return '<svg '+ICON_ATTR+'>'+ICON_FALLBACK+'</svg>';
 }
 
 /* RIGHT 의 작은 아이콘 — Figma 원형(16 격자 · 굵기 1.4) */
@@ -1400,6 +1420,17 @@ function cardHtml(f){
 
 function renderCards(){
   el("cards").innerHTML = visibleForms().map(cardHtml).join("");
+  syncScrollHint();
+}
+
+/* 목록이 구를 때만 바닥 단추 위에 실선을 긋는다.
+   ⚠️ 취급 서식 수는 기관마다 다르다(설정으로 켜고 끈다). 8종인 군포에서는 구르지 않지만,
+      12종을 쓰는 기관에서는 구른다 — 그때 아래에 무엇이 더 있는지 보여야 한다.
+   ⚠️ 글자 크기가 바뀌면(크게 보기) 구르는 여부도 바뀌므로 거기서도 다시 부른다. */
+function syncScrollHint(){
+  var body=document.querySelector(".ask-body"), col=document.querySelector(".task-col");
+  if(!body||!col) return;
+  col.classList.toggle("scrolls", body.scrollHeight - body.clientHeight > 1);
 }
 
 /* ══ CENTER — 준비물 + 작성할 신청서 + [작성 시작하기] ═════════════════════
@@ -1640,7 +1671,11 @@ function bindEvents(){
     var on=document.documentElement.classList.toggle("big");
     this.setAttribute("aria-pressed", on?"true":"false");
     el("btnBigLabel").textContent = on ? "일반 보기로" : "크게 보기";
+    syncScrollHint();          // 글자가 커지면 목록이 구를 수 있다
   });
+
+  /* 화면 크기가 바뀌어도 다시 잰다(다른 기관의 다른 해상도·회전) */
+  window.addEventListener("resize", syncScrollHint);
 }
 
 function init(){

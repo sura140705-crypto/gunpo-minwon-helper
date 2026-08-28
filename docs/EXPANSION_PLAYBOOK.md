@@ -93,9 +93,19 @@
 **⑨ 카탈로그에 등록한다** · 개발
 - `index.html` 의 `<!--FORM-CATALOG v1-->` 한 곳에만 넣습니다.
 - `key`·`citizen`·`formal`·`category`·`keywords`·`aliases`·`icon`·`href` +
-  ③⑦ 에서 정한 `desc`·`ready`·`scale` + `preview.fields`
+  ③⑦ 에서 정한 `desc`·`ready`·`scale`
 - ⛔ `key` 는 환경설정(`kiosk-app/main.js` 의 `FORM_KEYS`·`admin/settings.html`)과의
   **계약**입니다. 세 곳의 이름이 같아야 합니다.
+- **Main 의 CENTER 가 읽는 것**(2026.08.28 재설계) : `formal`(배지·신청서 카드) ·
+  `citizen`(제목) · `desc`(준비물이 없을 때의 한 줄) · `scale`(소요) ·
+  `ready[]` = `{t, s, opt, g}` — `g` 는 준비물 미니 그래픽 이름
+  (`id-card`·`id-photo`·`payment`·`document`·`cert`·`passport-book`, 없으면 `document`).
+  ⛔ **`ready` 를 지어내지 마십시오.** 확인된 것이 없으면 비워 둡니다 — 그러면 그 구역을
+  아예 내지 않습니다(있는 것처럼 보이는 것이 없는 것보다 나쁩니다).
+- 목록 아이콘은 `index.html` 의 `ICONS` 에 같은 `key` 로 넣습니다. 없으면 카탈로그의
+  `icon`(이모지) → **기본 서류 아이콘** 순으로 물러납니다(빈 칸이 되지 않습니다).
+- ⚠️ `preview.fields`·`preview.sample` 은 **지금 Main 이 쓰지 않습니다**(종이 미리보기
+  시연 전용이었고 그 코드는 사용 중단 상태입니다). 새 서식에 넣지 않아도 됩니다.
 - 미리보기 그림 : `python tools/make-form-previews.py`
 
 **⑩ 기관 설정(SITE-CONFIG)을 적용한다** · 개발
@@ -123,8 +133,11 @@ python tools/verify-print.py --electron   # 실제 인쇄 경로 + 용지(A4)
 - 새 서식이 값을 어딘가에 남기지 않는지 (저장소를 쓰지 않아야 합니다)
 
 **⑭ 완료 후 Main 복귀를 검증한다**
-- 인쇄·초기화 뒤 `index.html` 로 돌아오고, **시연이 다시 도는지.**
+- 인쇄·초기화 뒤 `index.html` 로 돌아오고, **3분 뒤 시연(선택 자동 순회)이 다시 도는지.**
+  새 서식도 그 순회에 **끼어 있는지**(끈 서식은 빠집니다 — `formOn`).
 - 돌아온 화면에 **앞사람 흔적이 없는지.**
+- 서식이 많아졌다면 **크게 보기에서 목록이 구를 때 [직원에게 여쭤볼게요] 단추가
+  기둥 바닥에 남아 있는지.** 그 단추가 화면 밖으로 밀리면 시민이 갇힙니다.
 
 ### 그 밖에 반드시 돌리는 것
 
