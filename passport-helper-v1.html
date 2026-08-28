@@ -447,6 +447,10 @@ html.big{
     --work:#f7f6f3; --zone:#e4e1db; --rail:#f1f0ec; --head:#fbfaf7;
     --line-strong:#b9b6b0; --line-warm:#d2cfc9;
     --hair:rgba(27,95,192,.16);          /* 기하학적 포인트 선 — 대표색의 아주 옅은 농도 */
+    /* 서식을 왼쪽에 두는 기관용 — `--m-cols`(26/56/18)를 **뒤집은 것**이다.
+       ⛔ `MAIN-SKIN` 블록 안에 넣지 마라. 그 블록은 허브와 글자까지 같아야 하고,
+          허브에는 좌우 교체가 없다. */
+    --m-cols-left:minmax(0,56fr) minmax(0,26fr) minmax(0,18fr);
   }
   *{box-sizing:border-box;}
   html,body{
@@ -469,13 +473,14 @@ html.big{
        한쪽만 1fr 이면 남는 폭이 한쪽으로 몰려 제목이 치우친다(2026.08.24 시안). */
     display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);
     align-items:center;gap:12px 20px;
-    padding:0 24px;min-height:74px;background:var(--head);border-bottom:0;
+    padding:0 24px;min-height:var(--m-bar-h);background:var(--head);
+    border-bottom:1px solid var(--line-warm);
     position:sticky;top:0;z-index:20;
   }
-  /* 아래 선을 대표색 그라데이션 띠로 — 단색 2px 보다 기관 색이 살아난다.
-     `.topbar` 는 인쇄에서 통째로 숨겨지므로 인쇄물과 무관하다. */
-  .topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
-    background:var(--grad);}
+  /* ⚠️ 2026.08.28 — 74px + 3px 대표색 그라데이션 띠를 **62px + 1px 선**으로 바꿨다(Main 과 같은 문법).
+     ⛔ 그라데이션을 되살리지 마라. 좁은 Accent 라도 9개 화면에서 인상이 갈린다.
+     ⚠️ 선 색은 이 단계에서 **기존 팔레트(`--line-warm`)** 를 그대로 쓴다 — 골격만 판정하려고
+        색은 다음 단계로 미뤘다. 그때 `--m-border` 로 바뀐다.
   /* 왼쪽 묶음 = 기관 표기 + **담당자 점검용 도구**. 시안대로 시민 동선(오른쪽)에서
      떼어 놓았다. ⚠️ `.brand` 만 줄어들게 해서 기관명이 긴 곳에서도 버튼이 안 접힌다. */
   .lead{display:flex;align-items:center;gap:16px;min-width:0;}
@@ -524,8 +529,13 @@ html.big{
         `.form-col{position:static;max-height:none;overflow:visible}` 만 되돌린다.
      ⚠️ 질문면과 레일에 **`.panel-col` 을 함께 붙여 둔다.** 인쇄 CSS가 그 이름으로
         둘을 숨긴다 — 새 이름만 쓰면 안내면이 종이에 딸려 나간다. */
+  /* ⚠️ 2026.08.28 — Main 과 **같은 프레임**(26/56/18)을 쓴다. 종전에는 공통 토큰
+     `--cols`(2:3:1, 크게 보기에서 5:5:2)를 썼는데, Main 이 26/56/18 로 동결되면서
+     같은 제품인데 페이지마다 기둥 폭이 달라 보였다.
+     ⛔ `html.big` 이 `--cols` 를 5:5:2 로 덮지만 **여기서는 `--m-cols` 를 보므로 무시된다** —
+        크게 보기에서 열 폭이 변하지 않는 것이 그래서다(결정 ②). */
   .layout{display:grid;gap:0;padding:0;max-width:none;margin:0;
-    grid-template-columns:var(--cols);}
+    grid-template-columns:var(--m-cols);}
   .form-col{min-width:0;}
   .panel-col{min-width:0;}
   /* 화면을 꽉 채우되 **상단 바 높이를 숫자로 빼지 않는다.** 기관명이 길거나 화면이 좁아
@@ -839,12 +849,15 @@ html.big{
     .task-col{order:1;} .form-col{order:2;} .rail-col{order:3;}
     body.form-left .task-col{order:2;}
     body.form-left .form-col{order:1;}
-    body.form-left .layout{grid-template-columns:minmax(0,1.08fr) minmax(0,1fr) 252px;}
+    /* 서식을 왼쪽에 두는 기관 설정. **비율은 그대로** 뒤집기만 한다(56/26/18).
+       ⚠️ 종전 고정폭(1.08fr 1fr 252px)은 26/56/18 과 어긋나 서식이 좁은 칸에 들어갔다. */
+    body.form-left .layout{grid-template-columns:var(--m-cols-left);}
   }
   /* 좁은 가로(노트북 등) — 기둥과 여백을 줄여 질문 폭을 지킨다 */
   @media screen and (min-width:861px) and (max-width:1379px) and (min-aspect-ratio:9/10){
-    .layout{grid-template-columns:var(--cols-narrow);}
-    body.form-left .layout{grid-template-columns:var(--cols-narrow-left);}
+    /* ⚠️ 좁은 가로에서도 **비율은 같다**(`fr` 이라 저절로 줄어든다). 여백·글자만 줄인다. */
+    .layout{grid-template-columns:var(--m-cols);}
+    body.form-left .layout{grid-template-columns:var(--m-cols-left);}
     .task{padding:24px 28px 18px;}
     .coach-q{font-size:29px;}
     .rail{padding:22px 16px 16px;}
