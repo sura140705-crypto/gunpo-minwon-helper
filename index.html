@@ -279,6 +279,155 @@ html.big{
 @media print{ #idleGuard,#printGuard,#printNotice{display:none !important;} }
 </style>
 <!--/DESIGN-TOKENS-->
+<!--MAIN-SKIN v1-->
+<style>
+/* ═══════════════════════════════════════════════════════════════════════════
+   Main 전용 스킨 (2026.08.28) — Figma Make Main 원형 이식
+
+   ⛔ **이 블록은 허브(Main)에만 있다.** 9개 화면 공통 블록이 아니다 —
+      위의 `DESIGN-TOKENS` 는 한 글자도 건드리지 않았다(`check-design-tokens.py`).
+      Main 과 Writing 의 시각언어 통일은 **여권 상세 UI 개편 단계**에서 한다(2026.08.28 결정 ③).
+   ⛔ Figma 의 `#2563EB` 를 박지 마라. 기관 대표색은 여전히 `--blue`(SITE-CONFIG 주입)이고,
+      알파 파생은 Figma `accentAt(hex, a)` 규칙을 `color-mix` 로 옮긴 것이다.
+      ⚠️ `color-mix` 를 모르는 브라우저에서는 아래 rgba 폴백(기본 대표색)이 남는다 —
+         대표색을 바꾼 기관에서 색이 조금 어긋날 뿐 화면은 깨지지 않는다.
+   ⚠️ 글자 크기는 **공통 토큰(`--fs-*`)을 그대로 쓴다.** 그래야 크게 보기가 열 폭을
+      건드리지 않고 글자만 커진다(결정 ② — 크게 보기는 zoom 도 비율 변경도 아니다).
+      Figma 의 11.5~14px 밀도는 서서 쓰는 키오스크에 그대로 옮기지 않았다.
+   ═══════════════════════════════════════════════════════════════════════════ */
+:root{
+  /* ── Figma neutral palette (차가운 무채색) ─────────────────────────────
+     ⚠️ 공통 토큰의 따뜻한 회색(`--surface-work` 계열)과 **다른 계열**이다.
+        지금은 Main 만 이 계열이고, 8종은 그대로다 — 의도된 갈림이다(결정 ③). */
+  --m-bg:#f2f4f7;            /* CENTER 바닥 */
+  --m-surface:#ffffff;       /* LEFT·RIGHT·카드 면 */
+  --m-border:#e5e7eb;        /* 기본선 */
+  --m-border-mid:#d1d5db;    /* 한 단 진한 선 — 그래픽 윤곽·hover */
+  --m-hairline:#f3f4f6;      /* 항목 사이 아주 옅은 선 */
+  /* ── 잉크 계층 (2026.08.28 — 고령·저시력 이용자 기준으로 보정) ──────────
+     ⛔ Figma 의 연한 gray 위계를 그대로 쓰지 않는다. 여기는 서서 읽는 공공 민원실이다.
+     ⚠️ **역할이 곧 하한선이다.** 흰 면(#fff) 위 대비:
+          `--m-ink`        17.7:1  제목 · 목록 민원명 · 카드 이름
+          `--m-ink-sub`    10.1:1  묶음 머리 · 안내 목록
+          `--m-ink-read`    7.6:1  **실제로 읽어야 하는 설명**(준비물 보조·안심 문장 …)
+          `--m-ink-muted`   4.9:1  secondary 하한선. 이보다 연한 글자를 만들지 마라
+          `--m-ink-faint`   2.5:1  ⛔ 글자에는 **날짜 같은 비핵심 metadata 에만.**
+                                   그 밖에는 아이콘·그래픽 선처럼 **글자가 아닌 것**에만 쓴다
+     ⛔ 미선택 항목의 글자를 흐리게 해서 선택 상태를 만들지 마라 — 8개 중 7개가
+        읽기 어려워진다. 선택은 **배경·테두리·대표색**으로만 말한다. */
+  --m-ink:#111827;
+  --m-ink-sub:#374151;
+  --m-ink-read:#4b5563;
+  --m-ink-muted:#6b7280;
+  --m-ink-faint:#9ca3af;
+  --m-icon-bg:#f3f4f6;
+  --m-photo:#e9eaec;         /* 미니 그래픽의 사진 자리 */
+  --m-photo-fill:#c4c9d4;
+  --m-chip:#f8f9fa;          /* 미니 그래픽의 카드 몸통 */
+
+  /* ── 대표색 알파 파생 (Figma accentAt) ── */
+  --m-a06:rgba(27,95,192,.06); --m-a07:rgba(27,95,192,.07);
+  --m-a08:rgba(27,95,192,.08); --m-a10:rgba(27,95,192,.10);
+  --m-a12:rgba(27,95,192,.12); --m-a18:rgba(27,95,192,.18);
+  --m-a20:rgba(27,95,192,.20); --m-a25:rgba(27,95,192,.25);
+  --m-a30:rgba(27,95,192,.30); --m-a35:rgba(27,95,192,.35);
+  --m-a55:rgba(27,95,192,.55);
+
+  /* ── 골격 ──
+     ⚠️ 26 / 56 / 18 (2026.08.28 결정 ②). Figma 의 LEFT 340px 고정은 채택하지 않았다 —
+        LEFT 가 Main 의 1차 행동영역이고 긴 민원명과 크게 보기를 받아야 한다.
+     ⛔ `fr` 은 `calc()` 안에서 못 쓴다. 트랙 목록을 통째로 담는다(공통 토큰 §Layout 참조).
+     ⚠️ `html.big` 이 이 값을 **덮지 않는다.** 크게 보기에서 열 폭은 그대로다. */
+  --m-cols:minmax(0,26fr) minmax(0,56fr) minmax(0,18fr);
+  /* Figma 의 얇은 BAR 인상을 받되 52px 을 그대로 복사하지 않았다(결정 ②).
+     로고 28px + 위아래 여백이 들어가는 최소 높이다. 60~64px 구간에서 실물로 조정한다. */
+  --m-bar-h:62px;
+  --m-center-max:720px;      /* CENTER 콘텐츠 읽는 폭 상한 — 여백은 장식으로 채우지 않는다 */
+  --m-r-card:8px;            /* 준비물·신청서 카드 */
+  --m-r-row:10px;            /* LEFT 목록 줄 */
+  --m-r-btn:6px;             /* CTA */
+  --m-r-chip:4px;            /* 서식명 배지 */
+
+  /* ── 글자 크기 — **역할별로** 둔다 (2026.08.28) ──────────────────────
+     ⚠️ 공통 토큰(`--fs-*`)을 그대로 쓰면 크게 보기의 배율이 8종과 묶여 버린다.
+        Main 은 열 폭을 **고정한 채** 글자만 키워야 하므로 자기 눈금이 필요하다
+        (결정 ② — 프레임은 그대로, 글자를 크게).
+     ⚠️ 아래가 **일반 보기**이고, `html.big` 이 같은 이름을 덮는다.
+     ⛔ 카드·미니그래픽·열 폭은 이 눈금에 딸려 커지지 않는다. */
+  --m-fs-ask:22px;           /* LEFT 「무엇을 하러 오셨나요?」 */
+  --m-fs-ask-sub:15px;       /* 그 아래 한 줄 */
+  --m-fs-menu:19px;          /* LEFT 민원명 — 시민의 말 */
+  --m-fs-menu-sub:14px;      /* LEFT 서식명 — 행정명칭 */
+  --m-fs-handoff:15px;       /* 직원에게 여쭤보는 단추 */
+  --m-fs-badge:13.5px;       /* CENTER 서식명 배지 */
+  --m-fs-title:30px;         /* CENTER 큰 제목 — Figma 26px 를 키오스크 거리로 올림 */
+  --m-fs-lead:16px;          /* 그 아래 한 줄 */
+  --m-fs-item:15px;          /* 준비물 이름 */
+  --m-fs-item-sub:13.5px;    /* 준비물 조건 */
+  --m-fs-form:15px;          /* 작성할 신청서 이름 */
+  --m-fs-form-sub:13.5px;    /* 그 곁의 두 줄 */
+  --m-fs-cta:18px;           /* [작성 시작하기] */
+  --m-fs-note:13.5px;        /* 조용한 한 줄 · 직원 안내쪽지 */
+  --m-fs-rail-head:15px;     /* RIGHT 묶음 머리 */
+  --m-fs-rail-title:13.5px;  /* RIGHT 항목 제목 */
+  --m-fs-rail-sub:12.5px;    /* RIGHT 안내문 — 실제로 읽는 줄 */
+  --m-fs-brand:16.5px;       /* 기관 표기 */
+  --m-fs-brand-sub:14px;     /* 제품 이름 */
+  --m-fs-btn:14px;           /* [크게 보기] */
+  --m-fs-chip:12px;          /* 「선택」 칩 */
+  /* ⚠️ metadata(날짜·기관표기 푸터)는 **거의 키우지 않는다.** 읽을 것이 아니라
+     있는 것을 확인하는 자리다 — 키우면 본문과 다툰다. */
+  --m-fs-meta:13.5px;
+}
+@supports (color: color-mix(in srgb, red 50%, transparent)){
+  :root{
+    --m-a06:color-mix(in srgb,var(--blue) 6%,transparent);
+    --m-a07:color-mix(in srgb,var(--blue) 7%,transparent);
+    --m-a08:color-mix(in srgb,var(--blue) 8%,transparent);
+    --m-a10:color-mix(in srgb,var(--blue) 10%,transparent);
+    --m-a12:color-mix(in srgb,var(--blue) 12%,transparent);
+    --m-a18:color-mix(in srgb,var(--blue) 18%,transparent);
+    --m-a20:color-mix(in srgb,var(--blue) 20%,transparent);
+    --m-a25:color-mix(in srgb,var(--blue) 25%,transparent);
+    --m-a30:color-mix(in srgb,var(--blue) 30%,transparent);
+    --m-a35:color-mix(in srgb,var(--blue) 35%,transparent);
+    --m-a55:color-mix(in srgb,var(--blue) 55%,transparent);
+  }
+}
+/* ══ 크게 보기 (2026.08.28) ═══════════════════════════════════════════════
+   **프레임은 그대로, 글자를 크게.**
+   ⛔ 열 폭(`--m-cols` 26/56/18)을 바꾸지 않는다.
+   ⛔ 화면 전체 zoom 이 아니다. 카드·미니그래픽을 비례확대하지 않는다.
+   ⚠️ 읽는 글자는 **+15~21%**, metadata 는 거의 그대로다 — 그래야 위계가 유지된다.
+   ⚠️ 늘어난 글자가 한 화면에 남게 **여백만** 조인다(아래 `html.big` 규칙).
+      1920×1080 에서 LEFT 8줄 + 직원 단추, RIGHT 세 묶음이 스크롤 없이 들어가야 한다. */
+html.big{
+  --m-fs-ask:26px;
+  --m-fs-ask-sub:17px;
+  --m-fs-menu:23px;
+  --m-fs-menu-sub:17px;
+  --m-fs-handoff:17px;
+  --m-fs-badge:15.5px;
+  --m-fs-title:36px;
+  --m-fs-lead:19px;
+  --m-fs-item:18px;
+  --m-fs-item-sub:16px;
+  --m-fs-form:18px;
+  --m-fs-form-sub:16px;
+  --m-fs-cta:21px;
+  --m-fs-note:15px;
+  --m-fs-rail-head:17px;
+  --m-fs-rail-title:16px;
+  --m-fs-rail-sub:15px;
+  --m-fs-brand:18px;
+  --m-fs-brand-sub:15px;
+  --m-fs-btn:15.5px;
+  --m-fs-chip:13px;
+  --m-fs-meta:14px;
+  --m-center-max:820px;
+}
+</style>
+<!--/MAIN-SKIN-->
 <style>
   :root{
     /* 대표색 3종 + 그라데이션. SITE-CONFIG 가 이 이름으로 값을 넣는다.
@@ -286,372 +435,280 @@ html.big{
     --blue:#1b5fc0; --blue-dark:#164e9e; --blue-light:#eaf1fb;
     --grad:linear-gradient(135deg,hsl(215,75%,52%) 0%,hsl(215,75%,43%) 52%,hsl(215,79%,32%) 100%);
     --line:#d5d9df; --bg:#f2f4f7; --muted:#5b626c; --ink:#1a1c1f;
-    /* 세로로 늘어선 목록 카드의 최소 높이. 여권의 `--touch-card`(132px)는 두 칸
-       격자용이라 8개를 세로로 세우면 화면을 넘는다. 폭이 700px 가까이 되므로
-       표적 넓이는 충분하다(터치 최소 변 `--touch-min` 48px 을 크게 넘는다). */
+    /* 세로로 늘어선 목록 줄의 최소 높이. 아이콘판 40px + 위아래 여백이 들어간다. */
     --row-h:66px;
   }
   *{box-sizing:border-box;}
   html,body{
-    margin:0;padding:0;background:var(--surface-zone);color:var(--ink);
+    margin:0;padding:0;background:var(--m-bg);color:var(--m-ink);
     font-family:var(--ff);font-size:var(--fs-body);line-height:1.55;
   }
   html.big{ --row-h:80px; }
 
   /* ═══════════════════════════════════════════════════════════════════
-     MAIN — Writing 과 **같은 세 영역**(`--cols`) 을 쓴다.
+     MAIN (2026.08.28 — Figma Make 이식)
 
-     Start 화면을 두지 않기로 했으므로(2026.08.24) MAIN 다음이 곧 Writing 이다.
-     둘의 기하가 같으면 페이지가 바뀌어도 화면이 움직이지 않는다 —
-     ASK 는 질문·목록에서 질문·입력으로, PAPER 는 빈 서식에서 채워지는 서식으로
-     내용만 바뀐다.
+     LEFT   무엇을 하러 왔는지 고른다 (1차 행동영역)
+     CENTER 고른 민원의 **준비물 + 작성할 신청서 + [작성 시작하기]**
+     RIGHT  조용한 공통 안내
 
-     ⚠️ Stitch 시안에서 가져온 것은 **비례·여백·정렬·ASK↔PAPER 시각 관계**다.
-     ⛔ hover 에만 의존하는 정보를 만들지 않는다 — 첫 서식이 **처음부터** 떠 있고
-        hover·포커스는 그것을 바꿀 뿐이다. 터치에서도 종이가 늘 보인다.
-
-     ⚠️ **대기 화면을 따로 두지 않는다**(2026.08.25). 아무도 안 건드리면 이 화면이
-        스스로 카드를 짚어 보이는 **시연**을 돌 뿐이다 — 아래 「시연」 절을 함께 보라.
+     ⛔ **CENTER 에 A4 종이를 두지 않는다**(2026.08.28 결정 ①). 종전의 네 단
+        (빈 윤곽 → 실루엣 → 실제 서식 흐리게)과 종이에 줄이 그어지는 시연은
+        Main 에서 **사용을 중단**했다. 함수·그림은 아직 지우지 않았다 — 아래 JS 의
+        「사용 중단」 표시를 보라.
+     ⛔ Writing 과 `--cols` 를 공유하는 「기하가 같아서 안 움직이는 전환」도 더는
+        강제하지 않는다. 대신 CENTER 의 신청서 카드에 `data-shared="form-paper"` 를
+        달아 두었다 — 나중에 **카드 → 실제 PAPER shared-element** 전환이 붙을 자리다.
+        ⚠️ 이번 단계에서는 그 모션을 **구현하지 않는다.**
+     ⚠️ hover·포커스는 **LEFT 카드 자신만** 강조한다. CENTER 를 바꾸지 않는다
+        (Figma 동결 §5 — 누름만이 선택이다).
      ═══════════════════════════════════════════════════════════════════ */
 
-  /* ── BAR ─────────────────────────────────────────────────────────────*/
+  /* ── BAR ─────────────────────────────────────────────────────────────
+     Figma 의 얇고 조용한 머리. ⛔ 3px 대표색 띠를 여기서는 쓰지 않는다 —
+     대표색은 기관 표기와 선택 상태에만 남긴다(결정 ③ border/ink hierarchy).
+     ⚠️ `.topbar` 를 3열 격자로 두는 것은 SITE-CONFIG 가 키보드 없는 자리에
+        `.kb-help` 를 **자식으로 덧붙이기** 때문이다(`order:9` 로 마지막 줄에 붙는다). */
   .topbar{
     display:grid;grid-template-columns:minmax(0,1fr) minmax(0,auto) auto;
-    align-items:center;gap:12px 20px;
-    padding:0 24px;min-height:var(--topbar-h);background:var(--surface-head);
+    align-items:center;gap:8px 20px;
+    padding:0 28px;min-height:var(--m-bar-h);background:var(--m-surface);
+    border-bottom:1px solid var(--m-border);
     position:sticky;top:0;z-index:20;
   }
-  .topbar::after{content:"";position:absolute;left:0;right:0;bottom:0;height:3px;
-    background:var(--grad);}
-  .brand{display:flex;align-items:center;gap:13px;min-width:0;}
-  .brand-tx{min-width:0;}
-  .brand b{display:block;font-size:17px;color:var(--blue-dark);letter-spacing:-.02em;
+  .brand{display:flex;align-items:center;gap:11px;min-width:0;}
+  .brand-tx{display:flex;align-items:center;gap:11px;min-width:0;}
+  .brand b{font-size:var(--m-fs-brand);font-weight:var(--fw-heavy);color:var(--blue);
+    letter-spacing:-.03em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  /* 기관 표기와 제품 이름 사이의 얇은 칸막이 — Figma 의 정보 밀도 */
+  .brand-div{width:1px;height:15px;background:var(--m-border);flex:0 0 auto;}
+  .brand h1{margin:0;font-size:var(--m-fs-brand-sub);font-weight:500;color:var(--m-ink-sub);
     white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .brand h1{margin:0;font-size:13px;font-weight:400;color:var(--ink-muted);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-    justify-content:flex-end;padding:10px 0;}
-  .today{font-size:13.5px;color:var(--ink-muted);white-space:nowrap;}
+  .topbar .gunpo-logo{height:28px;}
+  .actions{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    justify-content:flex-end;padding:8px 0;}
+  /* ⚠️ 날짜만 둔다. **시계는 넣지 않는다** — 이 PC 는 날짜가 설치일로 원복되는
+     이력이 있어, 디자인을 이유로 틀린 시각을 띄우면 안 된다(2026.08.28 결정). */
+  .today{font-size:var(--m-fs-meta);color:var(--m-ink-faint);white-space:nowrap;
+    font-feature-settings:"tnum";}
   .btn{display:inline-flex;align-items:center;gap:7px;
-    font-family:inherit;font-size:15.5px;font-weight:var(--fw-bold);
-    border:1.5px solid var(--blue);background:var(--paper);color:var(--blue);
-    border-radius:var(--r-md);padding:10px 15px;cursor:pointer;}
-  .btn:hover{background:var(--blue-light);}
-  .btn.ghost{border-color:var(--border);color:var(--ink-muted);}
-  .btn.ghost:hover{background:var(--surface-work);border-color:var(--border-strong);}
-  .topbar .btn{font-size:14.5px;padding:9px 12px;white-space:nowrap;}
+    font-family:inherit;font-size:var(--m-fs-btn);font-weight:var(--fw-bold);
+    border:1px solid var(--m-border);background:var(--m-surface);color:var(--m-ink-sub);
+    border-radius:var(--m-r-btn);padding:8px 13px;cursor:pointer;
+    transition:border-color var(--dur-quick) var(--ease-out),
+               background var(--dur-quick) var(--ease-out);}
+  .btn:hover{background:var(--m-bg);border-color:var(--m-border-mid);}
+  .btn .btn-ic{color:var(--m-ink-faint);}
 
-  /* ── 세 영역 골격 — Writing 과 같은 토큰 ─────────────────────────────*/
-  .layout{display:grid;grid-template-columns:var(--cols);}
+  /* ── 세 영역 골격 ────────────────────────────────────────────────────*/
+  .layout{display:grid;grid-template-columns:var(--m-cols);}
   @media screen and (min-width:861px){
     body{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
     .topbar{flex:0 0 auto;position:relative;}
     .layout{flex:1 1 auto;min-height:0;}
-    .task-col,.form-col,.rail-col{height:100%;min-height:0;}
+    .task-col,.ready-col,.rail-col{height:100%;min-height:0;}
   }
-  .task-col{display:flex;flex-direction:column;min-width:0;overflow:auto;
-    background:var(--surface-work);padding:30px 34px 24px;}
-  /* 종이는 **세로에 맞춰** 한 페이지가 통째로 보인다(잘리지 않는다).
-     ⚠️ `min-height:0` 이 없으면 flex 자식이 안 줄어들어 그림이 넘친다. */
-  .form-col{min-width:0;overflow:hidden;background:var(--surface-zone);
-    padding:22px 22px 10px;position:relative;
-    display:flex;flex-direction:column;min-height:0;}
-  .paper-fit{flex:1 1 auto;min-height:0;display:flex;
-    align-items:center;justify-content:center;}
-  /* 실제 서식 1쪽. ⛔ 인쇄용이 아니라 **미리보기용 축소본**이다
-     (`tools/make-form-previews.py`). 인쇄물은 각 서식이 따로 갖고 있다.
-     ⚠️ 그림을 `.img-hold` 로 감싼 것은 **베일을 그림 위에만** 덮기 위해서다 —
-        감싸지 않고 `.paper-fit` 에 덮으면 종이 둘레의 바닥까지 밝아진다(실제로 겪었다).
-     ⚠️ 크기는 실루엣(`.gp-sil`)과 **같은 식**으로 정한다. 두 상태가 같은 자리·같은
-        크기여야 고를 때 「바뀌는」 것으로 읽힌다. */
-  .img-hold{position:relative;width:min(210mm,100%);margin:0 auto;aspect-ratio:210/297;}
-  .img-hold{width:min(210mm,100%,calc(100cqh * 210 / 297));}
-  .gp-img{display:block;width:100%;height:100%;
-    object-fit:contain;background:var(--paper);box-shadow:var(--paper-shadow);}
-  /* 서식이 놓인 자리를 가리키는 모서리 선 — 여권과 같은 표시 */
-  .form-col::before{content:"";position:absolute;left:25px;top:25px;width:94px;height:94px;
-    border-left:1px solid var(--hair);border-top:1px solid var(--hair);pointer-events:none;}
-  .rail-col{min-width:0;background:var(--surface-rail);}
+  .task-col{display:flex;flex-direction:column;min-width:0;overflow:hidden;
+    background:var(--m-surface);border-right:1px solid var(--m-border);}
+  .ready-col{min-width:0;overflow-y:auto;background:var(--m-bg);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:40px 32px;}
+  .rail-col{min-width:0;overflow-y:auto;background:var(--m-surface);
+    border-left:1px solid var(--m-border);display:flex;flex-direction:column;}
 
-  /* ── ASK ─────────────────────────────────────────────────────────────*/
-  .ask-q{margin:0 0 6px;font-size:var(--fs-question);font-weight:var(--fw-heavy);
-    line-height:1.28;letter-spacing:var(--ls-tight);}
-  .ask-sub{margin:0 0 20px;font-size:var(--fs-help);color:var(--ink-muted);}
-
+  /* ── LEFT ────────────────────────────────────────────────────────────*/
+  .ask-head{padding:26px 22px 12px;flex:0 0 auto;}
+  .ask-q{margin:0;font-size:var(--m-fs-ask);font-weight:var(--fw-heavy);
+    color:var(--m-ink);line-height:1.3;letter-spacing:-.03em;}
+  .ask-sub{margin:6px 0 0;font-size:var(--m-fs-ask-sub);color:var(--m-ink-read);line-height:1.5;}
+  .ask-body{flex:1 1 auto;min-height:0;overflow-y:auto;
+    display:flex;flex-direction:column;padding:0 14px 18px;}
   /* 목록 카드 — **큰 글씨 = 시민이 하려는 일 / 작은 글씨 = 행정명칭**(철학 §3) */
-  .cards{display:grid;gap:7px;margin:0 0 14px;}
-  .card{display:flex;align-items:center;gap:10px;width:100%;
-    min-height:var(--row-h);padding:10px 14px;background:var(--paper);
-    border:1.5px solid var(--border-strong);border-radius:var(--r-lg);
+  .cards{display:flex;flex-direction:column;gap:5px;margin:0 0 14px;}
+  .card{display:flex;align-items:center;gap:13px;width:100%;
+    min-height:var(--row-h);padding:11px 13px;
+    background:#fafafa;border:1.5px solid var(--m-border);border-radius:var(--m-r-row);
     text-align:left;cursor:pointer;font-family:inherit;color:inherit;
     transition:border-color var(--dur-quick) var(--ease-out),
                background var(--dur-quick) var(--ease-out);}
-  .card:hover,.card:focus-visible{border-color:var(--blue);background:var(--blue-light);}
-  /* 지금 오른쪽에 떠 있는 서식 — hover 가 없는 터치에서도 **무엇이 보이는지** 알린다 */
-  .card.picked{border-color:var(--blue);background:var(--blue-light);
-    box-shadow:inset 3px 0 0 var(--blue);}
-  /* ⚠️ 아이콘은 **보조 표시**다. 크면 목록이 둔해 보이고 시민의 말(큰 글씨)과
-     주인 자리를 다툰다. 26px → 20px 로 내렸다(2026.08.24). */
-  /* 아이콘은 보조 표시다. 20 → 14px(30% 더). 목록이 조밀해지고 시민의 말이 산다. */
-  /* 선 아이콘 한 벌(인라인 SVG). ⚠️ 색은 **잉크**를 따른다 — 카드끼리 색으로 경쟁하지
-     않게. 고른 카드에서만 대표색이 된다(그때는 색이 「골라짐」이라는 뜻을 갖는다).
-     ⚠️ `font-size`·`text-align` 은 아이콘이 없는 서식의 이모지 대비책으로 남겨 둔다. */
-  .card-ic{flex:0 0 auto;width:21px;height:21px;font-size:14px;line-height:1;
-    text-align:center;color:var(--ink-muted);opacity:.9;
+  /* hover·포커스는 **이 카드 자신만** 바꾼다(Figma 동결 §5) */
+  .card:hover,.card:focus-visible{background:#f8f9fb;border-color:var(--m-border-mid);}
+  /* 고른 카드 — 색이 여기서만 「골라짐」이라는 뜻을 갖는다 */
+  .card[aria-pressed="true"]{border-color:var(--m-a35);background:var(--m-a06);}
+  .card-ic{flex:0 0 auto;width:40px;height:40px;border-radius:var(--m-r-row);
+    background:var(--m-icon-bg);display:flex;align-items:center;justify-content:center;
+    color:var(--m-ink-muted);
+    transition:background var(--dur-quick) var(--ease-out),
+               color var(--dur-quick) var(--ease-out);}
+  .card-ic svg{display:block;width:22px;height:22px;}
+  .card[aria-pressed="true"] .card-ic{background:var(--m-a10);color:var(--blue);}
+  .card-tx{display:flex;flex-direction:column;gap:2px;min-width:0;flex:1 1 auto;}
+  /* 시민의 말 — **미선택도 진하다**(17px→19px · #374151→#111827, 2026.08.28).
+     ⚠️ 목록은 8개 중 7개가 늘 미선택이다. 그 일곱이 읽기 어려우면 목록이 아니다. */
+  .card-label{font-size:var(--m-fs-menu);font-weight:600;
+    color:var(--m-ink);line-height:1.3;letter-spacing:-.015em;
     transition:color var(--dur-quick) var(--ease-out);}
-  .card-ic svg{display:block;width:100%;height:100%;}
-  .card:hover .card-ic,.card:focus-visible .card-ic,
-  .card-wrap.open .card-ic,.demo-on .card-ic{color:var(--blue);opacity:1;}
-  .card-tx{display:flex;flex-direction:column;gap:3px;min-width:0;}
-  /* 목록은 여권의 두 칸 격자 카드보다 한 치수 작다 — 8개를 세로로 훑는 자리다.
-     ⚠️ 크게 보기에서는 토큰이 커지므로 여기서도 함께 커진다. */
-  .card-label{font-size:calc(var(--fs-card) - 2px);font-weight:var(--fw-heavy);
-    color:var(--ink);line-height:1.25;letter-spacing:-.02em;}
-  .card-formal{font-size:calc(var(--fs-card-sub) - 1px);color:var(--ink-muted);line-height:1.4;}
+  .card[aria-pressed="true"] .card-label{font-weight:var(--fw-heavy);color:var(--blue);}
+  /* 행정명칭 — 창구와 말이 통하게 하는 줄이다. 13px→14px · #9ca3af→#4b5563 */
+  /* ⚠️ 크게 보기에서 **잘리지 않게** 한다 — 창구와 말이 통해야 하는 줄이다.
+     ⛔ ellipsis 로 삼키지 않는다. 길면 두 줄로 흐른다. */
+  .card-formal{font-size:var(--m-fs-menu-sub);color:var(--m-ink-read);
+    line-height:1.4;overflow-wrap:break-word;}
+  /* ⛔ 고른 카드에서 이 줄의 색을 **연하게 하지 않는다**(종전 `--m-a55` 는 대표색 55%
+     투명이라 대비가 떨어졌다). 선택은 배경·테두리·아이콘·민원명이 이미 말한다. */
+  .card-arrow{flex:0 0 auto;width:13px;height:13px;color:var(--m-ink-faint);}
+  .card[aria-pressed="true"] .card-arrow{color:var(--blue);}
 
-  /* Human Handoff (철학 §8) — 여기 없으면 시민이 갇힌다 */
-  /* 단추 안의 선 아이콘. ⚠️ 카드 아이콘과 **같은 문법**(24 격자·굵기 1.7·둥근 끝)이고
-     `currentColor` 라 단추 색을 그대로 따라간다 — hover 에서 같이 물든다. */
+  /* Human Handoff (철학 §8) — 여기 없으면 시민이 갇힌다.
+     ⚠️ Figma 시안에는 이 단추가 없다. **빠뜨리지 않고 그대로 지켰다.** */
   .btn-ic{flex:0 0 auto;width:16px;height:16px;display:block;}
   .card-sub{display:flex;align-items:center;justify-content:center;gap:9px;
-    width:100%;margin:auto 0 0;padding:14px;
-    font-family:inherit;font-size:15px;font-weight:var(--fw-bold);
-    color:var(--ink-muted);background:var(--surface-work);
-    border:1.5px dashed var(--border);border-radius:var(--r-lg);cursor:pointer;}
-  .card-sub:hover{border-color:var(--blue);color:var(--blue-dark);background:var(--paper);}
-  .staff-note{margin:10px 0 0;padding:13px 15px;font-size:15px;line-height:1.6;
+    width:100%;margin:auto 0 0;padding:13px;
+    font-family:inherit;font-size:var(--m-fs-handoff);font-weight:var(--fw-bold);
+    color:var(--m-ink-sub);background:var(--m-bg);
+    border:1.5px dashed var(--m-border-mid);border-radius:var(--m-r-row);cursor:pointer;}
+  .card-sub:hover{border-color:var(--blue);color:var(--blue);background:var(--m-surface);}
+  .staff-note{margin:10px 0 0;padding:12px 14px;font-size:var(--m-fs-note);line-height:1.6;
     color:var(--notice);background:var(--notice-face);
-    border:1px solid var(--notice-line);border-radius:var(--r-md);}
+    border:1px solid var(--notice-line);border-radius:var(--m-r-card);}
   .staff-note:empty{display:none;}
 
-  /* ── PAPER — 고른 서식의 빈 신청서 ───────────────────────────────────
-     ⛔ 8종 실제 서식 배경을 허브에 싣지 않는다(범용·저사양 원칙 §19).
-        같은 컴포넌트가 제목과 항목만 바꿔 그린다.
-     ⚠️ 실제 개인정보가 입력된 것처럼 보이게 하지 않는다 — 칸은 비어 있다. */
-  .gpaper{width:min(210mm,100%);margin:0 auto;background:var(--paper);
-    box-shadow:var(--paper-shadow);padding:34px 40px 38px;
-    aspect-ratio:210/297;max-height:100%;}
-  .gp-title{text-align:center;font-size:23px;font-weight:var(--fw-heavy);
-    letter-spacing:.14em;color:var(--ink);}
-  .gp-rule{height:2px;background:var(--ink);margin:16px 0 26px;}
-  .gp-row{display:grid;grid-template-columns:132px minmax(0,1fr);gap:18px;
-    align-items:center;padding:11px 0;border-bottom:1px solid var(--border);}
-  .gp-k{font-size:15px;color:var(--ink-muted);}
-  .gp-v{height:30px;border-radius:2px;background:var(--surface-work);}
-  /* 서명란 — 한 줄로 둔다. 접히면 종이가 아니라 표처럼 읽힌다. */
-  .gp-sign{display:flex;justify-content:flex-end;align-items:flex-end;gap:10px;
-    margin-top:40px;white-space:nowrap;}
-  .gp-sign span{font-size:14.5px;color:var(--ink-muted);}
-  .gp-sign i{display:inline-block;font-style:normal;
-    border-bottom:1px solid var(--ink);width:150px;height:22px;}
-  .gp-note{flex:0 0 auto;margin:10px auto 0;width:min(210mm,100%);font-size:12.5px;
-    color:var(--ink-muted);text-align:center;}
-
-  /* ── RAIL ────────────────────────────────────────────────────────────*/
-  .rail{display:flex;flex-direction:column;height:100%;min-height:0;overflow:auto;
-    padding:26px 20px 20px;}
-  .rail-info{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
-  /* ⚠️ MAIN 의 RAIL 은 위에 **한 묶음뿐**이다(동결 §7 의 「[대체] 이렇게 도와드립니다」).
-     아래 안심 안내는 바닥 고정이라, 같은 간격을 쓰면 가운데에 큰 구멍이 남아
-     「조용한」 것이 아니라 「덜 만든」 것으로 읽힌다.
-     ⛔ 정보를 더 넣어 채우지 않는다(결정 ⑤ — 없으면 여백을 허용한다).
-        대신 **묶음을 벌리고 남는 높이를 위아래로 나눠** 여백이 의도로 읽히게 한다.
-     ⚠️ 세로 배치에서는 기둥이 가로 띠가 되므로 아래 미디어 쿼리에서 되돌린다. */
-  .rail-sec{margin:clamp(8px,13vh,150px) 0 20px;}
-  .rail-head{display:flex;align-items:center;gap:8px;
-    font-size:var(--fs-rail-head);font-weight:900;margin-bottom:14px;}
-  .rail-items{display:grid;gap:clamp(12px,2.2vh,24px);}
-  .rail-item{display:grid;grid-template-columns:16px 1fr;gap:8px;
-    font-size:var(--fs-rail-item);line-height:1.45;color:#7b7f7d;}
-  .rail-item .check{color:#b7b5af;font-weight:900;}
-  .rail-item small{display:block;color:var(--ink-muted);font-size:11.5px;
-    margin-top:2px;font-weight:400;}
-  .rail-safe{margin-top:auto;border-top:1px solid var(--border);padding-top:16px;}
-  .rail-safe .rail-head{font-size:var(--fs-rail-item);margin-bottom:7px;}
-  .rail-safe p{font-size:var(--fs-rail-note);line-height:1.55;color:#5f6667;margin:6px 0;}
-  .screen-notice{flex:0 0 auto;border-top:1px solid var(--border);
-    margin-top:16px;padding-top:14px;}
-  .screen-notice h3{margin:0 0 7px;font-size:12.5px;font-weight:900;color:var(--ink-muted);}
-  .screen-notice ul{margin:0;padding-left:16px;}
-  .screen-notice li{font-size:12px;color:#6a706d;line-height:1.6;}
-
-  /* ---------------------------------------------------------------------
-     빈 상태 · 카드 펼침 · 시연 (2026.08.25)
-
-     ⚠️ 대기 화면을 **따로 두지 않는다.** 이 화면 하나가 대기도 하고 선택도 한다 —
-        아무도 안 건드리면 **시연**이 카드를 하나씩 짚어 가운데 종이를 바꾸고,
-        마우스가 움직이거나 아무 키나 누르면 시연이 멈추고 **기본 상태**로 돌아간다.
-        별도 화면이 없으니 「깨어날 때 화면이 갈린다」는 느낌 자체가 생기지 않는다.
-     ⛔ 카드를 누른다고 **바로 넘어가지 않는다.** 그 카드가 아래로 펼쳐져 설명과
-        [작성 시작]을 내고, 그것을 눌러야 간다 — 잘못 누른 사람이 되돌아올 길이 생긴다.
-     --------------------------------------------------------------------- */
-
-  /* ══ 종이 자리의 네 단 (2026.08.25) ═════════════════════════════════════
-     ⛔ **실제 서식은 「고른 것」에만 쓴다.** 종전에는 시연·hover·고름이 **셋 다**
-        실제 서식을 띄워서, 눌러도 화면이 그대로인 것처럼 보였고(구별 안 됨)
-        빽빽한 정부 서식이 2.6초마다 바뀌어 부담스러웠다.
-
-       ① 아무것도 안 고름  빈 윤곽 + 「서식을 골라 주세요」
-       ② 시연             실루엣 — 이름 + 항목 줄이 **하나씩 그어진다**
-       ③ hover            실루엣 — 정지. 줄은 비어 있다
-       ④ 고름             **실제 서식**, 살짝 흐리게 — 아직 내 것이 아니다
-       ⑤ 작성(Writing)    실제 서식, 또렷 ← 페이지가 바뀌는 순간 선명해진다
-
-     **선명도가 곧 확정의 단계다.** ④→⑤ 는 기하가 같아 화면이 안 움직이는 전환인데,
-     종이가 또렷해지는 것이 그 순간을 말해 준다.
-     ═══════════════════════════════════════════════════════════════════════ */
-
-  /* ⛔ `[hidden]` 은 브라우저 기본 규칙이라 **클래스의 `display` 에 진다.**
-     아래는 `display` 를 직접 주므로 숨김 규칙을 같이 적어야 한다 —
-     빠뜨리면 `hidden=true` 로 감춘 것이 화면에 그대로 남는다(실제로 겪었다). */
-  .gp-empty[hidden],.img-hold[hidden],.gp-sil[hidden]{display:none;}
-
-  /* ── ① 빈 자리 ──
-     ⚠️ hover 가 없는 터치에서 빈 화면이 되지 않게 **이 자리가 대신 말을 건다.** */
-  .gp-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;
-    gap:16px;height:100%;color:var(--ink-muted);text-align:center;}
-  .gp-empty b{display:block;font-size:var(--fs-lead);font-weight:var(--fw-bold);color:var(--ink);}
-  .gp-empty small{display:block;margin-top:5px;font-size:var(--fs-small);}
-  /* 종이 윤곽만 그려 둔다 — 「여기에 종이가 놓입니다」를 보이는 것으로 말한다 */
-  .gp-empty .ghost{width:min(52%,300px);aspect-ratio:210/297;border-radius:2px;
-    border:2px dashed var(--border);}
-
-  /* ── ②③ 실루엣 ──
-     실제 서식이 **아니다.** 이름과 항목 수만 가진 종이 모양이다.
-     ⛔ 그림을 쓰지 않으므로 무게가 없다 — 2.6초마다 바뀌어도 부담되지 않는다.
-     ⚠️ 크기는 실제 서식과 **같은 자리·같은 비율**이어야 한다. 그래야 고를 때
-        실루엣이 실제 서식으로 **바뀌는** 것으로 읽힌다(딴 것이 나타나는 게 아니다). */
-  /* ⚠️ **폭 하나로 크기를 정한다.** `width` + `max-height` 를 같이 주면 A4 비율이
-     깨진다(2026.08.25 에 겪었다). 재는 상자는 `.paper-fit` 이다 — 아래 참조.
-     ⚠️ 컨테이너 질의를 모르는 브라우저에서는 이 선언이 무시되고 `min(210mm,100%)`
-        로 물러난다. 종이가 조금 클 뿐 화면은 깨지지 않는다. */
-  .gp-sil{width:min(210mm,100%);margin:0 auto;background:var(--paper);
-    box-shadow:var(--paper-shadow);aspect-ratio:210/297;
-    display:flex;flex-direction:column;padding:6.5% 8% 7%;
-    transition:opacity var(--dur-calm) var(--ease-out);}
-  .gp-sil{width:min(210mm,100%,calc(100cqh * 210 / 297));}
-  .sil-name{font-size:clamp(15px,2.4cqh,23px);font-weight:var(--fw-heavy);
-    letter-spacing:.06em;color:var(--ink);text-align:center;}
-  .sil-rule{height:2px;background:var(--border-strong);margin:4% 0 7%;}
-  /* ⛔ 줄 사이를 `%` 로 벌리지 마라. 이 상자는 높이가 **내용에서 나오므로** 백분율
-     간격이 0 으로 접힌다 — 줄이 위에 뭉쳐 바코드처럼 보인다(2026.08.25 에 겪었다).
-     종이 높이를 재는 `cqh` 로 벌린다(재는 상자는 `.paper-fit`). */
-  .sil-rows{display:flex;flex-direction:column;gap:clamp(12px,6cqh,60px);}
-  /* 한 줄 = 한 항목. **왼쪽에 그 서식이 묻는 것 / 오른쪽에 채워질 자리.**
-     ⚠️ 항목 이름은 언제나 보인다 — 비어 있어도 「무엇을 쓰는 종이인지」는 읽혀야 한다. */
-  .sil-row{display:grid;grid-template-columns:37% 1fr;gap:4%;align-items:end;}
-  .sil-k{font-size:clamp(10px,1.5cqh,15px);color:var(--ink-muted);line-height:1.3;
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  /* 밑줄은 **칸**이 갖고, 글자만 왼쪽에서 오른쪽으로 드러난다 — 손으로 적어 나가는 결이다.
-     ⛔ 밑줄을 글자 쪽에 주지 마라. 같이 잘려서 빈 칸에 줄이 없어진다(빈 서식으로 안 읽힌다). */
-  .sil-v{border-bottom:1px solid var(--border-strong);overflow:hidden;
-    padding-bottom:clamp(2px,.55cqh,6px);}
-  .sil-v i{display:block;font-style:normal;font-size:clamp(11px,1.75cqh,17px);
-    line-height:1.3;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
-    clip-path:inset(0 100% 0 0);
-    transition:clip-path var(--dur-calm) var(--ease-out);}
-  .sil-row.wrote .sil-v i{clip-path:inset(0 0 0 0);}
-  /* 아래쪽 서명 줄. ⚠️ 이것이 없으면 종이의 아래 절반이 통째로 비어 「빈 종이」로 읽히고,
-     고른 순간 나오는 **빽빽한 실제 서식**과 무게가 너무 달라 다른 종이처럼 보인다.
-     ⛔ 「서명하세요」 표시가 아니다 — 인쇄물의 `--marker-sign` 과 아무 관계가 없다. */
-  .sil-sign{margin-top:auto;margin-bottom:7%;display:flex;justify-content:flex-end;}
-  .sil-sign span{display:block;width:40%;height:clamp(8px,1.25cqh,13px);
-    border-radius:2px;background:var(--surface-work);}
-  .sil-foot{font-size:clamp(11px,1.6cqh,14px);
-    color:var(--ink-muted);text-align:center;}
-
-  /* ── ④ 고른 서식 — 실제 서식이지만 **아직 흐리다** ──
-     ⛔ `filter:blur()` 를 쓰지 마라. 700×990 그림에 blur 는 재사용 사무용 PC 에서
-        부담이다(§19 저사양). 흰 베일 한 겹이면 합성만으로 끝난다.
-     ⚠️ 「흐림」은 화면 전용이다. 인쇄에는 이 겹이 나가지 않는다 — 허브는 인쇄하지 않는다. */
-  .form-col{--veil:0;}
-  /* `cqh` 를 쓰는 실루엣·그림이 이 상자의 높이를 잰다. 「같은 자리·같은 비율」이 되려면
-     둘이 같은 칸에서 재야 한다. */
-  .paper-fit{position:relative;container-type:size;}
-  /* ⛔ 베일은 **그림 위에만** 덮는다(`.img-hold`). `.paper-fit` 에 덮으면 종이가 아니라
-     구역 전체가 밝아져 바닥에 밝은 사각형이 생긴다. */
-  .img-hold::after{content:"";position:absolute;inset:0;pointer-events:none;
-    background:var(--paper);opacity:var(--veil);
-    transition:opacity var(--dur-calm) var(--ease-out);}
-  .picked .form-col{--veil:.42;}
-
-  /* -- 카드 펼침 --
-     ⚠️ 카드는 `<button>` 이라 그 **안에** [작성 시작] 단추를 넣을 수 없다
-        (단추 안의 단추는 HTML 위반이고 터치에서 엉뚱한 것이 눌린다).
-        `.card-wrap` 으로 감싸고 펼침판을 **형제로** 둔다. */
-  .card-wrap{display:block;}
-  /* 0fr -> 1fr 은 내용 높이를 재지 않고도 부드럽게 열린다.
-     ⛔ `max-height` 추측값을 쓰지 마라 — 준비물이 긴 여권에서 내용이 잘린다. */
-  /* ⚠️ 여닫는 방향에 **다른 easing** 을 준다(2026.08.27 외부 검토 A-2 #2).
-     펼칠 때는 `--ease-out` — 눌렀다는 결과와 새 정보를 빨리 연결해 보여 준다.
-     접을 때는 `--ease-in` — 내용이 물러나는 방향만 짧게 보이고 다음 조작을 늦추지 않는다.
-     ⚠️ 규칙 **둘**로 가른다. 여는 쪽 규칙에 전환을 같이 적으면 그때만 그 곡선이 쓰인다. */
-  .card-open{display:grid;grid-template-rows:0fr;
-    transition:grid-template-rows var(--dur-base) var(--ease-in);}
-  .card-open > div{overflow:hidden;}
-  .card-wrap.open .card-open{grid-template-rows:1fr;
-    transition:grid-template-rows var(--dur-base) var(--ease-out);}
-  .card-body{padding:14px 16px 16px;margin:0 0 7px;
-    background:var(--paper);border:1.5px solid var(--blue);border-top:0;
-    border-radius:0 0 var(--r-lg) var(--r-lg);}
-  .card-wrap.open .card{border-color:var(--blue);background:var(--blue-light);
-    border-radius:var(--r-lg) var(--r-lg) 0 0;box-shadow:inset 3px 0 0 var(--blue);}
-  /* ⚠️ 설명이 카드 제목(`--fs-card` - 2)만 해지면 위계가 죽는다. 카드 안의 보조
-     글자 크기(`--fs-card-sub`)를 쓴다 — 크게 보기에서도 함께 커진다. */
-  .card-desc{margin:0;font-size:var(--fs-card-sub);line-height:1.6;color:var(--ink-muted);}
-  .card-scale{margin:9px 0 0;font-size:var(--fs-small);color:var(--ink-muted);}
-  .card-ready{margin:11px 0 0;padding:0;list-style:none;}
-  .card-ready li{font-size:var(--fs-small);line-height:1.6;color:var(--ink-muted);}
-  .card-ready b{color:var(--ink);font-weight:var(--fw-bold);}
-  .card-go{display:block;width:100%;margin:14px 0 0;min-height:var(--touch-min);
-    font-family:inherit;font-size:var(--fs-label);font-weight:var(--fw-heavy);
-    color:#fff;background:var(--blue);border:0;border-radius:var(--r-md);
-    padding:13px 16px;cursor:pointer;}
-  .card-go:hover{background:var(--blue-dark);}
-
-  /* -- 시연 --
-     ⛔ 시연이 짚는 카드에 `.picked` 를 쓰지 않는다. 그러면 시연이 끝난 뒤에도
-        시민이 고른 것처럼 남는다 — 고르지도 않은 것이 골라져 있으면 안 된다.
-     ⚠️ 목록 **높이는 고정**이다. 시연이 펼침판까지 열면 아래 카드들이 밀려내려가
-        목록 전체가 출렁인다. 움직이는 것은 **강조 하나와 가운데 종이**뿐이다. */
-  .card.demo-on{border-color:var(--blue);background:var(--blue-light);
-    box-shadow:inset 3px 0 0 var(--blue);}
-  .demo .card,.demo .card-sub{cursor:default;}
-  /* 시연 중에만 나오는 말. 장치를 전제하지 않는다(철학 §19·§22) */
-  .demo-cta{display:none;}
-  .demo .demo-cta{display:block;margin:12px auto 0;width:min(210mm,100%);
-    font-size:var(--fs-lead);font-weight:var(--fw-bold);color:var(--accent-strong);
+  /* ── CENTER — 준비물 + 작성할 신청서 + [작성 시작하기] ────────────────
+     ⚠️ Figma 의 CENTER 는 준비물 3장뿐이었다. 신청서 카드는 **같은 조형 언어 안에서**
+        보탰다(이식 지시서 2단계). 담당 창구는 설정값이 없어 이번 단계에 넣지 않았다. */
+  .ready{width:100%;max-width:var(--m-center-max);margin:0 auto;
+    display:flex;flex-direction:column;align-items:center;}
+  .ready-head{text-align:center;margin-bottom:40px;}
+  .form-badge{display:inline-flex;align-items:center;gap:7px;margin-bottom:13px;
+    padding:5px 12px;border-radius:var(--m-r-chip);
+    font-size:var(--m-fs-badge);font-weight:600;color:var(--blue);
+    background:var(--m-a07);border:1px solid var(--m-a18);}
+  .ready-title{margin:0 0 9px;font-size:var(--m-fs-title);font-weight:var(--fw-heavy);
+    color:var(--m-ink);letter-spacing:-.03em;line-height:1.25;}
+  .ready-lead{margin:0;font-size:var(--m-fs-lead);color:var(--m-ink-read);line-height:1.5;
+    letter-spacing:-.01em;}
+  /* 준비물 — ⚠️ **검증된 것만.** 카탈로그 `ready` 가 비면 이 격자를 아예 내지 않는다
+     (지금은 여권만 채워져 있다). ⛔ 없는 준비물을 지어내지 마라. */
+  .ready-grid{display:grid;grid-template-columns:repeat(var(--m-grid-n,3),minmax(0,1fr));
+    gap:16px;width:100%;margin-bottom:22px;}
+  .rc{display:flex;flex-direction:column;align-items:center;
+    padding:24px 16px 20px;background:var(--m-surface);
+    border:1px solid var(--m-border);border-radius:var(--m-r-card);position:relative;}
+  /* ⚠️ 그래픽은 크게 보기에서도 **커지지 않는다**(결정 ② · Figma 동결 §8). */
+  .rc-gfx{display:flex;align-items:center;justify-content:center;
+    height:108px;margin-bottom:18px;}
+  .rc-gfx svg{display:block;max-width:100%;height:auto;}
+  .rc-sep{width:100%;height:1px;background:var(--m-border);margin-bottom:14px;}
+  .rc-name{font-size:var(--m-fs-item);font-weight:var(--fw-bold);color:var(--m-ink);
+    letter-spacing:-.02em;line-height:1.3;text-align:center;margin-bottom:5px;}
+  /* 준비물의 실제 조건(사진 규격·결제 방법 …). 읽어야 하는 줄이다 — #9ca3af→#4b5563 */
+  .rc-sub{font-size:var(--m-fs-item-sub);color:var(--m-ink-read);line-height:1.5;
     text-align:center;}
-  /* 종이가 바뀔 때 튀지 않게 — 짧은 어둠이 아니라 가만한 갈아끼우기다.
-     ⚠️ `prefers-reduced-motion` 에서는 공통 토큰 블록이 이 전환을 끈다. */
-  .gp-img,.gpaper{transition:opacity var(--dur-calm) var(--ease-out);}
-  /* ⚠️ 실루엣도 함께 뺀다 — 시연은 1.8초마다 실루엣끼리 갈아끼우므로, 여기서 빠지면
-     시연에서만 종이가 툭툭 바뀐다(가장 오래 보이는 화면인데). */
-  .form-col.swap .gp-img,.form-col.swap .gpaper,.form-col.swap .gp-sil{opacity:0;}
+  /* 「가지고 계시면」 같은 **선택** 준비물. 종전 목록의 `·` 표시를 눈에 보이게 옮겼다 */
+  .rc-opt{position:absolute;top:10px;right:10px;padding:2px 7px;border-radius:var(--m-r-chip);
+    font-size:var(--m-fs-chip);font-weight:600;
+    color:var(--m-ink-muted);background:var(--m-bg);border:1px solid var(--m-border);}
+
+  /* 작성할 신청서 — 나중에 **실제 PAPER 로 이어질 자리**(shared-element 원점).
+     ⚠️ 모션은 이번 단계에서 붙이지 않는다. DOM 만 유지한다. */
+  .ready-form{display:flex;align-items:center;gap:20px;width:100%;
+    padding:18px 22px;background:var(--m-surface);
+    border:1px solid var(--m-border);border-radius:var(--m-r-card);margin-bottom:30px;}
+  .rf-gfx{flex:0 0 auto;display:flex;align-items:center;justify-content:center;}
+  .rf-gfx svg{display:block;width:52px;height:auto;}
+  .rf-tx{min-width:0;flex:1 1 auto;}
+  .rf-kicker{font-size:var(--m-fs-form-sub);color:var(--m-ink-muted);letter-spacing:-.005em;}
+  .rf-name{margin-top:3px;font-size:var(--m-fs-form);font-weight:var(--fw-bold);
+    color:var(--m-ink);letter-spacing:-.02em;}
+  .rf-scale{margin-top:4px;font-size:var(--m-fs-form-sub);color:var(--m-ink-read);line-height:1.5;}
+  .rf-scale:empty{display:none;}
+
+  .ready-go{display:inline-flex;align-items:center;gap:10px;
+    min-height:var(--touch-min);padding:16px 36px;
+    font-family:inherit;font-size:var(--m-fs-cta);font-weight:var(--fw-heavy);
+    color:#fff;background:var(--blue);border:0;border-radius:var(--m-r-btn);
+    letter-spacing:-.01em;cursor:pointer;
+    transition:background var(--dur-quick) var(--ease-out);}
+  .ready-go:hover{background:var(--blue-dark);}
+  .ready-note{margin:14px 0 0;font-size:var(--m-fs-note);color:var(--m-ink-muted);
+    text-align:center;letter-spacing:-.005em;}
+
+  /* 가운데가 바뀔 때 — **짧은 페이드 하나뿐**(2026.08.28).
+     시민이 눌렀을 때도, 시연이 한 걸음 옮겨 갈 때도 같은 경로(`renderReady`)라
+     같은 전환이 걸린다 — 시연과 실사용이 다르게 보일 여지를 만들지 않는다.
+     ⛔ 움직이지 않는다(자리 이동·확대·bounce 없음). 8초마다 무엇이 스르르 움직이면
+        민원실 화면이 아니라 매장 광고판이 된다.
+     ⚠️ `#ready` 자신이 아니라 **자식들**에 건다. 내용이 갈릴 때 자식은 새로 만들어지므로
+        애니메이션이 다시 돈다 — 같은 요소에 걸면 두 번째부터 돌지 않는다.
+     ⚠️ `prefers-reduced-motion` 에서는 공통 토큰 블록이 이것을 통째로 끈다. */
+  @keyframes m-ready-in{ from{opacity:0} to{opacity:1} }
+  #ready > *{ animation:m-ready-in var(--dur-base) var(--ease-out); }
+
+  /* ── RIGHT — 조용한 공통 안내 ────────────────────────────────────────
+     ⛔ 콘텐츠를 채우기 위해 넓히지 않는다(Figma 동결 §4). 여백은 의도다(결정 ⑤). */
+  .rail{display:flex;flex-direction:column;flex:1 1 auto;min-height:0;}
+  .rail-sec{padding:22px 20px 4px;}
+  .rail-head{display:flex;align-items:center;gap:8px;margin-bottom:13px;
+    font-size:var(--m-fs-rail-head);font-weight:var(--fw-heavy);color:var(--m-ink-sub);
+    letter-spacing:-.01em;}
+  .rail-head svg{flex:0 0 auto;width:16px;height:16px;color:var(--m-ink-muted);}
+  .rail-item{display:flex;gap:11px;align-items:flex-start;padding:10px 0;
+    border-bottom:1px solid var(--m-hairline);}
+  .rail-item:last-child{border-bottom:0;}
+  .rail-ic{flex:0 0 auto;width:30px;height:30px;border-radius:var(--m-r-card);
+    background:var(--m-icon-bg);display:flex;align-items:center;justify-content:center;
+    color:var(--m-ink-muted);}
+  .rail-ic svg{display:block;width:16px;height:16px;}
+  .rail-item b{display:block;font-size:var(--m-fs-rail-title);font-weight:var(--fw-bold);
+    color:var(--m-ink);letter-spacing:-.01em;line-height:1.4;}
+  .rail-item small{display:block;margin-top:2px;font-size:var(--m-fs-rail-sub);
+    color:var(--m-ink-read);line-height:1.5;}
+  /* 묶음 사이의 띠 — Figma 의 6px 홈 */
+  .rail-gap{height:6px;background:var(--m-bg);
+    border-top:1px solid var(--m-border);border-bottom:1px solid var(--m-border);
+    margin:8px 0;flex:0 0 auto;}
+  /* 「안심하고 작성하세요」 네 문장 — 개인정보 안내다. **읽히지 않으면 없는 것과 같다.** */
+  .rail-note{margin:6px 0 0;font-size:var(--m-fs-rail-sub);line-height:1.6;
+    color:var(--m-ink-read);}
+  .rail-list{margin:0;padding:0;list-style:none;}
+  .rail-list li{display:flex;gap:8px;align-items:flex-start;padding:7px 0;
+    font-size:var(--m-fs-rail-sub);line-height:1.55;color:var(--m-ink-sub);
+    border-bottom:1px solid var(--m-hairline);}
+  .rail-list li:last-child{border-bottom:0;}
+  .rail-list i{flex:0 0 auto;font-style:normal;font-weight:var(--fw-heavy);color:var(--blue);}
+  .rail-foot{margin-top:auto;padding:13px 20px;border-top:1px solid var(--m-border);
+    display:flex;justify-content:space-between;align-items:center;
+    font-size:var(--m-fs-meta);color:var(--m-ink-faint);}
+
+  /* ── 크게 보기의 여백 — **글자가 커진 만큼만 조인다** ────────────────────
+     ⛔ 카드·그래픽·열 폭은 그대로다. 여기서 줄이는 것은 **빈 곳**뿐이다.
+     ⚠️ 1080 화면에서 RIGHT 세 묶음이 7px 넘쳤다(2026.08.28 실측). 안내문은 줄일 수
+        없으므로 묶음 사이와 항목 사이의 숨을 조금 줄였다 — 스크롤이 생기면
+        아래 문장은 **없는 것과 같아진다**(키오스크에서 옆 기둥을 굴리는 사람은 드물다). */
+  html.big .rail-sec{padding:17px 20px 4px;}
+  html.big .rail-item{padding:8px 0;}
+  html.big .rail-gap{margin:6px 0;}
+  html.big .rail-foot{padding:11px 20px;}
+  /* CENTER — 제목과 카드 사이의 큰 숨만 줄인다(카드 자체는 그대로) */
+  html.big .ready-head{margin-bottom:34px;}
+  html.big .ready-form{margin-bottom:26px;}
 
   :focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
 
-  @media screen and (max-width:1600px){ .layout{grid-template-columns:var(--cols-narrow);} }
-
-  /* 세로 화면(1080×1920 키오스크) — 질문·목록 위 / 종이 아래.
-     RAIL 은 머리맡 가로 띠로 접는다(동결 ⑧).
-     ⚠️ 폭으로만 재면 1080 은 걸리지 않는다 — 여권과 같은 **화면비**로 잰다. */
+  /* 세로 화면(1080×1920 키오스크) — 안내 띠 위 / 목록 / CENTER 아래.
+     ⚠️ 이번 단계의 검증 대상은 1920×1080 이다. 여기서는 **깨지지 않게만** 쌓는다 —
+        세로 전용 배치는 다음 단계 과제다(핸드오프 §12 「미착수」). */
   @media screen and (max-width:860px), screen and (max-aspect-ratio:9/10){
-    /* ⚠️ 행을 `auto auto 1fr` 로 못 박는다. 안 그러면 세 칸이 다 내용 높이로 자라
-       화면 아래로 넘치고, 키오스크는 스크롤을 모르는 사람이 많아 **종이가 잘린 채**
-       끝난다. 남는 높이를 종이가 가져가야 `cqh` 로 재는 종이가 화면 안에 들어온다. */
     .layout{grid-template-columns:1fr;grid-template-rows:auto auto 1fr;}
-    .rail-col{order:1;} .task-col{order:2;} .form-col{order:3;}
-    .rail{flex-direction:row;align-items:flex-start;gap:24px;
-      padding:12px 20px;overflow-x:auto;}
-    .rail-info{flex-direction:row;gap:24px;}
-    .rail-sec{margin:0;}          /* 가로 띠에서는 위아래로 벌릴 이유가 없다 */
-    .rail-safe{margin-top:0;border-top:0;padding-top:0;}
-    .screen-notice{display:none;}
-    .task-col{padding:22px 20px 16px;}
-    .form-col{padding:16px 20px 24px;}
-    .form-col::before{display:none;}
-    .card-sub{margin-top:12px;}
+    .rail-col{order:1;border-left:0;border-bottom:1px solid var(--m-border);}
+    .task-col{order:2;border-right:0;border-bottom:1px solid var(--m-border);}
+    .ready-col{order:3;padding:28px 20px;justify-content:flex-start;}
+    .rail{flex-direction:row;align-items:flex-start;gap:20px;overflow-x:auto;}
+    .rail-sec{padding:12px 16px;}
+    .rail-gap{display:none;}
+    .rail-foot{display:none;}
+    .task-col{overflow:visible;}
+    .ask-body{overflow:visible;}
   }
 </style>
 <!--GUNPO-LOGO-->
@@ -761,12 +818,14 @@ html.big{
 <!--/SITE-CONFIG--></head>
 <body>
 
-<!-- ═══ BAR — 어떤 상태에서도 사라지지 않는다 ═══ -->
+<!-- ═══ BAR — 어떤 상태에서도 사라지지 않는다.
+     ⚠️ 얇은 머리(62px)로 낮췄다. ⛔ 시계는 넣지 않는다(2026.08.28 결정). ═══ -->
 <header class="topbar">
   <div class="brand">
     <!--GUNPO-LOGO--><img class="gunpo-logo" src="data:image/png;base64,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" alt="군포시"><!--/GUNPO-LOGO-->
     <div class="brand-tx">
       <b id="orgName">경기도 군포시</b>
+      <span class="brand-div" aria-hidden="true"></span>
       <h1>민원 서식 작성 도우미</h1>
     </div>
   </div>
@@ -775,7 +834,7 @@ html.big{
     <span class="today" id="today"></span>
     <!-- ⚠️ 아이콘과 글자를 갈라 둔다. 글자만 「일반 보기로」로 바뀌므로,
          한 덩어리로 두면 JS 가 매번 아이콘까지 다시 그려야 한다. -->
-    <button class="btn ghost" id="btnBig" aria-pressed="false"
+    <button class="btn" id="btnBig" aria-pressed="false"
             title="질문과 글자를 크게 봅니다"><svg class="btn-ic" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.6"/><path d="M15.4 15.4L21 21"/>
@@ -783,59 +842,41 @@ html.big{
   </div>
 </header>
 
-<!-- ═══ 네 구역 — BAR(위) + ASK / PAPER / RAIL. Writing 과 같은 `--cols` 다.
-     ⛔ 시연이 돌든 안 돌든 이 구역들은 생기거나 사라지지 않는다(동결 §2). ═══ -->
+<!-- ═══ 네 구역 — BAR(위) + LEFT 26% / CENTER 56% / RIGHT 18%.
+     ⛔ 이 구역들은 어떤 상태에서도 생기거나 사라지지 않는다(동결 §2). ═══ -->
 <div class="layout">
 
-  <!-- ASK — 무엇을 하러 왔는지 묻고 고르게 한다 -->
+  <!-- LEFT — 무엇을 하러 왔는지 묻고 고르게 한다(1차 행동영역) -->
   <main class="task-col">
-    <h2 class="ask-q">무엇을 하러 오셨나요?</h2>
-    <p class="ask-sub">고르시면 오른쪽에 그 신청서가 나타납니다.</p>
-    <div class="cards" id="cards" role="list"></div>
-    <!-- Human Handoff — 여기 없으면 시민이 갇힌다(철학 §8) -->
-    <button type="button" class="card-sub" id="btnStaff"><svg class="btn-ic" viewBox="0 0 24 24"
-      fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
-      stroke-linejoin="round" aria-hidden="true"><circle cx="8.8" cy="7.4" r="3"/><path
-      d="M3.4 19.4c0-3 2.4-5.4 5.4-5.4s5.4 2.4 5.4 5.4"/><path d="M16.4 8.1c0-1.2 1-2.2 2.2-2.2s2.2
-      1 2.2 2.2c0 1.5-2.2 1.6-2.2 3.2"/><path d="M18.6 14.3h.01"/></svg><span>어느 것인지
-      모르겠어요 — 직원에게 여쭤볼게요</span></button>
-    <div class="staff-note" id="staffNote" role="status"></div>
+    <div class="ask-head">
+      <h2 class="ask-q">무엇을 하러 오셨나요?</h2>
+      <p class="ask-sub">필요한 민원을 선택해 주세요.</p>
+    </div>
+    <div class="ask-body">
+      <div class="cards" id="cards" role="list"></div>
+      <!-- Human Handoff — 여기 없으면 시민이 갇힌다(철학 §8).
+           ⚠️ Figma 시안에 없던 것이고, **그대로 지켰다.** -->
+      <button type="button" class="card-sub" id="btnStaff"><svg class="btn-ic" viewBox="0 0 24 24"
+        fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true"><circle cx="8.8" cy="7.4" r="3"/><path
+        d="M3.4 19.4c0-3 2.4-5.4 5.4-5.4s5.4 2.4 5.4 5.4"/><path d="M16.4 8.1c0-1.2 1-2.2 2.2-2.2s2.2
+        1 2.2 2.2c0 1.5-2.2 1.6-2.2 3.2"/><path d="M18.6 14.3h.01"/></svg><span>어느 것인지
+        모르겠어요 — 직원에게 여쭤볼게요</span></button>
+      <div class="staff-note" id="staffNote" role="status"></div>
+    </div>
   </main>
 
-  <!-- PAPER — 고른 서식의 빈 신청서.
-       ⚠️ 아무것도 안 골랐으면 `#gpEmpty` 가 그 자리에서 말을 건다 — 빈 화면을 내지 않는다. -->
-  <section class="form-col" aria-live="polite">
-    <div class="paper-fit">
-      <!-- 실제 서식 — **고른 뒤에만.** 흰 베일 한 겹이 「아직 내 것이 아니다」를 말한다.
-           ⚠️ 감싸개(`.img-hold`)를 지우지 마라 — 베일이 종이 밖까지 번진다. -->
-      <div class="img-hold" id="gpHold" hidden><img class="gp-img" id="gpimg" alt=""></div>
-      <div class="gpaper" id="gpaper" hidden></div>
-      <!-- 실루엣 — 시연·hover 때. ⛔ 실제 서식이 아니다(이름과 항목 수만 있다). -->
-      <div class="gp-sil" id="gpSil" hidden aria-hidden="true"></div>
-      <div class="gp-empty" id="gpEmpty">
-        <div class="ghost" aria-hidden="true"></div>
-        <p><b>서식을 골라 주세요</b>
-           <small>왼쪽에서 고르시면 그 신청서가 여기에 나타납니다.</small></p>
-      </div>
-    </div>
-    <p class="gp-note" id="gpNote"></p>
-    <!-- 시연 중에만 보인다. 장치를 전제하지 않는 말이다(철학 §19·§22) -->
-    <p class="demo-cta">화면을 만지거나 아무 키나 누르면 시작합니다</p>
+  <!-- CENTER — 고른 민원의 **준비물 + 작성할 신청서 + [작성 시작하기]**.
+       ⛔ A4 종이·실루엣을 두지 않는다(2026.08.28 결정 ①).
+       ⚠️ 담당 창구는 설정값(`ORG_KEYS`)이 아직 없어 이번 단계에 넣지 않았다 —
+          **지어내지 않는다.** 다음 단계에서 설정으로 붙인다. -->
+  <section class="ready-col" aria-live="polite">
+    <div class="ready" id="ready"></div>
   </section>
 
-  <!-- RAIL — 영역은 어떤 상태에서도 유지된다 -->
+  <!-- RIGHT — 조용한 공통 안내. 어떤 상태에서도 유지된다 -->
   <aside class="rail-col">
-    <div class="rail">
-      <div class="rail-info" id="railInfo"></div>
-      <div class="screen-notice">
-        <h3>이용 안내</h3>
-        <ul>
-          <li>본 도구는 신청서 작성을 돕기 위한 미리보기 도구입니다.</li>
-          <li>공식 신청서와 항목·배치가 다를 수 있습니다.</li>
-          <li>실제 접수 가능 여부와 필요 서류는 담당 직원의 확인을 따릅니다.</li>
-        </ul>
-      </div>
-    </div>
+    <div class="rail" id="rail"></div>
   </aside>
 </div>
 
@@ -899,10 +940,12 @@ var FORM_CATALOG = [
     desc:"신규·재발급 신청서 작성 안내. 로마자 성명, 사증 면수·유효기간, 미성년자 동의서·위임장까지 도와드립니다.",
     /* 여권의 `readyItems()` 중 **경로와 무관한 것만** 옮겼다. 미성년·대리 경로에서
        더 필요한 서류(가족관계 서류·법정대리인 신분증·대리인 신분증)는 여권이 맡는다. */
-    ready:[ { t:"신분증", s:"접수할 때 창구에서 확인합니다" },
-            { t:"여권용 사진 1장", s:"6개월 이내 · 흰 배경 · 창구에서 붙입니다" },
-            { t:"수수료", s:"창구에서 결제합니다" },
-            { t:"기존 여권", s:"가지고 계시면 함께 준비해 주세요", opt:true } ],
+    /* `g` = MAIN CENTER 의 미니 그래픽 이름(2026.08.28 신설 — `GRAPHICS` 참조).
+       ⚠️ 없으면 `document`(서류 한 장)로 물러난다. 준비물 **문구는 그대로**다. */
+    ready:[ { t:"신분증", s:"접수할 때 창구에서 확인합니다", g:"id-card" },
+            { t:"여권용 사진 1장", s:"6개월 이내 · 흰 배경 · 창구에서 붙입니다", g:"id-photo" },
+            { t:"수수료", s:"창구에서 결제합니다", g:"payment" },
+            { t:"기존 여권", s:"가지고 계시면 함께 준비해 주세요", opt:true, g:"passport-book" } ],
     scale:{ steps:15, minutes:5 },
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
@@ -1039,27 +1082,34 @@ function visibleForms(){
   return FORM_CATALOG.filter(function(f){ return formOn(f.key); });
 }
 
-/* -- 지금 오른쪽에 떠 있는 서식 -------------------------------------------
-   ⚠️ **처음에는 아무것도 고르지 않은 상태다**(2026.08.25). 종전에는 첫 서식이 이미
-      `picked` 로 떠 있었다 — hover 없는 터치에서 종이가 안 보이는 것을 막으려던
-      것인데, 시민이 고르지도 않은 것이 골라져 있는 셈이라 헷갈렸다.
-      그 자리는 이제 `#gpEmpty`(「서식을 골라 주세요」)가 맡는다.
-   ⛔ hover 에만 의존하지 않는 원칙은 그대로다(2026.08.24 결정 §2) — hover 는
-      미리보기를 잠깐 바꿀 뿐이고, **누르는 것만이 선택**이다. */
-var picked = null;
+/* ══ 지금 고른 민원 ═══════════════════════════════════════════════════════
+   ⚠️ 처음에는 **첫 서식이 골라져 있다**(2026.08.28 — Figma 원형 이식).
+      CENTER 가 「준비물 + 신청서 + 작성 시작」이라 고른 것이 없으면 가운데가 빈다.
+      ⚠️ 종전(2026.08.25)에는 「아무것도 고르지 않은 상태」가 기본이었다. 그때 CENTER 는
+         종이 자리였고 빈 윤곽이 말을 걸 수 있었다 — 자리의 역할이 바뀌어 따라 바뀐 것이다.
+      📌 Idle(자동 순회)이 붙는 다음 단계에서 **순회를 멈췄을 때 무엇이 골라져 있는가**를
+         함께 정해야 한다(순회가 짚던 것을 넘겨줄지, 첫 서식으로 돌아갈지).
+   ⛔ hover 는 선택이 아니다. **누른 것만이 선택**이고 CENTER 는 hover 로 바뀌지 않는다. */
+var selected = null;
 
 function el(id){ return document.getElementById(id); }
 
-/* ══ 종이 자리 — 네 단 (2026.08.25) ══════════════════════════════════════
-   `mode` 로 갈린다. ⛔ **실제 서식은 `"picked"` 에만 쓴다.**
-     "empty"  아무것도 안 고름 → 빈 윤곽 + 「서식을 골라 주세요」
-     "silent" 시연·hover      → 실루엣(이름 + 항목 줄). 실제 서식이 아니다
-     "picked" 고름            → 실제 서식, 흰 베일 한 겹으로 **살짝 흐리게**
-   ⚠️ 그림이 없는 서식이 생기면 항목만 적힌 대체 종이로 물러난다 — 빈 화면을 내지 않는다.
-   ═══════════════════════════════════════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════════════════════════
+   ⛔ 사용 중단 — 종이 자리 네 단 (2026.08.28)
+
+   `renderPaper` · `silHtml` · `silWrite` · `showPaper` 와 `FORM_IMAGES` 는
+   **Main 에서 더 이상 호출하지 않는다.** CENTER 가 A4 종이 자리에서
+   「준비물 + 신청서 + 작성 시작」으로 바뀌었기 때문이다(결정 ①).
+
+   ⚠️ 지우지 않고 남겨 둔 이유: 실제 미사용 여부와 다른 의존성(특히
+      `tools/design-shots.py` 의 허브 갈무리 시나리오)을 확인한 뒤 시연 이후 정리한다.
+   ⛔ 이 함수들은 `#gpimg`·`#gpSil`·`.form-col` 같은 **지금은 없는 DOM** 을 찾는다.
+      되살리려면 마크업부터 되돌려야 한다. 그냥 부르면 아무 일도 하지 않거나 예외가 난다.
+   ══════════════════════════════════════════════════════════════════════════ */
 function renderPaper(f, mode){
   var img=el("gpimg"), hold=el("gpHold"), pap=el("gpaper"),
       sil=el("gpSil"), empty=el("gpEmpty"), note=el("gpNote");
+  if(!img||!hold||!pap||!sil||!empty||!note) return;   // Main 에서 사용 중단
   var root=document.documentElement;
   hold.hidden=true; pap.hidden=true; sil.hidden=true; empty.hidden=true;
   root.classList.toggle("picked", mode==="picked");
@@ -1073,8 +1123,6 @@ function renderPaper(f, mode){
     img.removeAttribute("src"); img.alt="";
     sil.hidden=false;
     sil.innerHTML = silHtml(f);
-    /* 「무엇을·얼마나」만 적는다. ⚠️ 없는 것을 지어내지 않는다 —
-       `scale` 이 비면 그 줄을 내지 않는다(지금은 여권만 채워져 있다). */
     note.textContent = "";
     return;
   }
@@ -1096,13 +1144,7 @@ function renderPaper(f, mode){
     '<div class="gp-sign"><span></span><span>신청인 <i></i> (서명 또는 인)</span></div>';
 }
 
-/* 실루엣 한 장 — **그 서식이 묻는 것**과 **채워질 자리**.
-   ⛔ 실제 서식 그림이 아니다(그것은 「고른 것」에만 쓴다 — 네 단 규칙).
-      항목 이름은 카탈로그의 `preview.fields` 이고 실제 서식과 배치가 다를 수 있다.
-   ⚠️ 값은 **전부 가상 인물**이고, 종이 아래에 「작성 예시」라고 적는다 —
-      앞사람 개인정보가 남아 있는 것처럼 보이면 이 제품의 가장 큰 강점이 무너진다.
-   ⚠️ 주민등록번호 뒷자리는 **가상값이라도 가린다.** 늘 켜져 있는 화면이라
-      숫자 13자리가 통째로 떠 있는 그림 자체를 만들지 않는다. */
+/* ⛔ 사용 중단(위 설명 참조) — 실루엣 한 장 */
 function silHtml(f){
   var fs = (f.preview && f.preview.fields) || [];
   var vs = (f.preview && f.preview.sample) || [];
@@ -1117,28 +1159,25 @@ function silHtml(f){
          '<div class="sil-foot">작성 예시입니다 · 질문에 답하시면 이렇게 채워집니다</div>';
 }
 
-/* 값이 한 줄씩 채워진다 — **시연에서만.** hover 는 정지된 빈 서식이다(항목만 보인다).
-   이것이 이 화면의 한 문장을 눈앞에서 보여 준다 — 「질문에 답하면, 신청서가 완성됩니다」.
-   ⚠️ `prefers-reduced-motion` 이면 아예 돌지 않는다(시연 자체가 안 돈다). */
+/* ⛔ 사용 중단(위 설명 참조) — 값이 한 줄씩 채워지는 연출 */
 var silTimers=[];
 function silStop(){ for(var i=0;i<silTimers.length;i++) clearTimeout(silTimers[i]); silTimers=[]; }
 function silWrite(){
   silStop();
   var rows=document.querySelectorAll("#gpSil .sil-row");
-  for(var i=0;i<rows.length;i++) rows[i].classList.remove("wrote");
-  /* 한 카드에 머무는 동안 다 그어져야 한다 — 마지막 줄이 끝나고 조금 남게 나눈다. */
+  if(!rows.length) return;
   var gap=Math.max(150, Math.floor((DEMO_STEP_MS-500)/Math.max(rows.length,1)));
+  for(var i=0;i<rows.length;i++) rows[i].classList.remove("wrote");
   for(var j=0;j<rows.length;j++) (function(j){
     silTimers.push(setTimeout(function(){ rows[j].classList.add("wrote"); }, 120+j*gap));
   })(j);
 }
 
-/* 종이를 갈아 끼운다. 잠깐 흐려졌다가 새 종이로 돌아온다 — 툭 바뀌면 시선이 튄다.
-   ⚠️ 시연이 카드를 짚어 갈 때 이 전환이 「누군가 조작하고 있다」를 만든다.
-   ⚠️ `prefers-reduced-motion` 에서는 공통 토큰 블록이 전환을 꺼 즉시 바뀐다. */
+/* ⛔ 사용 중단(위 설명 참조) — 종이 갈아끼우기 */
 var swapTimer=null;
 function showPaper(key, mode){
   var col=document.querySelector(".form-col");
+  if(!col) return;                                   // Main 에서 사용 중단
   clearTimeout(swapTimer); silStop();
   col.classList.add("swap");
   swapTimer=setTimeout(function(){
@@ -1148,58 +1187,143 @@ function showPaper(key, mode){
   }, 170);
 }
 
-/* -- 카드를 누르면 그 자리에서 펼쳐진다 -----------------------------------
-   ⛔ **바로 넘어가지 않는다.** 누름 한 번에 페이지가 바뀌면 잘못 누른 사람이
-      되돌아올 길이 없다. 설명을 읽고 [작성 시작]을 눌러야 간다.
-   ⚠️ 한 번에 하나만 열린다. 다른 카드를 누르면 그쪽으로 옮겨간다. */
-function openCard(key){
-  var same = (picked===key);
-  picked = same ? null : key;
-  [].forEach.call(document.querySelectorAll(".card-wrap"),function(w){
-    var on = w.getAttribute("data-key")===picked;
-    w.classList.toggle("open", on);
-    w.querySelector(".card").setAttribute("aria-expanded", on?"true":"false");
-  });
-  showPaper(picked, "picked");
-  if(picked){
-    /* ⚠️ 펼친 카드를 **목록 맨 위로** 올린다. `nearest` 로는 아래 카드가 밀려나는 것이
-       그대로 보이고 펼침판이 화면 밖으로 나갈 수 있다 — `start` 면 밀림이 안 보인다. */
-    var w=document.querySelector('.card-wrap[data-key="'+picked+'"]');
-    if(w) w.scrollIntoView({block:"start",behavior:calmMotion()?"auto":"smooth"});
-  }
-}
+/* ══ 미니 그래픽 (2026.08.28 — Figma Make 원형) ═══════════════════════════
+   준비물 한 가지를 **사물 그대로** 보여 준다. 글자를 못 읽어도 무엇을 가져오는지 안다.
 
-/* 펼침판의 내용. ⚠️ **없는 것을 지어내지 않는다** — `ready`·`scale` 이 비어 있으면
-   그 줄을 아예 내지 않는다. 지금은 여권만 채워져 있다. */
-function cardBody(f){
-  var h='<p class="card-desc">'+esc(f.desc||"")+'</p>';
-  if(f.scale && f.scale.steps)
-    h+='<p class="card-scale">약 '+f.scale.steps+'가지를 여쭤봅니다 · '
-      +f.scale.minutes+'분쯤 걸립니다</p>';
-  if(f.ready && f.ready.length){
-    h+='<ul class="card-ready">';
-    for(var i=0;i<f.ready.length;i++){
-      var r=f.ready[i];
-      h+='<li>'+(r.opt?"·":"✓")+' <b>'+esc(r.t)+'</b>'+(r.s?" — "+esc(r.s):"")+'</li>';
-    }
-    h+='</ul>';
-  }
-  return h+'<button type="button" class="card-go" data-go="'+esc(f.key)+'">작성 시작 →</button>';
-}
+   ⛔ 이모지·외부 아이콘으로 바꾸지 마라(Figma 동결 §3 금지 항목).
+   ⛔ 아이콘 세트를 받아 오지 않는다(오프라인). 여기에 인라인으로 둔다.
+   ⚠️ 색은 **면 2~3개 + 대표색 한 점**이다. 대표색은 `var(--blue)` 와 알파 파생
+      (`--m-a07` 따위)만 쓴다 — Figma 의 `#2563EB` 를 박으면 기관 색 교체가 죽는다.
+   ⚠️ `passport-book`(기존 여권)은 Figma 세트에 없어 **같은 문법으로 한 장 보탠 것**이다.
+   ═══════════════════════════════════════════════════════════════════════ */
+var GRAPHICS = {
+  /* 신분증 — 카드 몸통 + 사진 자리 + 발급기관 띠 */
+  "id-card":
+    '<svg width="120" height="78" viewBox="0 0 120 78" fill="none" aria-hidden="true">'+
+    '<rect x="0.5" y="0.5" width="119" height="77" rx="5.5" fill="var(--m-chip)" stroke="var(--m-border-mid)"/>'+
+    '<rect x="0" y="0" width="120" height="18" rx="5" fill="var(--blue)" opacity="0.12"/>'+
+    '<rect x="0" y="12" width="120" height="6" fill="var(--blue)" opacity="0.12"/>'+
+    '<circle cx="14" cy="9" r="5" fill="var(--blue)" opacity="0.25"/>'+
+    '<path d="M11 9l2 2 4-4" stroke="var(--blue)" stroke-width="1" stroke-linecap="round" stroke-linejoin="round" opacity="0.7"/>'+
+    '<rect x="22" y="6" width="36" height="3" rx="1.5" fill="var(--blue)" opacity="0.2"/>'+
+    '<rect x="22" y="11" width="24" height="2.5" rx="1.25" fill="var(--blue)" opacity="0.12"/>'+
+    '<rect x="10" y="24" width="30" height="38" rx="2" fill="var(--m-photo)" stroke="var(--m-border-mid)" stroke-width="0.75"/>'+
+    '<circle cx="25" cy="34" r="7" fill="var(--m-photo-fill)"/>'+
+    '<path d="M13 62c0-8 5.4-13 12-13s12 5 12 13" fill="var(--m-photo-fill)"/>'+
+    '<rect x="48" y="26" width="42" height="4" rx="2" fill="var(--m-ink-faint)"/>'+
+    '<rect x="48" y="35" width="58" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="48" y="41" width="50" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="48" y="47" width="54" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="48" y="53" width="38" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="10" y="68" width="100" height="3" rx="1" fill="var(--m-hairline)"/>'+
+    '<rect x="10" y="73" width="100" height="3" rx="1" fill="var(--m-hairline)"/>'+
+    '</svg>',
 
-/* ══ 카드 아이콘 (2026.08.27) ═══════════════════════════════════════════════
-   ⛔ **이모지를 쓰지 않는다.** 두 가지 이유다.
-      ① OS·글꼴에 따라 모양이 달라진다 — 배포본 하나를 여러 기관이 쓰는데 화면이 갈린다
-      ② **여러 색을 쓴다.** 철학 §15 는 색마다 하나의 역할을 주고 §1 은 장식 목적의
-         여러 색을 금하는데, 목록 8장에 8가지 색이 박혀 있었다
-   ⛔ 아이콘 폰트·SVG 세트를 받아 오지 않는다(오프라인). 여기에 인라인으로 둔다.
-   ⚠️ **같은 문법으로 그린다** — 24 격자 · 굵기 1.7 · 둥근 끝. 하나만 달라도 티가 난다.
-   ⚠️ `currentColor` 라 **잉크색**을 따른다. 기관 대표색을 따라가게 하지 마라 —
-      카드 8장이 색으로 경쟁하면 훑는 일이 느려진다. 고른 카드에서만 대표색이 된다.
-   ⚠️ 사망·이혼은 **감정이 실리는 민원**이다. 상징을 세게 쓰지 않는다 —
-      국화 한 송이와 담담한 두 사람으로 두었다.
-   ⚠️ 카탈로그의 `icon`(이모지)은 남겨 두었다. 여기 없는 서식이 생기면 그것으로 물러난다.
-   ═══════════════════════════════════════════════════════════════════════════ */
+  /* 여권용 사진 — 규격 테두리 + 모서리 맞춤선 */
+  "id-photo":
+    '<svg width="78" height="98" viewBox="0 0 78 98" fill="none" aria-hidden="true">'+
+    '<rect x="0.5" y="0.5" width="77" height="97" rx="2.5" fill="var(--m-surface)" stroke="var(--m-border-mid)"/>'+
+    '<rect x="4" y="4" width="70" height="90" rx="1" fill="var(--m-a07)"/>'+
+    '<path d="M4 10L4 4L10 4" stroke="var(--m-ink-faint)" stroke-width="1" stroke-linecap="round"/>'+
+    '<path d="M74 10L74 4L68 4" stroke="var(--m-ink-faint)" stroke-width="1" stroke-linecap="round"/>'+
+    '<path d="M4 88L4 94L10 94" stroke="var(--m-ink-faint)" stroke-width="1" stroke-linecap="round"/>'+
+    '<path d="M74 88L74 94L68 94" stroke="var(--m-ink-faint)" stroke-width="1" stroke-linecap="round"/>'+
+    '<circle cx="39" cy="34" r="15" fill="var(--m-a18)"/>'+
+    '<path d="M9 82c0-16 13-26 30-26s30 10 30 26" fill="var(--m-a18)"/>'+
+    '<rect x="16" y="87" width="20" height="2" rx="1" fill="var(--m-border-mid)"/>'+
+    '<rect x="42" y="87" width="20" height="2" rx="1" fill="var(--m-border-mid)"/>'+
+    '<rect x="37" y="86" width="4" height="4" rx="0.5" fill="var(--m-surface)" stroke="var(--m-border-mid)" stroke-width="0.75"/>'+
+    '</svg>',
+
+  /* 수수료 — 카드(현금도 되지만 사물 하나로 말한다) */
+  "payment":
+    '<svg width="120" height="78" viewBox="0 0 120 78" fill="none" aria-hidden="true">'+
+    '<rect x="0.5" y="4.5" width="119" height="69" rx="5.5" fill="var(--m-chip)" stroke="var(--m-border-mid)"/>'+
+    '<rect x="0" y="18" width="120" height="14" fill="var(--m-border)"/>'+
+    '<rect x="12" y="36" width="22" height="17" rx="2" fill="var(--m-border-mid)" stroke="var(--m-photo-fill)" stroke-width="0.75"/>'+
+    '<line x1="12" y1="41.5" x2="34" y2="41.5" stroke="var(--m-photo-fill)" stroke-width="0.75"/>'+
+    '<line x1="12" y1="46.5" x2="34" y2="46.5" stroke="var(--m-photo-fill)" stroke-width="0.75"/>'+
+    '<line x1="20" y1="36" x2="20" y2="53" stroke="var(--m-photo-fill)" stroke-width="0.75"/>'+
+    '<line x1="26" y1="36" x2="26" y2="53" stroke="var(--m-photo-fill)" stroke-width="0.75"/>'+
+    '<path d="M44 42.5a8 8 0 0 1 0-7" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round" opacity="0.5"/>'+
+    '<path d="M47.5 44.5a13 13 0 0 0 0-11" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round" opacity="0.35"/>'+
+    '<path d="M51 46a18 18 0 0 0 0-15" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round" opacity="0.2"/>'+
+    '<circle cx="62" cy="45" r="1.5" fill="var(--m-ink-faint)" opacity="0.5"/>'+
+    '<circle cx="67" cy="45" r="1.5" fill="var(--m-ink-faint)" opacity="0.5"/>'+
+    '<circle cx="72" cy="45" r="1.5" fill="var(--m-ink-faint)" opacity="0.5"/>'+
+    '<circle cx="77" cy="45" r="1.5" fill="var(--m-ink-faint)" opacity="0.5"/>'+
+    '<circle cx="82" cy="45" r="1.5" fill="var(--m-ink-faint)" opacity="0.5"/>'+
+    '<circle cx="87" cy="45" r="1.5" fill="var(--m-ink-faint)" opacity="0.5"/>'+
+    '<circle cx="92" cy="45" r="1.5" fill="var(--blue)" opacity="0.6"/>'+
+    '<circle cx="97" cy="45" r="1.5" fill="var(--blue)" opacity="0.6"/>'+
+    '<circle cx="102" cy="45" r="1.5" fill="var(--blue)" opacity="0.6"/>'+
+    '<circle cx="107" cy="45" r="1.5" fill="var(--blue)" opacity="0.6"/>'+
+    '<rect x="12" y="60" width="44" height="3" rx="1.5" fill="var(--m-border-mid)"/>'+
+    '<rect x="90" y="57" width="18" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="90" y="62" width="14" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '</svg>',
+
+  /* 서류 한 장 — 접힌 모서리 + 관인. 「작성할 신청서」에도 쓴다 */
+  "document":
+    '<svg width="84" height="106" viewBox="0 0 84 106" fill="none" aria-hidden="true">'+
+    '<rect x="5" y="5" width="79" height="101" rx="3" fill="var(--m-border)" opacity="0.5"/>'+
+    '<rect x="0.5" y="0.5" width="79" height="101" rx="2.5" fill="var(--m-surface)" stroke="var(--m-border-mid)"/>'+
+    '<path d="M55 0.5L79.5 25" stroke="var(--m-border-mid)" stroke-width="0.75"/>'+
+    '<path d="M55 0.5V24.5H79.5" fill="var(--m-hairline)" stroke="var(--m-border-mid)" stroke-width="0.75"/>'+
+    '<rect x="10" y="14" width="36" height="4" rx="2" fill="var(--blue)" opacity="0.3"/>'+
+    '<rect x="10" y="22" width="24" height="3" rx="1.5" fill="var(--m-border-mid)"/>'+
+    '<rect x="10" y="36" width="60" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="10" y="43" width="56" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="10" y="50" width="60" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="10" y="57" width="44" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="10" y="68" width="60" height="2.5" rx="1.25" fill="var(--m-hairline)"/>'+
+    '<rect x="10" y="75" width="52" height="2.5" rx="1.25" fill="var(--m-hairline)"/>'+
+    '<rect x="10" y="82" width="58" height="2.5" rx="1.25" fill="var(--m-hairline)"/>'+
+    '<circle cx="58" cy="90" r="9" fill="var(--m-a08)" stroke="var(--blue)" stroke-width="0.75" opacity="0.5"/>'+
+    '<circle cx="58" cy="90" r="5.5" stroke="var(--blue)" stroke-width="0.75" opacity="0.3"/>'+
+    '</svg>',
+
+  /* 증명서 — 머리띠 + 관인 + 리본 */
+  "cert":
+    '<svg width="96" height="96" viewBox="0 0 96 96" fill="none" aria-hidden="true">'+
+    '<rect x="10.5" y="0.5" width="75" height="85" rx="2.5" fill="var(--m-surface)" stroke="var(--m-border-mid)"/>'+
+    '<rect x="10" y="0" width="76" height="14" rx="2" fill="var(--m-a08)"/>'+
+    '<rect x="10" y="8" width="76" height="6" fill="var(--m-a08)"/>'+
+    '<rect x="25" y="20" width="46" height="4" rx="2" fill="var(--blue)" opacity="0.25"/>'+
+    '<rect x="32" y="27" width="32" height="2.5" rx="1.25" fill="var(--m-border-mid)"/>'+
+    '<rect x="18" y="38" width="60" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="18" y="45" width="54" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<rect x="18" y="52" width="60" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '<circle cx="48" cy="74" r="13" fill="var(--m-a06)" stroke="var(--blue)" stroke-width="1" opacity="0.4"/>'+
+    '<circle cx="48" cy="74" r="9" stroke="var(--blue)" stroke-width="0.75" stroke-dasharray="3 2" opacity="0.3"/>'+
+    '<path d="M43 74l3.5 3.5 6.5-7" stroke="var(--blue)" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" opacity="0.6"/>'+
+    '<path d="M40 88l8 5 8-5" fill="var(--m-a12)" stroke="var(--blue)" stroke-width="0.75" opacity="0.4"/>'+
+    '<rect x="44" y="85" width="8" height="10" fill="var(--m-a12)"/>'+
+    '</svg>',
+
+  /* 기존 여권 — ⚠️ Figma 세트에 없어 **같은 문법으로 보탠 것**이다(책자 + 사진 자리) */
+  "passport-book":
+    '<svg width="78" height="98" viewBox="0 0 78 98" fill="none" aria-hidden="true">'+
+    '<rect x="4" y="4" width="74" height="94" rx="4" fill="var(--m-border)" opacity="0.5"/>'+
+    '<rect x="0.5" y="0.5" width="73" height="93" rx="3.5" fill="var(--m-chip)" stroke="var(--m-border-mid)"/>'+
+    '<path d="M8 0.5V93.5" stroke="var(--m-border-mid)" stroke-width="0.75"/>'+
+    '<rect x="18" y="12" width="42" height="3.5" rx="1.75" fill="var(--blue)" opacity="0.25"/>'+
+    '<rect x="26" y="20" width="26" height="2.5" rx="1.25" fill="var(--blue)" opacity="0.15"/>'+
+    '<circle cx="39" cy="46" r="13" fill="var(--m-a12)" stroke="var(--blue)" stroke-width="0.75" opacity="0.6"/>'+
+    '<path d="M26 46h26M39 33c5 4.5 5 21.5 0 26M39 33c-5 4.5-5 21.5 0 26" stroke="var(--blue)" stroke-width="0.75" opacity="0.35"/>'+
+    '<rect x="18" y="70" width="42" height="2.5" rx="1.25" fill="var(--m-border-mid)"/>'+
+    '<rect x="18" y="77" width="30" height="2.5" rx="1.25" fill="var(--m-border)"/>'+
+    '</svg>'
+};
+function graphicHtml(type){ return GRAPHICS[type] || GRAPHICS.document; }
+
+/* ══ 목록 아이콘 — 24 격자 · 굵기 1.7 · 둥근 끝 (2026.08.27) ═══════════════
+   ⛔ **이모지를 쓰지 않는다.** OS·글꼴에 따라 모양이 달라지고, 목록 8장이 색으로 경쟁한다.
+   ⚠️ Figma 시안에도 목록 아이콘이 있지만(20 격자·굵기 1.5) **이 한 벌을 지켰다** —
+      사망·이혼은 감정이 실리는 민원이라 상징을 이미 신중하게 정해 두었다
+      (국화 한 송이 · 담담한 두 사람. 종교·문화 상징을 쓰지 않는다).
+   ⚠️ `currentColor` 라 잉크색을 따른다. 고른 카드에서만 대표색이 된다.
+   ═══════════════════════════════════════════════════════════════════════ */
 var ICON_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
                 'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
 var ICONS = {
@@ -1237,123 +1361,222 @@ function iconHtml(f){
   return d ? '<svg '+ICON_ATTR+'>'+d+'</svg>' : esc(f.icon||"");
 }
 
+/* RIGHT 의 작은 아이콘 — Figma 원형(16 격자 · 굵기 1.4) */
+var PANEL_ATTR = 'viewBox="0 0 16 16" fill="none" stroke="currentColor" '+
+                 'stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"';
+var PANEL_ICONS = {
+  chat:'<path d="M2.5 2.5h11a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1H5l-3 3V3.5a1 1 0 0 1 1-1z"/>',
+  form:'<rect x="2.5" y="1.5" width="11" height="13" rx="1.5"/><path d="M5 5.5h6M5 8h6M5 10.5h4"/>',
+  steps:'<path d="M3 4.5h10M3 8h7M3 11.5h5"/><circle cx="13" cy="8" r="1.5"/>',
+  lock:'<rect x="3" y="7" width="10" height="7.5" rx="1.5"/>'+
+       '<path d="M5.5 7V5.5a2.5 2.5 0 0 1 5 0V7"/><path d="M8 10.6v1.4"/>',
+  trash:'<path d="M2.5 4.5h11M6 4.5V3h4v1.5M4 4.5l.7 9h6.6l.7-9"/><path d="M7 7v4M9 7v4"/>',
+  bell:'<path d="M8 1.5a4.5 4.5 0 0 0-4.5 4.5v3L2 11.5h12L12.5 9V6A4.5 4.5 0 0 0 8 1.5z"/>'+
+       '<path d="M6.5 13.5a1.5 1.5 0 0 0 3 0"/>',
+  info:'<circle cx="8" cy="8" r="6.5"/><path d="M8 7v4.5M8 5v.5"/>'
+};
+function panelIcon(t){
+  var d=PANEL_ICONS[t]; return d ? '<svg '+PANEL_ATTR+'>'+d+'</svg>' : "";
+}
+
+/* ══ LEFT — 민원 목록 ═════════════════════════════════════════════════════
+   ⛔ **누른다고 바로 넘어가지 않는다.** 누르면 고를 뿐이고, 가운데의
+      [작성 시작하기]를 눌러야 간다 — 잘못 누른 사람이 되돌아올 길이 남는다. */
 function cardHtml(f){
-  var id="open_"+f.key;
-  return '<div class="card-wrap" role="listitem" data-key="'+esc(f.key)+'">'
+  var on = (f.key===selected);
+  return '<div class="card-wrap" role="listitem">'
     + '<button type="button" class="card" data-key="'+esc(f.key)+'"'
-    +   ' aria-expanded="false" aria-controls="'+id+'">'
+    +   ' aria-pressed="'+(on?"true":"false")+'">'
     +   '<span class="card-ic" aria-hidden="true">'+iconHtml(f)+'</span>'
     +   '<span class="card-tx">'
     +     '<span class="card-label">'+esc(f.citizen)+'</span>'
     +     '<span class="card-formal">'+esc(f.formal)+'</span>'
     +   '</span>'
-    + '</button>'
-    + '<div class="card-open" id="'+id+'"><div><div class="card-body">'
-    +   cardBody(f)
-    + '</div></div></div>'
-    + '</div>';
+    +   '<svg class="card-arrow" viewBox="0 0 13 13" fill="none" aria-hidden="true">'
+    +     '<path d="M4.5 3.5l4 3-4 3" stroke="currentColor" stroke-width="1.4"'
+    +     ' stroke-linecap="round" stroke-linejoin="round"/></svg>'
+    + '</button></div>';
 }
 
 function renderCards(){
   el("cards").innerHTML = visibleForms().map(cardHtml).join("");
 }
 
-/* RAIL — MAIN 상태. 아래 「안심하고 작성하세요」는 바닥 고정이다(동결 §7). */
-function renderRailInfo(){
-  var help=[["1","왜 묻는지 알려 드립니다","그 칸이 왜 필요한지 함께 적어 둡니다."],
-            ["2","쉬운 말로 여쭤봅니다","서식의 용어 대신 평소 쓰는 말로 묻습니다."],
-            ["3","적히는 자리를 보여 드립니다","답하시면 옆의 실제 신청서 그 칸에 바로 나타납니다."]];
-  document.getElementById("railInfo").innerHTML =
-    '<div class="rail-sec"><div class="rail-head">이렇게 도와드립니다</div><div class="rail-items">'+
-    help.map(function(r){ return '<div class="rail-item"><span class="check">'+r[0]+'</span><div>'+
-      esc(r[1])+'<small>'+esc(r[2])+'</small></div></div>'; }).join("")+
-    '</div></div>'+
-    /* 종전에는 이 내용이 화면 상단의 **빨간 띠**였다. 개인정보 안내는 중요하지만
-       위험이 아니다 — Red 는 실제 오류·진행불가·임박한 파괴적 상태에만(철학 §11). */
-    '<div class="rail-safe"><div class="rail-head">안심하고 작성하세요</div>'+
-    '<p>적으신 내용은 이 화면에서만 쓰이고 어디에도 저장·전송되지 않습니다.</p>'+
-    '<p>작성이 끝나면 종이로 인쇄해 창구에 내시면 됩니다. 접수·전송은 하지 않습니다.</p>'+
-    '<p>출력물에는 개인정보가 들어 있습니다. <b>본인이 직접 수령·관리</b>해 주세요.</p>'+
-    '<p>공용 PC 입니다. 사용 후에는 창을 닫아 개인정보가 남지 않게 해 주세요.</p></div>';
+/* ══ CENTER — 준비물 + 작성할 신청서 + [작성 시작하기] ═════════════════════
+   ⛔ **없는 것을 지어내지 않는다.** 준비물은 카탈로그의 검증된 `ready` 뿐이고,
+      비어 있으면 그 격자를 통째로 내지 않는다(지금은 여권만 채워져 있다).
+      ⚠️ Figma 시안의 `READY_DATA` 여권 외 7종은 **샘플이라 쓰지 않았다.**
+   ⚠️ 담당 창구는 아직 설정값이 없어 넣지 않았다 — 다음 단계에서 `ORG_KEYS` 로 붙인다.
+   ═══════════════════════════════════════════════════════════════════════ */
+function renderReady(){
+  var box=el("ready");
+  var f=formByKey(selected);
+  if(!f){ box.innerHTML=""; return; }
+  var items=(f.ready||[]);
+  var h='<div class="ready-head">'
+      + '<span class="form-badge">'+esc(f.formal)+'</span>'
+      + '<h2 class="ready-title">'+esc(f.citizen)+'</h2>'
+      + '<p class="ready-lead">'
+      +   (items.length ? "작성 전에 필요한 것을 준비해 주세요." : esc(f.desc||""))
+      + '</p></div>';
+
+  if(items.length){
+    /* 3장이면 3열, 4장이면 4열. ⛔ 칸을 채우려고 없는 준비물을 만들지 않는다. */
+    h+='<div class="ready-grid" style="--m-grid-n:'+Math.min(items.length,4)+'">';
+    for(var i=0;i<items.length;i++){
+      var r=items[i];
+      h+='<div class="rc">'
+       + (r.opt?'<span class="rc-opt">선택</span>':"")
+       + '<div class="rc-gfx">'+graphicHtml(r.g)+'</div>'
+       + '<div class="rc-sep"></div>'
+       + '<div class="rc-name">'+esc(r.t)+'</div>'
+       + (r.s?'<div class="rc-sub">'+esc(r.s)+'</div>':"")
+       + '</div>';
+    }
+    h+='</div>';
+  }
+
+  /* 작성할 신청서 — ⚠️ `data-shared` 는 **나중에 실제 PAPER 로 이어질 자리**의 표시다.
+     이번 단계에서는 모션을 붙이지 않는다(결정 ① — DOM 만 유지). */
+  var scale = (f.scale && f.scale.steps)
+    ? "약 "+f.scale.steps+"가지를 여쭤봅니다 · "+f.scale.minutes+"분쯤 걸립니다" : "";
+  h+='<div class="ready-form" data-shared="form-paper">'
+   + '<div class="rf-gfx">'+graphicHtml("document")+'</div>'
+   + '<div class="rf-tx">'
+   +   '<div class="rf-kicker">여기에서 작성합니다</div>'
+   +   '<div class="rf-name">'+esc(f.formal)+'</div>'
+   +   '<div class="rf-scale">'+esc(scale)+'</div>'
+   + '</div></div>';
+
+  h+='<button type="button" class="ready-go" data-go="'+esc(f.key)+'">작성 시작하기'
+   + '<svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">'
+   + '<path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8"'
+   + ' stroke-linecap="round" stroke-linejoin="round"/></svg></button>'
+   + '<p class="ready-note">적으신 내용은 저장되지 않고, 인쇄한 뒤 바로 지워집니다.</p>';
+
+  box.innerHTML=h;
 }
 
-/* ==========================================================================
-   시연 — 대기 화면을 대신한다 (철학 §22)
+/* 고른 민원을 바꾼다. ⚠️ 목록과 가운데가 **같은 값 하나**를 본다. */
+function selectForm(key){
+  selected=key;
+  renderCards();
+  renderReady();
+}
 
-   「대기화면은 광고판이 아니라 사용해도 된다는 신호다.」
+/* ══ RIGHT — 조용한 공통 안내 ═════════════════════════════════════════════
+   ⚠️ 문구는 종전 것을 그대로 옮겼다. **새 사실을 만들지 않았다** —
+      전화번호·운영시간은 확인된 설정값이 없어 넣지 않았다(Figma 시안의
+      `031-390-XXXX` 는 자리표시다). */
+function renderRail(){
+  var help=[
+    ["chat","왜 묻는지 알려 드립니다","그 칸이 왜 필요한지 함께 적어 둡니다."],
+    ["form","쉬운 말로 여쭤봅니다","서식의 용어 대신 평소 쓰는 말로 묻습니다."],
+    ["steps","적히는 자리를 보여 드립니다","답하시면 실제 신청서의 그 칸에 바로 나타납니다."]
+  ];
+  var safe=[
+    "적으신 내용은 이 화면에서만 쓰이고 어디에도 저장·전송되지 않습니다.",
+    "작성이 끝나면 종이로 인쇄해 창구에 내시면 됩니다. 접수·전송은 하지 않습니다.",
+    "출력물에는 개인정보가 들어 있습니다. <b>본인이 직접 수령·관리</b>해 주세요.",
+    "공용 PC 입니다. 사용 후에는 창을 닫아 개인정보가 남지 않게 해 주세요."
+  ];
+  var use=[
+    "본 도구는 신청서 작성을 돕기 위한 미리보기 도구입니다.",
+    "공식 신청서와 항목·배치가 다를 수 있습니다.",
+    "실제 접수 가능 여부와 필요 서류는 담당 직원의 확인을 따릅니다."
+  ];
+  el("rail").innerHTML =
+    '<div class="rail-sec"><div class="rail-head">'+panelIcon("chat")+'이렇게 도와드립니다</div>'+
+    help.map(function(r){
+      return '<div class="rail-item"><span class="rail-ic" aria-hidden="true">'+panelIcon(r[0])+
+             '</span><div><b>'+esc(r[1])+'</b><small>'+esc(r[2])+'</small></div></div>';
+    }).join("")+'</div>'+
+    '<div class="rail-gap"></div>'+
+    /* 종전에는 이 내용이 화면 상단의 **빨간 띠**였다. 개인정보 안내는 중요하지만
+       위험이 아니다 — Red 는 실제 오류·진행불가에만(철학 §11). */
+    '<div class="rail-sec"><div class="rail-head">'+panelIcon("lock")+'안심하고 작성하세요</div>'+
+    safe.map(function(t){ return '<p class="rail-note">'+t+'</p>'; }).join("")+'</div>'+
+    '<div class="rail-gap"></div>'+
+    '<div class="rail-sec"><div class="rail-head">'+panelIcon("info")+'이용 안내</div>'+
+    '<ul class="rail-list">'+
+    use.map(function(t){ return '<li><i>→</i><span>'+esc(t)+'</span></li>'; }).join("")+
+    '</ul></div>'+
+    '<div class="rail-foot"><span id="officeName"></span></div>';
+  el("officeName").textContent = ORG_CONFIG.officeName||"";
+}
 
-   ⛔ **별도 화면을 만들지 않는다**(2026.08.25). 아무도 안 건드리면 이 화면이
-      스스로 카드를 하나씩 짚어 가운데 종이를 바꾼다 — 누군가 쓰고 있는 것처럼 보인다.
-      깨어날 때 화면이 갈리지 않으니 「다른 제품으로 바뀐 것 같다」가 아예 생기지 않는다.
-   ⛔ 캐러셀·시정홍보·빠른 pulse 를 쓰지 않는다. 움직이는 것은 **강조 하나와 종이**뿐이다.
-   ⚠️ 서식 8종은 무동작·인쇄 후 이 파일로 돌아온다. 그 끝이 곧 이 시연이다.
-   ========================================================================== */
+/* ══════════════════════════════════════════════════════════════════════════
+   Idle — **화면을 따로 두지 않는다.** 이 Main 이 스스로 천천히 사용된다 (2026.08.28)
 
-/* 카드 한 장에 머무는 시간. 8종이면 한 바퀴 22.4초.
-   ⚠️ 2026.08.27 에 2.6→1.8 로 줄였다가 **2.8 로 되돌렸다.** 그때는 종이에 추상적인 줄만
-      그어져 읽을 것이 없었지만, 이제 항목 이름과 값이 한 줄씩 채워진다 —
-      다섯 줄을 읽을 시간이 필요하다. 지나가던 사람이 한 서식은 끝까지 보게 하는 것이 목적이다. */
-var DEMO_STEP_MS = 2800;
-var DEMO_GUARD_MS = 400;   // 시연이 막 시작한 직후의 합성 mousemove 를 무시하는 시간
+   「대기화면은 광고판이 아니라 사용해도 된다는 신호다」(철학 §22)
 
+   ⛔ 캐러셀·시정홍보·빠른 pulse·bounce·flash 를 쓰지 않는다. 8초에 한 번 **선택이
+      옮겨 갈 뿐**이고, 그 결과로 가운데가 바뀐다.
+   ⛔ hover 흉내를 내지 않는다. `selectForm()` — **사람이 누를 때와 똑같은 경로**를 부른다.
+      그래서 시연에 나오는 화면은 정의상 실제 화면과 같다(따로 그리는 코드가 없다).
+   ⛔ RIGHT 는 공통 안내라 움직이지 않는다 — `renderRail()` 을 다시 부르지 않는다.
+   ⚠️ 종전의 「종이에 값이 한 줄씩 그어지는 시연」은 **폐기**했다. CENTER 에 종이가 없다
+      (그 코드는 아직 지우지 않았다 — 위의 「사용 중단」 표시를 보라).
+   ⚠️ 멈출 때 **화면을 되돌리지 않는다.** 마지막으로 짚던 민원이 그대로 골라져 있어
+      바로 [작성 시작하기]를 누를 수 있다 — 깨어나는 순간 화면이 갈리지 않는다.
+   ⚠️ 시연 중에 **없는 정보를 채우지 않는다.** 준비물이 검증된 것은 아직 여권뿐이고,
+      나머지는 그 자리를 비워 둔 채로 순회한다(지어내지 않는다).
+   ══════════════════════════════════════════════════════════════════════════ */
+var DEMO_ENABLED = true;
+/* 한 민원에 머무는 시간. ⚠️ 2.8초 → **8초**(2026.08.28). 종전에는 종이에 줄이 그어지는
+   것만 보면 됐지만, 지금은 준비물 넉 장과 신청서 한 장을 **읽어야** 한다.
+   8종이면 한 바퀴 64초 — 지나가던 사람이 한 민원은 끝까지 보게 하는 것이 목적이다. */
+var DEMO_STEP_MS = 8000;
+/* 시연이 한 걸음 옮긴 직후, 커서 아래 요소가 바뀌어 브라우저가 **합성 mousemove** 를
+   던진다. 그것에 즉시 꺼지지 않도록 걸음마다 이 시간만 움직임을 무시한다.
+   ⛔ 누름·키·터치는 가드 없이 **언제나** 즉시 멈춘다. */
+var DEMO_GUARD_MS = 400;
 /* 아무 조작이 없을 때 시연으로 돌아가는 시간. 키오스크 환경설정 값이 있으면 그것을 쓴다
-   (서식 8종의 초기화 대기와 같은 값 — 창구에서 두 가지를 따로 맞출 일이 없게 한다).
-   ⚠️ 허브에는 지울 개인정보가 없다. 이 시계는 **보호가 아니라 대기로 돌아가기 위한 것**이라
-      8종과 달리 30초 경고를 띄우지 않는다 — 잃을 것이 없는데 경고하면 소음이다. */
+   (서식 8종의 초기화 대기와 같은 값 — 창구에서 두 가지를 따로 맞출 일이 없게).
+   ⚠️ 허브에는 지울 개인정보가 없다. 이 시계는 보호가 아니라 **대기로 돌아가기** 위한
+      것이라 8종과 달리 30초 경고를 띄우지 않는다. */
 var DEMO_BACK_MS = (function(){
   var c = (typeof window!=="undefined" && window.__kioskCfg) || {};
   return (typeof c.idleMs==="number" && c.idleMs>0) ? c.idleMs : 3*60*1000;
 })();
-
 var demoTimer=null, backTimer=null, demoAt=0, lastArm=0;
 
 /* ⚠️ CSS 의 `prefers-reduced-motion` 규칙은 transition/animation 만 끈다.
-      **JS 로 도는 시연은 여기서 직접 갈라야 한다**(여권 `calmScroll()` 과 같은 방식). */
+      **JS 로 도는 시연은 여기서 직접 갈라야 한다.** */
 function calmMotion(){
   try{ return window.matchMedia("(prefers-reduced-motion: reduce)").matches; }
   catch(e){ return false; }
 }
-
 function demoing(){ return document.documentElement.classList.contains("demo"); }
 
-function demoMark(key){
-  [].forEach.call(document.querySelectorAll(".card"),function(n){
-    n.classList.toggle("demo-on", n.getAttribute("data-key")===key);
-  });
-}
-
 function startDemo(){
+  if(!DEMO_ENABLED) return;
   clearTimeout(backTimer); backTimer=null;
-  /* 시연은 **보여 주기만** 한다 — 열려 있던 것을 닫고 기본 상태에서 시작한다 */
-  if(picked) openCard(picked);
-  if(calmMotion()) return;      // 줄여 달라고 한 사용자에게는 아예 돌리지 않는다
-  var forms=visibleForms(); if(!forms.length) return;
+  if(demoing()) return;
+  /* 줄여 달라고 한 사용자에게는 **아예 돌리지 않는다**(자동 시연 없음) */
+  if(calmMotion()) return;
+  /* ⚠️ 그 기관이 취급하는 것만 돈다(`formOn`). 한 가지뿐이면 순회가 뜻이 없으므로
+     돌리지 않는다 — 같은 화면이 8초마다 다시 그려질 뿐이다. */
+  var forms=visibleForms();
+  if(forms.length<2) return;
   document.documentElement.classList.add("demo");
-  demoAt=+new Date();
-  var i=-1;
+  /* 지금 골라진 것 **다음**부터 시작한다 — 같은 화면을 한 번 더 보여 주지 않는다 */
+  var at=0;
+  for(var i=0;i<forms.length;i++) if(forms[i].key===selected) at=i+1;
   (function step(){
-    i=(i+1)%forms.length;
-    demoMark(forms[i].key);
-    showPaper(forms[i].key, "silent");   // ⛔ 실제 서식이 아니다
+    selectForm(forms[at % forms.length].key);   // ⚠️ 누를 때와 같은 경로
+    at++;
+    demoAt=+new Date();
     demoTimer=setTimeout(step, DEMO_STEP_MS);
   })();
 }
 
-/* 시연을 끝내고 **기본 상태**로 — 아무것도 골라지지 않고 종이 자리는 비어 있다.
-   ⛔ 시연이 짚던 것을 골라진 것으로 넘겨주지 않는다. 시민이 고른 것이 아니다. */
+/* 시연을 멈춘다. ⛔ 화면을 되돌리지 않는다 — 보이는 그대로 바로 조작할 수 있어야 한다. */
 function stopDemo(){
-  clearTimeout(demoTimer); demoTimer=null; silStop();
-  if(!demoing()) return;
+  clearTimeout(demoTimer); demoTimer=null;
   document.documentElement.classList.remove("demo");
-  demoMark(null);
-  renderPaper(null,"empty");          // 전환 없이 즉시 빈 자리로
-  document.querySelector(".form-col").classList.remove("swap");
 }
-
-function armDemo(){
-  clearTimeout(backTimer);
-  backTimer=setTimeout(startDemo, DEMO_BACK_MS);
-}
+function armDemo(){ clearTimeout(backTimer); backTimer=setTimeout(startDemo, DEMO_BACK_MS); }
 
 function chooseForm(key){
   var f=formByKey(key);
@@ -1363,49 +1586,44 @@ function chooseForm(key){
 function bindEvents(){
   /* 시연을 끄는 것 — 마우스가 **움직이기만 해도** 끈다. 키·터치·휠도 마찬가지다.
      장치를 전제하지 않는다(철학 §19).
-     ⚠️ 캡처 단계에서 받는다. 시연을 끄는 그 한 번은 **선택이 아니다** —
-        그래서 시연 중이면 아래 클릭 처리로 내려가지 않게 여기서 막는다.
-     ⚠️ 시연이 막 시작하면 커서 아래 요소가 바뀌어 브라우저가 mousemove 를 합성한다.
-        그것에 즉시 꺼지지 않도록 처음 `DEMO_GUARD_MS` 동안은 움직임만 무시한다. */
+
+     ⛔ **깨우는 입력을 삼키지 않는다**(2026.08.28 결정). Idle 은 덮개도 대기화면도 아니라
+        **이 Main 이 스스로 고르고 있는 상태**다. 그러니 첫 누름은 「깨우기」가 아니라
+        그냥 그 사람의 첫 조작이어야 한다 — 카드를 누르면 그 카드가 골라지고,
+        [작성 시작하기]를 누르면 그대로 들어가고, [크게 보기]는 그 한 번에 켜진다.
+        종전에는 여기서 `preventDefault()` 로 삼켜 **두 번 눌러야** 했다.
+     ⚠️ 그래서 이 처리기는 **아무것도 막지 않는다.** 시계만 만지고 이벤트는 그대로 흘러
+        원래 처리기(카드 click · CTA click · 단추들)로 내려간다. `passive:true` 인 것이
+        그 약속의 표시다 — 여기서 실수로 막으려 하면 브라우저가 무시한다.
+     ⚠️ 시연이 한 걸음 옮긴 직후에는 커서 아래 요소가 바뀌어 브라우저가 **합성
+        mousemove** 를 던진다. 그 400ms 만 움직임을 무시한다. 누름·키·터치는 가드 없다.
+     ⚠️ 시연 중이 아니면 무동작 시계만 되감는다. pointermove 는 초당 수십 번 오므로
+        1초에 한 번만 되감는다. */
   ["pointermove","pointerdown","keydown","wheel","touchstart"].forEach(function(t){
-    document.addEventListener(t, function(e){
+    document.addEventListener(t, function(){
       var now=+new Date();
       if(demoing()){
-        if(t==="pointermove" && now-demoAt < DEMO_GUARD_MS) return;
+        if(t==="pointermove" && now-demoAt < DEMO_GUARD_MS) return;   // 합성 이동 무시
         stopDemo();
         armDemo();
-        if(t==="pointerdown" || t==="touchstart"){ e.stopPropagation(); e.preventDefault(); }
-        return;
+        return;                       // ⛔ preventDefault·stopPropagation 하지 않는다
       }
-      /* 시연 중이 아니면 무동작 시계만 되감는다.
-         ⚠️ mousemove 는 초당 수십 번 온다 — 1초에 한 번만 되감는다. */
       if(now-lastArm < 1000) return;
       lastArm=now; armDemo();
-    }, true);
+    }, {capture:true, passive:true});
   });
 
-  var list=el("cards");
-  list.addEventListener("click", function(e){
-    var go=e.target.closest("[data-go]");
-    if(go){ chooseForm(go.getAttribute("data-go")); return; }   // [작성 시작]만 이동한다
+  /* 목록 — 누르면 **고르기만** 한다. ⛔ 페이지를 옮기지 않는다.
+     ⚠️ hover 는 카드 자신만 밝힌다(CSS). CENTER 를 바꾸지 않는다(Figma 동결 §5). */
+  el("cards").addEventListener("click", function(e){
     var b=e.target.closest(".card");
-    if(b) openCard(b.getAttribute("data-key"));                 // 카드는 펼치기만 한다
+    if(b) selectForm(b.getAttribute("data-key"));
   });
-  /* hover·포커스는 **보조**다. 미리보기만 잠깐 바꾸고, 벗어나면 고른 것으로 돌아온다.
-     ⚠️ 펼쳐 놓은 카드가 있으면 그것을 이긴다 — 열어 둔 것을 hover 가 가려서는 안 된다. */
-  /* hover·포커스는 **실루엣**만 띄운다(2026.08.25). 종전에는 실제 서식을 띄워
-     눌러도 화면이 그대로인 것처럼 보였다 — 누름이 아무 일도 안 한 것처럼 읽혔다. */
-  list.addEventListener("mouseover", function(e){
-    if(picked || demoing()) return;
-    var b=e.target.closest(".card"); if(b) showPaper(b.getAttribute("data-key"), "silent");
-  });
-  list.addEventListener("mouseleave", function(){
-    if(picked || demoing()) return;
-    showPaper(null, "empty");
-  });
-  list.addEventListener("focusin", function(e){
-    if(picked || demoing()) return;
-    var b=e.target.closest(".card"); if(b) showPaper(b.getAttribute("data-key"), "silent");
+
+  /* 가운데의 [작성 시작하기]만 실제로 이동한다 */
+  el("ready").addEventListener("click", function(e){
+    var go=e.target.closest("[data-go]");
+    if(go) chooseForm(go.getAttribute("data-go"));
   });
 
   el("btnStaff").addEventListener("click", function(){
@@ -1415,24 +1633,26 @@ function bindEvents(){
       "어떤 서식이 필요한지 함께 찾아 드립니다. "+
       esc(ORG_CONFIG.officeName||"")+" 창구로 오시면 됩니다.";
   });
-  /* 크게 보기 — `html.big` 이 디자인 토큰만 갈아 끼운다. 전체 화면 Zoom 이 아니다(§13). */
-  document.getElementById("btnBig").addEventListener("click", function(){
+
+  /* 크게 보기 — `html.big` 이 글자 토큰만 갈아 끼운다.
+     ⚠️ 열 폭(`--m-cols`)은 **바뀌지 않는다**(2026.08.28 결정 ②). */
+  el("btnBig").addEventListener("click", function(){
     var on=document.documentElement.classList.toggle("big");
     this.setAttribute("aria-pressed", on?"true":"false");
-    document.getElementById("btnBigLabel").textContent = on ? "일반 보기로" : "크게 보기";
+    el("btnBigLabel").textContent = on ? "일반 보기로" : "크게 보기";
   });
 }
 
 function init(){
   el("orgName").textContent = ORG_CONFIG.orgName;
   el("today").textContent = formatDate(new Date());
+  var forms=visibleForms();
+  selected = forms.length ? forms[0].key : null;
   renderCards();
-  renderRailInfo();
+  renderReady();
+  renderRail();
   bindEvents();
-  renderPaper(null,"empty");   // 아무것도 고르지 않은 기본 상태 — 「서식을 골라 주세요」
-  /* ⚠️ 화면을 **다 그려 둔 뒤** 시연을 얹는다. 시연이 꺼질 때 그릴 것이 남아 있으면
-     전환이 「화면 교체」로 읽힌다. 여기서는 지울 것만 남아 있으면 된다. */
-  startDemo();
+  armDemo();
 }
 init();
 </script>
