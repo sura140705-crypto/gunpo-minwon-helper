@@ -2368,9 +2368,12 @@ var FORM={
         h+='<div class="note-box"><b>⚠️ 소재지는 지번주소로 적습니다.</b> 도로명주소(○○로 00)로 적으면 '
           +'접수되지 않습니다. 등기사항증명서·토지대장에 적힌 <b>지번</b>(○○동 000-0)으로, '
           +'아파트 등 집합건축물은 <b>동·호수까지</b> 적으세요.</div>';
+        /* ⚠️ 2026.08.29 실사용 QA — 위 경고 상자와 이 칸의 도움말이 **같은 말을 두 번** 하고
+           있었다. 경고는 상자 한 곳에서만 하고, 도움말은 상자가 말하지 않는 것
+           (①② 주소란과 다르다는 점)만 남긴다. ⛔ 업무 내용은 그대로다. */
         h+=A.inputHtml({k:"p_addr", label:"⑥ 소재지 (지번주소)", req:true,
           ph:"경기도 군포시 산본동 000-0 101동 1001호",
-          help:"도로명주소 아님. ①② 주소란(주민등록 주소)은 도로명으로 적어도 되지만, 이 칸은 지번주소여야 합니다."});
+          help:"①② 주소란(주민등록 주소)은 도로명으로 적어도 되지만, 이 칸은 다릅니다."});
         h+=A.inputHtml({k:"p_jimok", label:"지목", half:true, ph:"대",
           help:"토지대장에 적힌 지목(대, 전, 답 등)."});
         h+=A.inputHtml({k:"p_landArea", label:"토지면적(㎡)", ph:"45000",
@@ -2948,7 +2951,12 @@ function renderStepper(){
 function renderStep(){
   var def=FORM.STEPS[state.step-1];
   var act=activeSteps(), TOTAL=act.length, pos=act.indexOf(state.step)+1;
-  el.wizTitle.textContent=def.title;
+  /* ⚠️ 제목을 **함수**로도 받는다(2026.08.29 · 실사용 QA 1차).
+     한 단계가 조건에 따라 다른 항목을 보일 때, 고정 제목은 **화면에 없는 항목을 말한다**
+     (혼인 「⑨⑩⑧ 출석·제출·동의」 — 미성년이 아니면 ⑧ 이 없다.
+      이혼 「③④ … 재판확정일자 …」 — 협의이혼이면 ④ 가 없다).
+     ⛔ `short`(안내 기둥의 묶음 이름)는 고정이다. 진행 표시가 흔들리면 안 된다. */
+  el.wizTitle.textContent = (typeof def.title==="function") ? def.title(state) : def.title;
   el.wizCount.textContent="진행 "+pos+" / "+TOTAL;   // 여권과 같은 문구
   el.wizBody.innerHTML=renderStepBody(state.step);
   el.stepWarn.textContent="";

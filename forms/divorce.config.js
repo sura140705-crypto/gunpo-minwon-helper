@@ -324,7 +324,15 @@ var FORM={
       required:function(s){ return reqParent(s,"w","아내"); },
       body:function(A){ return parentFields("w").map(A.inputHtml).join(""); }},
 
-    {n:6, short:"이혼 종류", title:"③④ 이혼 종류·재판확정일자·기타사항",
+    {n:6, short:"이혼 종류",
+      /* ⚠️ 2026.08.29 실사용 QA — 고정 제목 「③④ 이혼 종류·재판확정일자·기타사항」은
+         **협의이혼을 고르면 화면에 없는 ④ 재판확정일자**를 계속 말하고 있었다.
+         이제 실제로 보이는 것만 말한다. 번호는 각 항목 라벨(④·③)이 달고 있다. */
+      title:function(s){
+        return isJudicial(s)
+          ? "이혼 종류 · 재판확정일자 · 기타사항"
+          : "이혼 종류 · 기타사항";
+      },
       q:"어떤 이혼인지 골라 주세요.",
       required:function(s){
         var m=[];

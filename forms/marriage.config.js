@@ -281,14 +281,17 @@ var FORM={
         if(!s.seongbon) m.push("성·본의 협의");
         if(!s.kinship) m.push("근친혼 여부");
         return m; },
+      /* ⚠️ 2026.08.29 실사용 QA — 화면 순서를 **서식 번호 순(③④⑤⑥)** 으로 바로잡았다.
+         종전에는 ④ → ⑤ → ③ → ⑥ 이라 종이와 눈이 어긋났다.
+         ⛔ 순서만 바꿨다 — state·검증·인쇄 좌표는 그대로다. */
       body:function(A){
         var h='';
+        h+=A.inputHtml({k:"foreignDate", label:"③ 외국방식 혼인성립일자", type:"date",
+          ph:"2026.01.01", help:"외국 방식으로 이미 혼인한 경우에만 적습니다. 아니면 비워 두세요."});
         h+='<div class="field"><label class="field-label">④ 성·본의 협의 <span class="fb fb-req">필수</span></label>';
         h+=A.choiceHtml("seongbon",["예","아니요"],"자녀의 성·본을 어머니의 성·본으로 하기로 협의했나요? 해당 없으면 ‘아니요’.")+'</div>';
         h+='<div class="field"><label class="field-label">⑤ 근친혼 여부 <span class="fb fb-req">필수</span></label>';
         h+=A.choiceHtml("kinship",["예","아니요"],"두 사람이 8촌 이내 혈족인가요? 보통은 ‘아니요’입니다.")+'</div>';
-        h+=A.inputHtml({k:"foreignDate", label:"③ 외국방식 혼인성립일자", type:"date",
-          ph:"2026.01.01", help:"외국 방식으로 이미 혼인한 경우에만 적습니다. 아니면 비워 두세요."});
         h+=A.inputHtml({k:"etc", label:"⑥ 기타사항", help:"특별히 밝힐 내용이 있을 때만 적습니다."});
         return h;
       }},
@@ -310,7 +313,15 @@ var FORM={
           + WIT_FIELDS.map(A.inputHtml).join("");
       }},
 
-    {n:8, short:"출석·제출", title:"⑨⑩⑧ 출석·제출·동의",
+    {n:8, short:"출석·제출",
+      /* ⚠️ 2026.08.29 실사용 QA — 고정 제목 「⑨⑩⑧ 출석·제출·동의」는 번호가 뒤섞였고,
+         **미성년이 아니면 ⑧ 동의는 화면에 없는데** 제목에는 남아 있었다.
+         이제 화면에 실제로 보이는 것만 말한다. 번호는 각 항목 라벨(⑨·⑩·⑧)이 이미 달고 있다. */
+      title:function(s){
+        return (isMinor("h")||isMinor("w"))
+          ? "출석 여부 · 제출인 · 미성년자 동의"
+          : "출석 여부 · 제출인";
+      },
       q:"출석 여부와 제출인을 확인하세요.",
       required:function(s){
         return (s.attend_h||s.attend_w) ? [] : ["출석하신 분(남편·아내)"];
