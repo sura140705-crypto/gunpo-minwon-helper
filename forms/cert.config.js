@@ -61,12 +61,28 @@ function buildSummary(){
 }
 
 var FORM={
+  /* ⛔ 이 한 줄이 껍데기를 정한다 — Product UI v1(`engine/base-product.html`). */
+  shell:"product",
   docTitle:"증명서 발급신청 작성 미리보기 도우미",
   formName:"가족관계 등록사항별 증명서 교부 등 신청서",
   org:{ orgName:"경기도 군포시", officeName:"군포시청 민원실" },
   sampleLabels:["작성예시(본인 신청)","작성예시(대리 신청)"],
   sampleKinds:["self","agent"],
   rerenderOnSet:[],
+
+  /* ⛔ **이 서식은 「가족관계등록 신고서」가 아니다.** 2026.08.29 담당자 확정본의
+        공통 필수/선택 원칙(모든 사항 필수 · 등록기준지·본·한자만 선택 · 신고인란 필수)은
+        **신고서 5종에만** 적용된다. 여기의 필수 조건은 **기존 업무규칙 그대로** 두고,
+        새 필수 조건을 추정해 보태지 않는다.
+     ⛔ 준비물도 담당자가 준 것이 없으므로 **비워 둔다** — 없으면 그 구역을 아예 내지 않는다.
+        「신분증이 필요할 것이다」 같은 짐작으로 채우지 마라. */
+  ready:[],
+
+  /* 안내 기둥 맨 아래 「이용 안내」 — 2줄(Product UI v1). ⛔ 늘리지 마라. */
+  noticeItems:[
+    "필요 서류는 직원 확인을 따릅니다.",
+    "여기서 접수되지는 않습니다."
+  ],
 
   stateKeys:[].concat(
     // 발급 대상자
@@ -195,15 +211,12 @@ var FORM={
   },
 
   STEPS:[
+    /* ⛔ 시작 화면은 보여 주지 않는다 — 허브에서 이미 증명서 발급을 고르고 들어왔다.
+       ⚠️ 단계를 지우지 않고 `when` 으로 숨긴다(`STEP_HL`·`applySample` 이 절대 번호를 쓴다). */
     {n:1, short:"시작", title:"증명서 발급신청 작성 시작",
-      q:"함께 한 단계씩 채워 볼까요?",
-      why:"가족관계증명서·기본증명서·혼인관계증명서 등 가족관계등록부의 증명서를 신청하는 서식입니다. 신분증을 준비하고, 서명·날인은 인쇄한 뒤 직접 하시면 됩니다.",
-      kind:"intro",
-      body:function(){
-        return '<div class="note-box">이 도구는 <b>미리보기</b>이며, 실제 접수는 담당 직원의 확인을 따릅니다. '
-          +'입력 내용은 저장되지 않습니다.</div>'
-          +'<div class="opts"><button type="button" class="opt sel" data-next="1">시작하기 →</button></div>';
-      }},
+      when:function(){ return false; },
+      q:"함께 한 단계씩 채워 볼까요?", kind:"intro",
+      body:function(){ return '<div class="opts"><button type="button" class="opt sel" data-next="1">시작하기</button></div>'; }},
 
     {n:2, short:"발급 대상자", title:"발급받을 사람 (대상자)",
       q:"증명서를 발급받을 사람의 정보를 입력하세요.",

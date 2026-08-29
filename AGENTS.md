@@ -43,8 +43,8 @@
 | 환경설정 창의 항목 | **`kiosk-app/admin/settings.html`** + `main.js` 의 `ORG_KEYS`·`POLICY_KEYS`·`FORM_KEYS` | 양쪽 이름이 같아야 한다 |
 
 > ⛔ **엔진 7종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
-> ⚠️ **껍데기가 둘이다** — `base-product.html`(Product UI v1 · 출생·혼인·이혼·사망·개명) 과
->    `base.html`(옛 껍데기 · 증명서·부동산). 공통 CSS 를 고치면 **양쪽**을 봐야 한다.
+> ⚠️ **껍데기가 둘이다** — `base-product.html`(Product UI v1 · 출생·혼인·이혼·사망·개명·증명서) 과
+>    `base.html`(옛 껍데기 · 부동산). 공통 CSS 를 고치면 **양쪽**을 봐야 한다.
 > ⛔ **`kiosk-app/app/` 안의 파일을 직접 고치지 마라.** 원본은 루트다.
 
 ## 2. 끝내기 전에 반드시 통과시켜야 하는 것

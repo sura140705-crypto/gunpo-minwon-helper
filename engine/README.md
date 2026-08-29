@@ -128,8 +128,8 @@ bash tools/sync-kiosk.sh --check  # 커밋 전 드리프트 검증(다르면 exi
 손작성본은 **여권 하나**뿐이며, 엔진 공용 스니펫(유휴 초기화·인쇄 안내 모달 등)을 고칠 때는
 여권도 같은 내용으로 함께 손봐야 합니다.
 
-⚠️ **껍데기가 둘입니다** — `base-product.html`(Product UI v1 · 출생·혼인·이혼·사망·개명)과
-`base.html`(옛 껍데기 · 증명서·부동산). `shell:"product"` 한 줄이 무엇을 쓸지 정합니다.
+⚠️ **껍데기가 둘입니다** — `base-product.html`(Product UI v1 · 출생·혼인·이혼·사망·개명·증명서)과
+`base.html`(옛 껍데기 · 부동산). `shell:"product"` 한 줄이 무엇을 쓸지 정합니다.
 
 엔진(`engine.js`·`base.html`)을 고친 뒤에는 **5종을 모두 재빌드**하고, 커밋본과 인쇄·화면 픽셀을 비교해
 회귀가 없는지 확인하십시오.
