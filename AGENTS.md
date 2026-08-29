@@ -32,7 +32,7 @@
 |---|---|---|
 | `birth·marriage·divorce·death·naming·cert·realestate-helper-v1.html` | **`forms/<이름>.config.js`** | config 수정 → `node tools/build-form.js <이름>` |
 | `passport-helper-v1.html` | **그 HTML 자체**(손작성 · 유일하게 남은 하나) | 파일 직접 수정 |
-| 8종 공통 동작·CSS | **`engine/engine.js`** + 껍데기 **둘**(`engine/base.html` · `engine/base-product.html`) + 여권 | 엔진 수정 → 7종 재빌드 → 여권에 같은 내용 손수 반영 |
+| 8종 공통 동작·CSS | **`engine/engine.js`** + **`engine/base-product.html`** + 여권 | 엔진 수정 → 7종 재빌드 → 여권에 같은 내용 손수 반영 |
 | `index.html`(허브) | 그 파일 | 직접 수정 |
 | `운영문서/*.pdf` | **`운영문서/*.md`** | `.md` 수정 → `python tools/make-manual.py …` |
 | `kiosk-app/app/` 안의 HTML | **루트의 같은 파일** | 루트 수정 → `bash tools/sync-kiosk.sh` |
@@ -43,8 +43,9 @@
 | 환경설정 창의 항목 | **`kiosk-app/admin/settings.html`** + `main.js` 의 `ORG_KEYS`·`POLICY_KEYS`·`FORM_KEYS` | 양쪽 이름이 같아야 한다 |
 
 > ⛔ **엔진 7종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
-> ⚠️ **껍데기가 둘이다** — `base-product.html`(Product UI v1 · 출생·혼인·이혼·사망·개명·증명서) 과
->    `base.html`(옛 껍데기 · 부동산). 공통 CSS 를 고치면 **양쪽**을 봐야 한다.
+> ✅ **엔진 7종이 모두 `base-product.html`(Product UI v1) 을 쓴다**(2026.08.29).
+>    `engine/base.html` 은 **더 쓰는 서식이 없다** — 옛 껍데기이고 대조용으로만 남겨 둔다.
+>    ⛔ 그것을 고쳐도 배포물은 바뀌지 않는다.
 > ⛔ **`kiosk-app/app/` 안의 파일을 직접 고치지 마라.** 원본은 루트다.
 
 ## 2. 끝내기 전에 반드시 통과시켜야 하는 것

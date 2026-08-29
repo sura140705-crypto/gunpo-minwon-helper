@@ -156,6 +156,10 @@ function buildSummary(){
 }
 
 var FORM={
+  /* ⛔ 이 한 줄이 껍데기를 정한다 — Product UI v1(`engine/base-product.html`).
+     ⚠️ 이 서식만 **별지(`extraPages`)** 를 쓴다. 새 껍데기에도 `.paper.extra` 자리가 있어야
+        2쪽이 유지된다 — 없어지면 `verify-print` 가 쪽수로 잡는다. */
+  shell:"product",
   docTitle:"부동산거래계약 신고서 작성 미리보기 도우미",
   formName:"부동산거래계약 신고서",
   org:{ orgName:"경기도 군포시", officeName:"군포시청 민원실" },
@@ -164,6 +168,20 @@ var FORM={
   /* 이 서식은 머리말이 "[  ]에는 해당하는 곳에 √표를 합니다" — 영표(○)가 아니라 체크,
      색도 신고서 5종의 빨간 영표와 달리 검정으로 표기한다. */
   checkMark:"✔", checkSize:8, checkBlack:true,
+
+  /* ⛔ **이 서식은 「가족관계등록 신고서」가 아니다.** 2026.08.29 담당자 확정본의
+        공통 필수/선택 원칙은 **신고서 5종에만** 적용된다. 여기의 필수 조건은
+        **기존 업무규칙 그대로** 두고 새 필수 조건을 추정해 보태지 않는다.
+     ⛔ 준비물도 담당자가 준 것이 없으므로 **비워 둔다**(없으면 그 구역을 아예 내지 않는다).
+        ⚠️ 종전 시작 화면이 안내하던 「거래계약서·신분증…」 문장은 **없앤 것이 아니라**
+           ① 매도인 단계의 안내 상자로 옮겼다 — 그것은 화면 안내이지 확정된 준비물 목록이 아니다. */
+  ready:[],
+
+  /* 안내 기둥 맨 아래 「이용 안내」 — 2줄(Product UI v1). ⛔ 늘리지 마라. */
+  noticeItems:[
+    "필요 서류는 직원 확인을 따릅니다.",
+    "여기서 접수되지는 않습니다."
+  ],
   /* 선택 즉시 조건부 입력칸이 나타나야 하는 항목 */
   rerenderOnSet:["d_kind","d_supply","d_rightKind","f_visaType"],
 
@@ -446,28 +464,31 @@ var FORM={
   },
 
   STEPS:[
+    /* ⛔ 시작 화면은 보여 주지 않는다 — 허브에서 이미 부동산 거래 신고를 고르고 들어왔다.
+       ⚠️ 단계를 지우지 않고 `when` 으로 숨긴다(`STEP_HL`·`applySample` 이 절대 번호를 쓴다).
+       ⚠️ 여기 있던 **30일·과태료 경고와 준비물·인터넷 안내는 없앤 것이 아니라**
+          아래 ① 매도인 단계로 옮겼다. 숨긴 화면에 안내를 남겨 두면 아무도 보지 못한다. */
     {n:1, short:"시작", title:"부동산거래계약 신고서 작성 시작",
-      q:"함께 한 단계씩 채워 볼까요?",
-      why:"부동산 매매계약을 맺으면 계약 체결일부터 30일 안에 시·군·구청에 신고해야 합니다. 신고하지 않거나 거짓으로 신고하면 과태료가 부과됩니다.",
-      kind:"intro",
-      body:function(){
-        return '<div class="note-box">이 도구는 <b>미리보기</b>이며, 실제 접수는 담당 직원의 확인을 따릅니다. '
-          +'입력 내용은 저장되지 않습니다.</div>'
-          +'<div class="note-box">준비물 : <b>부동산 거래계약서</b>, 매도인·매수인 신분증, '
-          +'계약금 지급을 확인할 수 있는 서류(단독신고·중개사 신고 시). '
-          +'인터넷(<b>rtms.molit.go.kr</b>)으로도 신고할 수 있습니다.</div>'
-          +'<div class="opts"><button type="button" class="opt sel" data-next="1">시작하기 →</button></div>';
-      }},
+      when:function(){ return false; },
+      q:"함께 한 단계씩 채워 볼까요?", kind:"intro",
+      body:function(){ return '<div class="opts"><button type="button" class="opt sel" data-next="1">시작하기</button></div>'; }},
 
     {n:2, short:"매도인", title:"① 매도인 (파는 사람)",
       q:"부동산을 파는 사람의 정보를 입력하세요.",
-      why:"거래계약서에 적힌 매도인과 같아야 합니다. 법인이면 법인명·법인등록번호·법인소재지를 적습니다.",
+      why:"부동산 매매계약을 맺으면 계약 체결일부터 30일 안에 시·군·구청에 신고해야 합니다. 신고하지 않거나 거짓으로 신고하면 과태료가 부과됩니다.",
       kind:"fields",
       required:function(s){ var m=[];
         if(!String(s.s_name||"").trim()) m.push("매도인 성명");
         if(!String(s.s_addr||"").trim()) m.push("매도인 주소");
         return m; },
       body:function(A){ var h='';
+        /* ⚠️ 종전 시작 화면에 있던 안내를 그대로 옮긴 것이다(문구를 새로 짓지 않았다).
+           ⛔ 이것을 안내 기둥의 `ready` 로 승격하지 마라 — 담당자가 확정한 준비물이 아니다. */
+        h+='<div class="note-box">준비물 : <b>부동산 거래계약서</b>, 매도인·매수인 신분증, '
+          +'계약금 지급을 확인할 수 있는 서류(단독신고·중개사 신고 시). '
+          +'인터넷(<b>rtms.molit.go.kr</b>)으로도 신고할 수 있습니다.</div>';
+        h+='<div class="q-help">거래계약서에 적힌 매도인과 같아야 합니다. '
+          +'법인이면 법인명·법인등록번호·법인소재지를 적습니다.</div>';
         h+=A.inputHtml({k:"s_name", label:"성명(법인명)", req:true, ph:"홍길동"});
         h+=A.inputHtml({k:"s_jumin", label:"주민등록번호(법인·외국인등록번호)", type:"jumin", ph:"900101-0000000"});
         h+=A.inputHtml({k:"s_addr", label:"주소(법인소재지)", req:true, ph:"경기도 군포시 …"});

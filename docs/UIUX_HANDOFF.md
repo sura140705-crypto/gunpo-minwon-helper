@@ -74,7 +74,7 @@
 | `death-helper-v1.html` | 사망신고서 | 8 | 엔진 |
 | `naming-helper-v1.html` | 개명신고서 | 9 | 엔진 |
 | `cert-helper-v1.html` | 증명서 발급신청 | 7 | 엔진 |
-| `realestate-helper-v1.html` | 부동산거래계약 신고서 | — | 엔진 |
+| `realestate-helper-v1.html` | 부동산거래계약 신고서 | 12 | 엔진 |
 | `marriage-helper-v1.html` | 혼인신고서 | 10 | 엔진 |
 | `divorce-helper-v1.html` | 이혼(친권자 지정)신고서 | 10 | 엔진 |
 

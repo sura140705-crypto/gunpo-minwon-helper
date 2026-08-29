@@ -1567,6 +1567,24 @@ body.pv-open .modal-back{display:flex;}
 /* 첨부 페이지 — 내용이 없으면 화면·인쇄에서 사라진다 */
 .paper.extra:empty{display:none !important;}
 
+/* ══ 별지(첨부 페이지)의 조판 — ⛔ `engine/base.html` 과 **글자까지 같아야 한다** ═══════
+   ⚠️ 2026.08.29 — 부동산을 이 껍데기로 옮길 때 이 규칙이 **통째로 빠져 있었다.**
+      화면은 멀쩡한데 **별지 2쪽만** 여백을 잃고 밀렸다(`verify-print` 가 194,677px 로 잡았다).
+      옛 껍데기에만 있던 규칙이라, 별지를 쓰는 서식이 부동산 하나뿐이어서 드러나지 않았다.
+   ⛔ 값을 「더 나아 보이게」 고치지 마라 — 두 껍데기가 **같은 인쇄물**을 내야 한다. */
+.xpaper{background:#fff;padding:14mm 12mm;}
+@media screen{
+  .form-col .xpaper{margin-top:36px;position:relative;}
+  .form-col .xpaper::before{content:"";position:absolute;left:0;right:0;top:-19px;
+    border-top:2px dashed #a9b2bd;}
+}
+@media print{
+  /* 첨부 페이지는 서식 다음 장부터 인쇄 */
+  .xpaper{page-break-before:always;break-before:page;padding:12mm 10mm;}
+  .form-col .xpaper{margin-top:0;}
+  .form-col .xpaper::before{display:none;}
+}
+
 /* 고른 것 — 엔진은 `sel`, 여권은 `selected`. 같은 뜻이라 같은 모양을 준다. */
 .opt.sel{border-color:var(--blue);background:var(--m-a10);box-shadow:inset 3px 0 0 var(--blue);}
 .opt.sel .opt-label{color:var(--blue-dark);}
