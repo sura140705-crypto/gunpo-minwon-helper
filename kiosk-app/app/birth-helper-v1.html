@@ -2482,10 +2482,7 @@ function renderRailProg(){
 function renderRailInfo(){
   var box=document.getElementById("railInfo"); if(!box) return;
   var h='';
-  /* ⚠️ 준비물이 **경로에 따라 갈리는** 서식이 있다(이혼 — 협의냐 재판이냐로 필요한 서류가 다르다).
-     그런 서식은 `ready` 를 **함수**로 주고, 지금 상태에 맞는 목록만 돌려준다.
-     ⛔ 두 갈래를 한꺼번에 보여주지 마라 — 시민이 없는 서류를 떼러 간다. */
-  var ready=(typeof FORM.ready==="function" ? (FORM.ready(state)||[]) : (FORM.ready||[]));
+  var ready=FORM.ready||[];
   if(ready.length){
     h+='<div class="rail-rule"></div>';
     h+='<div class="rail-sec"><div class="rail-head">'+svgIcon("checklist","ic-sm")+'준비하셨나요?</div>';
