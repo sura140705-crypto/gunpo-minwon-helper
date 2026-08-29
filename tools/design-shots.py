@@ -273,7 +273,7 @@ def dump_css():
     ⛔ `@media print` 블록은 **인쇄물의 일부**다. 뽑아 주되 고치지 말라고 표시해 둔다."""
     parts = []
     for src, note in [("engine/base.html", "옛 껍데기 — 사망·개명·증명서·부동산이 쓴다"),
-                      ("engine/base-product.html", "Product UI v1 껍데기 — 출생·혼인·이혼이 쓴다"),
+                      ("engine/base-product.html", "Product UI v1 껍데기 — 출생·혼인·이혼·사망이 쓴다"),
                       ("passport-helper-v1.html", "여권 도우미(2026.08 개편으로 세 영역이 됐다)"),
                       ("index.html", "허브(첫 화면)")]:
         s = io.open(os.path.join(ROOT, src), encoding="utf-8").read()

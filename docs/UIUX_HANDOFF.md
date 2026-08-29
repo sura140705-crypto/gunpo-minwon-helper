@@ -71,7 +71,7 @@
 | 파일 | 서식 | 단계 수 | 만드는 법 |
 |---|---|---|---|
 | `birth-helper-v1.html` | 출생신고서 | 10 | 엔진 |
-| `death-helper-v1.html` | 사망신고서 | — | 엔진 |
+| `death-helper-v1.html` | 사망신고서 | 8 | 엔진 |
 | `naming-helper-v1.html` | 개명신고서 | — | 엔진 |
 | `cert-helper-v1.html` | 증명서 발급신청 | — | 엔진 |
 | `realestate-helper-v1.html` | 부동산거래계약 신고서 | — | 엔진 |
@@ -607,7 +607,7 @@ preview.sample  실루엣의 예시값 5개    ✅ 8종 전부 · **전부 가�
 | `passport` | 여권 만들기 | 여권발급신청서 | ✅ `서식원본/[별지 제1호서식] 여권발급신청서…pdf` (+ 시청본·위임장·동의서) | HTML 안 base64 **2장** | ✅ 80KB | ✅ |
 | `birth` | 아이 출생 신고하기 | 출생신고서 | ✅ `출생신고서.pdf` | `engine/assets/birth.b64` | ✅ 54KB | ✅ |
 | `marriage` | 혼인 신고하기 | 혼인신고서 | ✅ `혼인신고서(20260828).pdf` (구본 `…(서식).pdf` 는 대조용) | `engine/assets/marriage.b64` | ✅ 93KB | ✅ |
-| `death` | 사망 신고하기 | 사망신고서 | ✅ `사망신고서.pdf` | `engine/assets/death.b64` | ✅ 51KB | ✅ |
+| `death` | 사망 신고하기 | 사망신고서 | ✅ `사망신고서(20260828).pdf` (구본 `사망신고서.pdf` 는 대조용) | `engine/assets/death.b64` | ✅ 69KB | ✅ |
 | `naming` | 개명 신고하기 | 개명신고서 | ✅ `개명신고서.pdf` | `engine/assets/naming.b64` | ✅ 52KB | ✅ |
 | `divorce` | 이혼·친권자 신고하기 | 이혼(친권자 지정)신고서 | ✅ `이혼신고서(20260828).pdf` (구본 `…(서식).pdf` 는 대조용) | `engine/assets/divorce.b64` | ✅ 83KB | ✅ |
 | `cert` | 가족관계증명서 발급받기 | 증명서 발급신청 | ✅ `[별지 제11호 서식]…pdf` | `engine/assets/cert.b64` | ✅ 87KB | ✅ |
