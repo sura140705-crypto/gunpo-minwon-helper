@@ -2,15 +2,15 @@
 """디자인 토큰 블록(DESIGN-TOKENS)이 9개 화면에서 같은지 본다.
 
 `engine/base.html` 의 `<!--DESIGN-TOKENS v1-->` … `<!--/DESIGN-TOKENS-->` 블록이 **원본**이고,
-엔진 5종은 재빌드로, 손작성 3종과 허브는 이 도구가 넣어 준다.
+엔진 7종은 재빌드로, 손작성(여권)과 허브는 이 도구가 넣어 준다.
 
 `check-site-block.py` 와 같은 방식이다. 그쪽이 **기관별 설정**(색을 주입하는 스크립트)을
 지키고, 이쪽이 **디자인 값**(색·반경·간격·글자 크기)을 지킨다. 둘 다 「9개 화면에 글자까지
 똑같이」가 조건이라 어긋나면 그 서식만 다르게 생긴 채로 배포된다 — 조용히 어긋난다.
 
     python tools/check-design-tokens.py           # 다르면 exit 1
-    python tools/check-design-tokens.py --fix     # base.html 내용으로 손작성 3종·허브를 맞춘다
-                                                  # (엔진 5종은 `node tools/build-form.js` 로 재빌드)
+    python tools/check-design-tokens.py --fix     # base.html 내용으로 손작성(여권)·허브를 맞춘다
+                                                  # (엔진 7종은 `node tools/build-form.js` 로 재빌드)
 
 블록이 아직 없는 파일에는 **첫 `<style>` 바로 앞에** 새로 심는다. 그 자리여야
 파일이 원래 갖고 있던 `:root` 가 뒤에 와서 이긴다 — 토큰을 새로 넣는 것만으로는
@@ -30,10 +30,12 @@ except Exception:
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'engine', 'base.html')
 
-# 손으로 맞춰야 하는 것들 — 엔진 5종은 재빌드로 자동 반영된다
-HAND = ['passport-helper-v1.html', 'marriage-helper-v1.html',
-        'divorce-helper-v1.html', 'index.html']
-BUILT = ['birth-helper-v1.html', 'death-helper-v1.html', 'naming-helper-v1.html',
+# 손으로 맞춰야 하는 것들 — 엔진 7종은 재빌드로 자동 반영된다.
+# ⚠️ 혼인·이혼이 2026.08.29 에 손작성에서 엔진으로 옮겨졌다(목록을 옮기지 않으면
+#    `--fix` 가 재빌드에 덮일 파일을 고친다).
+HAND = ['passport-helper-v1.html', 'index.html']
+BUILT = ['birth-helper-v1.html', 'marriage-helper-v1.html', 'divorce-helper-v1.html',
+         'death-helper-v1.html', 'naming-helper-v1.html',
          'cert-helper-v1.html', 'realestate-helper-v1.html']
 
 PAT = re.compile(r'<!--DESIGN-TOKENS v1-->.*?<!--/DESIGN-TOKENS-->', re.S)
@@ -90,8 +92,9 @@ def main():
     if bad:
         print('\n%d개가 다릅니다.' % bad)
         if not fix:
-            print('  손작성 3종·허브 : python tools/check-design-tokens.py --fix')
-        print('  엔진 5종        : node tools/build-form.js <이름>  (birth·death·naming·cert·realestate)')
+            print('  손작성(여권)·허브 : python tools/check-design-tokens.py --fix')
+        print('  엔진 7종        : node tools/build-form.js <이름>'
+              '  (birth·marriage·divorce·death·naming·cert·realestate)')
         return 1
     print('\n전부 같습니다 — 9개 화면')
     return 0

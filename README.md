@@ -32,8 +32,8 @@
 | 배포 파일 | 서식 | 만드는 방식 |
 |---|---|---|
 | `passport-helper-v1.html` | 여권발급신청서 (미성년 법정대리인 동의서·위임장 자동 첨부) | 손작성 |
-| `marriage-helper-v1.html` | 혼인신고서 (양식 제10호) | 손작성 |
-| `divorce-helper-v1.html` | 이혼(친권자 지정)신고서 (양식 제11호) | 손작성 |
+| `marriage-helper-v1.html` | 혼인신고서 (양식 제10호) | 엔진 |
+| `divorce-helper-v1.html` | 이혼(친권자 지정)신고서 (양식 제11호) | 엔진 |
 | `birth-helper-v1.html` | 출생신고서 (양식 제1호) | 엔진 |
 | `death-helper-v1.html` | 사망신고서 (양식 제19호) | 엔진 |
 | `naming-helper-v1.html` | 개명신고서 (양식 제27호) | 엔진 |
@@ -49,13 +49,13 @@
 
 | 고칠 것 | 고칠 파일 | 뒤이어 할 일 |
 |---|---|---|
-| 손작성 3종(여권·혼인·이혼) 내용 | 루트의 해당 `*-helper-v1.html` | `sync-kiosk.sh` |
-| 엔진 5종 내용 | `forms/<이름>.config.js` | `build-form.js` 재빌드 → `sync-kiosk.sh` |
-| 8종 공통 동작 (유휴 초기화·인쇄 안내 모달·CSS 등) | `engine/engine.js` · `engine/base.html` **와** 손작성 3종에 같은 내용 손수 반영 | 엔진 5종 재빌드 → `sync-kiosk.sh` |
+| 손작성(여권) 내용 | `passport-helper-v1.html` | `sync-kiosk.sh` |
+| 엔진 7종 내용 | `forms/<이름>.config.js` | `build-form.js` 재빌드 → `sync-kiosk.sh` |
+| 8종 공통 동작 (유휴 초기화·인쇄 안내 모달·CSS 등) | `engine/engine.js` · 껍데기 **둘**(`base.html`·`base-product.html`) **와** 여권에 같은 내용 손수 반영 | 엔진 7종 재빌드 → `sync-kiosk.sh` |
 | 허브 메뉴 | `index.html` | `sync-kiosk.sh` |
 | 운영·제출 문서 | `운영문서/*.md` (원본) | 필요할 때 `make-manual.py` 로 PDF 재생성 |
 
-> ⚠️ **엔진 5종의 루트 HTML을 직접 고치지 말 것** — 다음 재빌드에 덮여 사라진다.
+> ⚠️ **엔진 7종의 루트 HTML을 직접 고치지 말 것** — 다음 재빌드에 덮여 사라진다.
 > ⚠️ **배포 HTML은 사본이 하나 있다** (루트 = 원본 / `kiosk-app/app/`).
 > 항상 루트만 고치고 `bash tools/sync-kiosk.sh` 로 맞춘 뒤, 커밋 전 `--check` 로 확인한다.
 
@@ -66,9 +66,9 @@ gunpo_minwon/
 ├─ AGENTS.md         ☞ 작업 지침(원본·생성물 구분, 필수 검증, 금지사항) — 고치기 전에 읽는다
 │                     Claude Code·Codex·사람 공용. CLAUDE.md 는 이 파일을 불러오는 한 줄짜리다
 ├─ index.html, *-helper-v1.html (8종)   배포 원본 ★루트 고정(상대경로·file:// 실행)
-├─ engine/          공통 엔진 — base.html(골격·CSS) · engine.js · assets/*.b64(배경, 재생성물)
+├─ engine/          공통 엔진 — base.html·base-product.html(껍데기 둘) · engine.js · assets/*.b64(배경, 재생성물)
 │   └─ README.md    ☞ 새 서식 만들기 · FORM(config) 인터페이스 · 좌표 잡는 법
-├─ forms/           엔진 서식 5종의 config (좌표맵·필드·단계·작성예시)
+├─ forms/           엔진 서식 7종의 config (좌표맵·필드·단계·작성예시)
 ├─ tools/           빌드·동기화·문서·로고 도구 (아래 표)
 ├─ assets/          logo.png (기관 로고 — 허브·입력 패널 머리에 base64로 박음)
 ├─ 서식원본/         관공서 서식 원본 PDF·HWP — prep-bg.py 의 입력. 앱 실행과 무관

@@ -1296,7 +1296,10 @@ var ICONS={
   photo:'<rect x="3.4" y="5.4" width="17.2" height="13.2" rx="2.2"/>'+
         '<circle cx="9.4" cy="10.6" r="2"/><path d="M4.4 17.4l4.8-4.2 3.4 3 2.8-2.4 4.2 3.6"/>',
   pay:'<rect x="3.2" y="6.2" width="17.6" height="11.6" rx="2.2"/><path d="M3.2 10.2h17.6"/>'+
-      '<path d="M6.8 14.4h3.2"/>'
+      '<path d="M6.8 14.4h3.2"/>',
+  /* 도장 — 손잡이 + 인면. ⚠️ 붉은 인주를 그리지 않는다(색은 「골라짐」에만 쓴다). */
+  stamp:'<path d="M9.6 3.6h4.8v3.2c0 1.5 1 2.2 2 3 1.2 1 2 2 2 3.6v1.2H5.6v-1.2'+
+        'c0-1.6.8-2.6 2-3.6 1-.8 2-1.5 2-3z"/><rect x="4.2" y="17.4" width="15.6" height="3" rx="1.2"/>'
 };
 function svgIcon(key, cls){
   var d=ICONS[key]||ICONS.document;
@@ -1410,7 +1413,10 @@ function renderRailProg(){
 function renderRailInfo(){
   var box=document.getElementById("railInfo"); if(!box) return;
   var h='';
-  var ready=FORM.ready||[];
+  /* ⚠️ 준비물이 **경로에 따라 갈리는** 서식이 있다(이혼 — 협의냐 재판이냐로 필요한 서류가 다르다).
+     그런 서식은 `ready` 를 **함수**로 주고, 지금 상태에 맞는 목록만 돌려준다.
+     ⛔ 두 갈래를 한꺼번에 보여주지 마라 — 시민이 없는 서류를 떼러 간다. */
+  var ready=(typeof FORM.ready==="function" ? (FORM.ready(state)||[]) : (FORM.ready||[]));
   if(ready.length){
     h+='<div class="rail-rule"></div>';
     h+='<div class="rail-sec"><div class="rail-head">'+svgIcon("checklist","ic-sm")+'준비하셨나요?</div>';

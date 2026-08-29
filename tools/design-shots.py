@@ -54,7 +54,7 @@ CLICK = '''
 function click(t){ var n=[].filter.call(document.querySelectorAll(".card"),
   function(b){ return b.textContent.indexOf(t)>=0; })[0]; if(n) n.click(); }
 '''
-# 엔진 5종·손작성 2종의 「작성예시」 버튼
+# 엔진 7종의 「작성예시」 버튼
 SAMPLE = 'var b=document.getElementById("btnSampleAdult"); if(b) b.click();'
 
 # (파일이름, 소스, 설정, 화면을 만드는 스크립트, 설명)
@@ -170,9 +170,9 @@ SHOTS = [
     ("form-01-혼인-초기", "marriage-helper-v1.html", {}, "",
      "여권 말고 다른 서식의 **빈 첫 화면**. 카드가 없고 곧바로 입력 폼이다."),
     ("form-02-혼인", "marriage-helper-v1.html", {}, SAMPLE,
-     "혼인신고서(손작성 서식). 작성예시를 채운 상태."),
+     "혼인신고서(엔진 서식). 작성예시를 채운 상태."),
     ("form-03-출생", "birth-helper-v1.html", {}, SAMPLE,
-     "출생신고서(엔진 서식). 5종이 같은 틀을 쓴다."),
+     "출생신고서(엔진 서식). 7종이 같은 틀을 쓴다."),
     ("form-04-사망", "death-helper-v1.html", {}, SAMPLE, "사망신고서."),
     ("form-05-개명", "naming-helper-v1.html", {}, SAMPLE, "개명신고서."),
     ("form-06-이혼", "divorce-helper-v1.html", {}, SAMPLE, "이혼(친권자 지정)신고서."),
@@ -272,7 +272,8 @@ def dump_css():
 
     ⛔ `@media print` 블록은 **인쇄물의 일부**다. 뽑아 주되 고치지 말라고 표시해 둔다."""
     parts = []
-    for src, note in [("engine/base.html", "엔진 서식 5종 + 손작성 2종(혼인·이혼)이 공유하는 틀"),
+    for src, note in [("engine/base.html", "옛 껍데기 — 사망·개명·증명서·부동산이 쓴다"),
+                      ("engine/base-product.html", "Product UI v1 껍데기 — 출생·혼인·이혼이 쓴다"),
                       ("passport-helper-v1.html", "여권 도우미(2026.08 개편으로 세 영역이 됐다)"),
                       ("index.html", "허브(첫 화면)")]:
         s = io.open(os.path.join(ROOT, src), encoding="utf-8").read()

@@ -36,12 +36,13 @@ except Exception:
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 BEG, END = "<!--GUNPO-LOGO-->", "<!--/GUNPO-LOGO-->"
 
-# 손작성 3종은 engine/base.html 을 쓰지 않으므로 여기서 직접 고쳐야 한다.
-# 엔진 5종은 base.html 만 고치고 재빌드한다 — 여기에 넣으면 재빌드에 덮여 헛일이 된다.
-# (birth 는 예전에 손작성이었다가 엔진으로 옮겨졌다. 2026.08.08 목록 바로잡음.)
-HAND_WRITTEN = ["passport-helper-v1.html", "marriage-helper-v1.html",
-                "divorce-helper-v1.html"]
-ENGINE_FORMS = ["birth", "death", "naming", "cert", "realestate"]
+# 손작성(여권)은 껍데기를 쓰지 않으므로 여기서 직접 고쳐야 한다.
+# 엔진 7종은 껍데기만 고치고 재빌드한다 — 여기에 넣으면 재빌드에 덮여 헛일이 된다.
+# (birth 2026.08.08 · marriage·divorce 2026.08.29 에 손작성에서 엔진으로 옮겨졌다.)
+# ⚠️ 껍데기가 **둘**이다 — 옛 `base.html` 과 Product UI v1 의 `base-product.html`.
+#    둘 다 고쳐야 7종에 다 걸린다.
+HAND_WRITTEN = ["passport-helper-v1.html"]
+ENGINE_FORMS = ["birth", "marriage", "divorce", "death", "naming", "cert", "realestate"]
 
 MIME = {".svg": "image/svg+xml", ".png": "image/png",
         ".jpg": "image/jpeg", ".jpeg": "image/jpeg"}
@@ -212,7 +213,8 @@ def main():
               % (os.path.relpath(logo, ROOT), os.path.getsize(logo) / 1024,
                  len(uri) / 1024, len(white) / 1024))
 
-    targets = ["index.html", os.path.join("engine", "base.html")] + HAND_WRITTEN
+    targets = ["index.html", os.path.join("engine", "base.html"),
+               os.path.join("engine", "base-product.html")] + HAND_WRITTEN
     for rel in targets:
         p = os.path.join(ROOT, rel)
         s = io.open(p, encoding="utf-8").read()

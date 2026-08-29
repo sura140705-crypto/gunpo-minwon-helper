@@ -32,9 +32,9 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 WIDTH = 760          # 미리보기 가로 픽셀 (1920 화면에서 실제로 보이는 폭은 ~670)
 QUALITY = 80
 
-# 엔진 5종은 배경 파일이 따로 있고, 손작성 3종은 HTML 안에 박혀 있다
-ENGINE = ["birth", "death", "naming", "cert", "realestate"]
-HAND = ["passport", "marriage", "divorce"]
+# 엔진 7종은 배경 파일이 따로 있고, 손작성(여권)은 HTML 안에 박혀 있다
+ENGINE = ["birth", "marriage", "divorce", "death", "naming", "cert", "realestate"]
+HAND = ["passport"]
 KEYS = ["passport", "birth", "marriage", "death", "naming", "divorce", "cert", "realestate"]
 
 PAT = re.compile(r"<!--FORM-IMAGES v1-->.*?<!--/FORM-IMAGES-->", re.S)
