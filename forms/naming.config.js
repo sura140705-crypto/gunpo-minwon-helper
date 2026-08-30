@@ -283,28 +283,28 @@ var FORM={
   applySample:function(state, kind){
     Object.assign(state,{
       step:2,
-      bef_surKor:"김", bef_givenKor:"철수", bef_surHan:"金", bef_givenHan:"哲洙",
-      aft_surKor:"김", aft_givenKor:"도윤", aft_surHan:"金", aft_givenHan:"道潤",
-      bon:"金海", n_jumin:"9001011000000",
-      n_regBase:"경기도 군포시 산본로 000",
-      n_addr:"경기도 군포시 산본로 000, 101동 1001호",
+      bef_surKor:"최", bef_givenKor:"철수", bef_surHan:"崔", bef_givenHan:"哲洙",
+      aft_surKor:"최", aft_givenKor:"도윤", aft_surHan:"崔", aft_givenHan:"道潤",
+      bon:"慶州", n_jumin:"9001011000000",
+      n_regBase:"경기도 군포시 도마교동 000-0",
+      n_addr:"경기도 군포시 도마교동 000-0, 201동 503호",
       permDate:"2026.06.15", court:"수원가정법원",
       etc:"",
-      r_name:"김도윤", r_jumin:"9001011000000", r_qual:"본인", r_qualEtc:"",
-      r_addr:"경기도 군포시 산본로 000, 101동 1001호", r_phone:"01012345678",
-      r_email:"kim@example.com",
+      r_name:"최도윤", r_jumin:"9001011000000", r_qual:"본인", r_qualEtc:"",
+      r_addr:"경기도 군포시 도마교동 000-0, 201동 503호", r_phone:"01012345678",
+      r_email:"doyoon@example.com",
       sub_name:"", sub_jumin:""
     });
     if(kind==="legal"){
       /* 미성년 자녀 개명 — 부(법정대리인)가 신고 */
       Object.assign(state,{
-        bef_surKor:"이", bef_givenKor:"민준", bef_surHan:"李", bef_givenHan:"敏俊",
-        aft_surKor:"이", aft_givenKor:"서준", aft_surHan:"李", aft_givenHan:"舒俊",
-        bon:"全州", n_jumin:"1503111000000",
-        n_regBase:"서울특별시 강남구 테헤란로 000",
+        bef_surKor:"윤", bef_givenKor:"민준", bef_surHan:"尹", bef_givenHan:"敏俊",
+        aft_surKor:"윤", aft_givenKor:"서준", aft_surHan:"尹", aft_givenHan:"舒俊",
+        bon:"坡平", n_jumin:"1503111000000",
+        n_regBase:"경기도 군포시 금정동 000-0",
         permDate:"2026.07.01", court:"수원가정법원",
-        r_name:"이철수", r_jumin:"8203151000000", r_qual:"법정대리인", r_qualEtc:"",
-        r_email:"lee@example.com"
+        r_name:"윤태호", r_jumin:"8203151000000", r_qual:"법정대리인", r_qualEtc:"",
+        r_email:"taeho@example.com"
       });
     }
   }

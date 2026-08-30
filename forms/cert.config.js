@@ -349,19 +349,21 @@ var FORM={
   applySample:function(state, kind){
     Object.assign(state,{
       step:2,
-      t_name:"홍길동", t_nameHan:"洪吉童",
-      t_regBase:"경기도 군포시 산본로 000", t_jumin:"9001011000000",
+      /* ⚠️ 대상자는 **1960년생**이다. 아래 `agent` 예시에서 **자녀가 대리 신청**하는데,
+         종전에는 대상자가 1990년생이고 자녀가 1985년생이라 나이가 뒤집혀 있었다. */
+      t_name:"장영호", t_nameHan:"張永浩",
+      t_regBase:"경기도 군포시 당정동 000-0", t_jumin:"6001011000000",
       c_fam_gen:"1", c_bas_gen:"1", c_mar_gen:"",
-      ap_name:"홍길동", ap_jumin:"9001011000000", ap_qual:"본인",
-      ap_addr:"경기도 군포시 산본로 000, 101동 1001호", ap_phone:"01012345678"
+      ap_name:"장영호", ap_jumin:"6001011000000", ap_qual:"본인",
+      ap_addr:"경기도 군포시 당정동 000-0, 105동 802호", ap_phone:"01012345678"
     });
     if(kind==="agent"){
       // 대리 신청 — 자녀가 부(대상자)의 증명서를 대리 신청
       Object.assign(state,{
         c_fam_gen:"1", c_bas_gen:"", c_mar_gen:"1",
-        ap_name:"홍길순", ap_jumin:"8503152000000", ap_qual:"홍길동의 자녀",
-        ap_addr:"경기도 군포시 번영로 000", ap_phone:"01098765432",
-        del_name:"홍길동", del_jumin:"9001011000000",
+        ap_name:"장수빈", ap_jumin:"9003152000000", ap_qual:"장영호의 자녀",
+        ap_addr:"경기도 군포시 금정동 000-0, 302동 1104호", ap_phone:"01098765432",
+        del_name:"장영호", del_jumin:"6001011000000",
         claim_reason:"부동산 상속 관련 은행 제출용",
         disc_scope:"신청대상자 본인만 공개", disc_reason:"본인·가족"
       });

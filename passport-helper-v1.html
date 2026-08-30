@@ -4014,25 +4014,25 @@ function fillSample(kind){
   };
   if(kind==="minor"){
     /* 미성년자(2012년생) — 아버지(법정대리인 1)가 대리 신청 → 「법정대리인 동의서」 자동 출력.
-       ⚠️ 긴급연락처를 **어머니**로 둔다. 종전 예시는 긴급연락처도 아버지(김철수)여서
+       ⚠️ 긴급연락처를 **어머니**로 둔다. 종전 예시는 긴급연락처도 아버지여서
           법정대리인 1 과 같은 사람이었다 — 공동친권자 제안이 「같은 사람을 두 줄에」 적는
           꼴이 되는지 이 예시로는 확인할 수 없었다. 이제 부·모 두 분이 들어간다. */
     state.data=Object.assign(base,{
       pages:"26면", period:"5년",
-      nameKor:"김민준", jumin:"1203114234567", phone:"01023456789",
-      emgName:"이영희", emgRel:"모", emgPhone:"01087654321",
-      romanSur:"KIM", romanGiven:"MINJUN",
-      applyBy:"대리인", agentName:"김철수", guardianRel:"부", guardianJumin:"7505051234567",
-      applicantAddr:"경기도 군포시 산본로 123, 101동 202호",
-      guardian2Name:"이영희", guardian2Rel:"모"
+      nameKor:"임하준", jumin:"1203114234567", phone:"01023456789",
+      emgName:"강미선", emgRel:"모", emgPhone:"01087654321",
+      romanSur:"LIM", romanGiven:"HAJUN",
+      applyBy:"대리인", agentName:"임경수", guardianRel:"부", guardianJumin:"7505051234567",
+      applicantAddr:"경기도 군포시 부곡동 000-0, 101동 202호",
+      guardian2Name:"강미선", guardian2Rel:"모"
     });
   } else {
     // 성인 본인 신청
     state.data=Object.assign(base,{
       pages:"58면", period:"10년",
-      nameKor:"홍길동", jumin:"9001011234567", phone:"01012345678",
-      emgName:"홍판서", emgRel:"부", emgPhone:"01098765432",
-      romanSur:"HONG", romanGiven:"GILDONG",
+      nameKor:"최지훈", jumin:"9001011234567", phone:"01012345678",
+      emgName:"최영식", emgRel:"부", emgPhone:"01098765432",
+      romanSur:"CHOI", romanGiven:"JIHUN",
       applyBy:"본인"
     });
   }

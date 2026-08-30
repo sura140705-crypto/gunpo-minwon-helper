@@ -2131,7 +2131,7 @@ var FORM={
            좋습니다」라고 안내하고 예시에도 병원명을 넣어 두었다. 담당자 확인: 병원명은 적지 않는다.
            ⛔ 시설명을 적도록 유도하지 마라(예시·도움말 둘 다). */
         h+=A.inputHtml({k:"child_birthPlaceAddr", label:"출생 장소 주소", req:true,
-          ph:"예: 경기도 군포시 산본로 000",
+          ph:"예: 경기도 군포시 산본동 000-0",
           help:"출생한 곳의 주소까지만 적어 주세요. 병원명은 적지 않습니다."});
         if(A.state.child_birthPlace==="기타")
           h+=A.inputHtml({k:"child_birthPlaceEtc", label:"출생 장소(기타) 상세", req:true,
@@ -2255,31 +2255,31 @@ var FORM={
   applySample:function(state, kind){
     Object.assign(state,{
       step:2,
-      child_surKor:"김", child_givenKor:"하늘", child_surHan:"金", child_givenHan:"하늘",
-      child_bon:"金海", child_sex:"여", child_marital:"혼인 중",
+      child_surKor:"정", child_givenKor:"하늘", child_surHan:"鄭", child_givenHan:"하늘",
+      child_bon:"東萊", child_sex:"여", child_marital:"혼인 중",
       child_birthDate:"2026.07.20", child_birthHour:"14", child_birthMin:"30",
       child_birthPlace:"병원",
       /* ⛔ 작성예시에 **병원명을 넣지 마라**(2026.08.30 담당자 2차). 예시가 곧 본보기다 —
          여기에 시설명이 있으면 안내문으로 아무리 막아도 그대로 따라 적는다. */
-      child_birthPlaceAddr:"경기도 군포시 산본로 000",
-      child_regBase:"경기도 군포시 산본로 000",
-      child_addr:"경기도 군포시 산본로 000, 101동 1001호",
-      child_headName:"김철수", child_headRel:"자녀(녀)",
-      f_name:"김철수", f_nameHan:"金哲洙", f_bon:"金海", f_jumin:"8803151000000",
-      f_regBase:"경기도 군포시 산본로 000", f_edu:"대학(교)",
-      m_name:"이순자", m_nameHan:"李順子", m_bon:"全州", m_jumin:"9007222000000",
-      m_regBase:"경기도 군포시 산본로 000", m_edu:"대학(교)",
+      child_birthPlaceAddr:"경기도 군포시 산본동 000-0",
+      child_regBase:"경기도 군포시 당동 000-0",
+      child_addr:"경기도 군포시 당동 000-0, 101동 1001호",
+      child_headName:"정우진", child_headRel:"자녀(녀)",
+      f_name:"정우진", f_nameHan:"鄭宇鎭", f_bon:"東萊", f_jumin:"8803151000000",
+      f_regBase:"경기도 군포시 당동 000-0", f_edu:"대학(교)",
+      m_name:"윤서연", m_nameHan:"尹書娟", m_bon:"坡平", m_jumin:"9007222000000",
+      m_regBase:"경기도 군포시 부곡동 000-0", m_edu:"대학(교)",
       sonbon_consent:"아니요",
-      reporter_name:"김철수", reporter_jumin:"8803151000000", reporter_qual:"부",
-      reporter_addr:"경기도 군포시 산본로 000, 101동 1001호", reporter_phone:"01012345678",
-      reporter_email:"chulsoo@example.com"
+      reporter_name:"정우진", reporter_jumin:"8803151000000", reporter_qual:"부",
+      reporter_addr:"경기도 군포시 당동 000-0, 101동 1001호", reporter_phone:"01012345678",
+      reporter_email:"woojin@example.com"
     });
     if(kind==="unwed"){
       state.child_marital="혼인 외";
-      state.child_headName="이순자"; state.child_headRel="자녀(녀)";
+      state.child_headName="윤서연"; state.child_headRel="자녀(녀)";
       state.f_name=""; state.f_nameHan=""; state.f_bon=""; state.f_jumin=""; state.f_regBase=""; state.f_edu="";
-      state.reporter_name="이순자"; state.reporter_jumin="9007222000000"; state.reporter_qual="모";
-      state.reporter_email="soonja@example.com";
+      state.reporter_name="윤서연"; state.reporter_jumin="9007222000000"; state.reporter_qual="모";
+      state.reporter_email="seoyeon@example.com";
     }
   }
 };
