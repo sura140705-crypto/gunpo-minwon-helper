@@ -416,21 +416,21 @@ var FORM={
   applySample:function(state, kind){
     Object.assign(state,{
       step:2,
-      h_surKor:"박", h_givenKor:"도현", h_surHan:"朴", h_givenHan:"道賢", h_bon:"密陽",
+      h_surKor:"박", h_givenKor:"산본", h_surHan:"朴", h_givenHan:"山本", h_bon:"密陽",
       h_phone:"01012345678", h_birth:"1992.03.15", h_jumin:"9203151000000",
       h_regBase:"경기도 군포시 부곡동 000-0", h_addr:"경기도 군포시 부곡동 000-0, 102동 704호",
-      h_fName:"박준호", h_fJumin:"6001011000000", h_fRegBase:"경기도 군포시 부곡동 000-0",
-      h_mName:"임수현", h_mJumin:"6305012000000", h_mRegBase:"경기도 군포시 부곡동 000-0",
+      h_fName:"박당동", h_fJumin:"6001011000000", h_fRegBase:"경기도 군포시 부곡동 000-0",
+      h_mName:"임수리", h_mJumin:"6305012000000", h_mRegBase:"경기도 군포시 부곡동 000-0",
       h_marType:"초혼", h_edu:"대학(교)", h_job:"사무직",
-      w_surKor:"최", w_givenKor:"지은", w_surHan:"崔", w_givenHan:"智恩", w_bon:"慶州",
+      w_surKor:"최", w_givenKor:"금정", w_surHan:"崔", w_givenHan:"衿井", w_bon:"慶州",
       w_phone:"01098765432", w_birth:"1994.07.22", w_jumin:"9407222000000",
       w_regBase:"경기도 군포시 금정동 000-0", w_addr:"경기도 군포시 부곡동 000-0, 102동 704호",
-      w_fName:"최대한", w_fJumin:"6208011000000", w_fRegBase:"경기도 군포시 금정동 000-0",
-      w_mName:"강민정", w_mJumin:"6511012000000", w_mRegBase:"경기도 군포시 금정동 000-0",
+      w_fName:"최대야", w_fJumin:"6208011000000", w_fRegBase:"경기도 군포시 금정동 000-0",
+      w_mName:"강재궁", w_mJumin:"6511012000000", w_mRegBase:"경기도 군포시 금정동 000-0",
       w_marType:"초혼", w_edu:"대학(교)", w_job:"전문직",
       kinship:"아니요", seongbon:"아니요",
-      wit1_name:"조성민", wit1_jumin:"8001011000000", wit1_addr:"경기도 군포시 당정동 000-0",
-      wit2_name:"장미영", wit2_jumin:"8203022000000", wit2_addr:"경기도 군포시 대야미동 000-0",
+      wit1_name:"조당정", wit1_jumin:"8001011000000", wit1_addr:"경기도 군포시 당정동 000-0",
+      wit2_name:"장오금", wit2_jumin:"8203022000000", wit2_addr:"경기도 군포시 대야미동 000-0",
       attend_h:true, attend_w:true, cohabitDate:"2025.12.01"
     });
     if(kind==="minor"){
