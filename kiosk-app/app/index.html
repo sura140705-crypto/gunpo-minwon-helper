@@ -778,13 +778,21 @@ html.big{
     border-radius:var(--m-r-row);pointer-events:none;z-index:2;
     transition:transform 240ms var(--ease-move),height 240ms var(--ease-move);}
 
-  /* ② 기존 CENTER 퇴장(200ms) → ③ 다 사라지기를 기다리지 않고 110ms 에 새 CENTER 가
-        겹쳐 올라온다(390ms). 두 동작이 물려 있어 끊겨 보이지 않는다.
-     ⛔ 화면을 가로지르는 slide 가 아니다. 세로로 12~15px 만 움직인다. */
-  html.demo #ready.pv-leave{animation:idleOut 200ms var(--ease-in) both;}
-  html.demo #ready.pv-enter{animation:idleIn 390ms var(--ease-out) both;}
-  @keyframes idleOut{ to{opacity:0;transform:translateY(-12px);} }
-  @keyframes idleIn{ from{opacity:0;transform:translateY(15px);} to{opacity:1;transform:translateY(0);} }
+  /* ② 옛 CENTER 가 **완전히 물러난 뒤** ③ 새 CENTER 가 떠오른다.
+     ⚠️ 2026.08.30 — 어색함의 원인은 둘이었고, 둘 다 여기서 고쳤다.
+        ① 옛 것이 **45% 쯤 남아 있을 때** 내용을 갈아 끼웠다. 겹쳐 보이라고 한 것인데
+           실제로는 「흐려지다가 툭 바뀌는」 것이었다 → **다 사라진 뒤**에 갈아 끼운다.
+        ② 컨테이너가 **위로** 올라왔다. 왼쪽 선택 블록은 **아래로** 내려가는데 가운데가
+           위로 오면 두 움직임이 서로 싸운다 → 컨테이너는 **세로로 움직이지 않는다.**
+           세로 움직임은 아래 ④ 의 항목별 stagger(9px)가 맡는다.
+     ⛔ **진짜 두 겹으로 겹치게 하지 마라.** 민원마다 준비물이 2~4장이라 가운데 덩어리의
+        **높이가 다르고**, 가운데 정렬이라 두 겹의 제목·카드·단추가 **서로 어긋난 채 겹쳐**
+        이중 노출처럼 지저분해진다. 2026.08.30 에 복제본(`.pv-ghost`)으로 실제로 해 보고
+        갈무리로 확인한 뒤 되돌렸다. 높이를 고정하지 않는 한 겹침은 답이 아니다. */
+  html.demo #ready.pv-leave{animation:idleOut 160ms var(--ease-out) both;}
+  html.demo #ready.pv-enter{animation:idleIn 280ms var(--ease-out) both;}
+  @keyframes idleOut{ from{opacity:1;} to{opacity:0;} }
+  @keyframes idleIn{ from{opacity:0;} to{opacity:1;} }
 
   /* ④ CENTER 안이 한꺼번에 나타나지 않는다 — 제목 → 준비물 → 신청서 → 시작하기 순.
      ⚠️ 마지막 줄이 340+340=680ms 에 멎는다. 그 뒤로는 **다음 전환까지 정지**해
@@ -1190,7 +1198,12 @@ var FORM_CATALOG = [
     keywords:["증명서","가족관계","기본증명","혼인관계","발급"],
     aliases:["가족관계증명서","기본증명서","혼인관계증명서","입양관계증명서","친양자입양관계증명서"],
     desc:"가족관계·기본·혼인관계·입양·친양자 증명서 발급을 한 곳에서 신청.",
-    ready:[], scale:null,
+    /* ⚠️ 2026.08.30 담당자 지시로 들어온 두 줄. ⛔ 개별 대리신청 서류를 열거하지 마라.
+       ⛔ **`forms/cert.config.js` 의 `ready` 와 글자까지 같아야 한다**(Main 과 서식이 갈리면 안 된다). */
+    ready:[ { t:"신분증", s:"접수할 때 창구에서 확인합니다", g:"id-card" },
+            { t:"대리 신청 시 관련 서류", s:"대리 신청인 경우 위임 등 관련 서류가 필요할 수 있습니다",
+              opt:true, g:"document" } ],
+    scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
     preview:{ fields:["신청인 성명","주민등록번호","증명서 종류","통수","사용 목적"],
@@ -1201,7 +1214,15 @@ var FORM_CATALOG = [
     citizen:"부동산 거래 신고하기", formal:"부동산거래계약 신고서",
     keywords:["부동산","집","매매","거래","계약"], aliases:["부동산거래신고","실거래신고"],
     desc:"매도인·매수인, 거래대상과 실제 거래가격 작성 안내. 계약 체결일부터 30일 이내에 신고해야 합니다.",
-    ready:[], scale:null,
+    /* ⚠️ 2026.08.30 담당자 지시로 들어온 세 줄.
+       ⛔ 자금조달계획서·법인 관련 서류·토지거래허가 서류 같은 개별 예외서류를 보태지 마라 —
+          세 번째 줄이 그 모두를 덮는다.
+       ⛔ **`forms/realestate.config.js` 의 `ready` 와 글자까지 같아야 한다.** */
+    ready:[ { t:"부동산 거래계약서 사본", g:"document" },
+            { t:"신고인 신분증", s:"접수할 때 창구에서 확인합니다", g:"id-card" },
+            { t:"거래 유형에 따른 관련 서류", s:"거래 내용에 따라 추가 서류가 필요할 수 있습니다",
+              opt:true, g:"cert" } ],
+    scale:null,
     /* 미리보기용 항목. ⚠️ 실제 서식과 항목·배치가 다를 수 있다 —
        화면에도 그렇게 적어 두었다. 실제 서식 배경은 허브에 싣지 않는다. */
     preview:{ fields:["매도인","매수인","소재지","실제 거래가격","계약 체결일"],
@@ -1823,8 +1844,10 @@ function calmMotion(){
 function demoing(){ return document.documentElement.classList.contains("demo"); }
 
 /* ══ 한 걸음 — **LEFT 가 먼저 옮겨 가고 CENTER 가 뒤따른다** (Idle Motion v2)
-   ① LEFT 선택 이동(240ms) → ② 기존 CENTER 퇴장(200ms) →
-   ③ **110ms 에 겹쳐** 새 CENTER 등장(390ms) → ④ 내부 stagger → ⑤ CTA 한 번.
+   ① LEFT 선택 이동(240ms) → ② 옛 CENTER 복제본이 물러난다(220ms) →
+   ③ **90ms 에** 새 CENTER 등장(300ms) → ④ 내부 stagger → ⑤ CTA 한 번.
+   ⚠️ 2026.08.30 — ② 를 **복제본으로** 바꿨다. 종전에는 같은 요소를 흐리게 했다가 도중에
+      내용만 갈아 끼워, 겹치는 것이 아니라 「흐려지다가 툭 바뀌는」 것으로 보였다.
    ⛔ 사람이 누르는 `selectForm()` 과 갈라 둔다 — 그쪽은 모션 없이 즉시다.
    ⚠️ 실제로 바뀌는 값은 `selected` 하나이고, 그리는 함수도 종전과 **같은 것**을 쓴다.
       시연 전용 렌더러를 따로 두지 않는다 — 그래야 시연 화면이 실제 화면과 같다. */
@@ -1836,17 +1859,20 @@ function demoSelect(key){
   /* 줄여 달라고 한 사용자에게는 겹침 없이 바로 갈아 끼운다(여기까지 올 일은 없다) */
   if(calmMotion()){ renderReady(); demoShownKey=selected; return; }
 
+  /* ② 옛 화면이 물러난다(160ms).
+     ③ **다 사라진 뒤에** 갈아 끼운다(170ms) — 그래야 「툭 바뀌는」 순간이 눈에 걸리지 않는다.
+        ⛔ 이 값을 줄여 겹치게 만들지 마라. 종전 110ms 가 바로 그 어색함의 원인이었다. */
   box.classList.remove("pv-enter");
-  box.classList.add("pv-leave");        // ② 기존 CENTER 가 물러난다
+  box.classList.add("pv-leave");
   clearTimeout(demoSwap);
-  demoSwap=setTimeout(function(){       // ③ 다 사라지기를 **기다리지 않는다**
+  demoSwap=setTimeout(function(){
     demoSwap=null;
     renderReady();
     demoShownKey=selected;
     box.classList.remove("pv-leave");
-    void box.offsetWidth;               // ⚠️ 리플로우 — 없으면 등장이 다시 타지 않는다
+    void box.offsetWidth;                    // ⚠️ 리플로우 — 없으면 등장이 다시 타지 않는다
     box.classList.add("pv-enter");
-  }, 110);
+  }, 170);
 }
 
 function startDemo(){
