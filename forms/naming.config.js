@@ -17,24 +17,16 @@ var QUAL_OPTS=["본인","법정대리인","기타"];
 function afterNameKor(){ return ((state.aft_surKor||"")+(state.aft_givenKor||"")).trim(); }
 function beforeNameKor(){ return ((state.bef_surKor||"")+(state.bef_givenKor||"")).trim(); }
 
+/* ⛔ Review 는 **핵심 선택**만이다(2026.08.29 §2). 성명·주민등록번호·주소·전화·이메일·
+   자유입력은 가운데 PAPER 가 실시간으로 보여 주므로 여기서 되풀이하지 않는다. */
+/* ⚠️ 개명만 예외로 **이름 한 줄**을 남긴다 — 이 신고의 업무 결과가 곧 이름 변경이라
+   그것을 빼면 다시 확인할 것이 남지 않는다. 나머지 인적사항은 전부 PAPER 가 맡는다. */
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>개명자</h4>';
-  h+=sumRow("개명 전 이름", beforeNameKor()+(d.bef_surHan||d.bef_givenHan?" ("+((d.bef_surHan||"")+(d.bef_givenHan||""))+")":""));
-  h+=sumRow("개명 후 이름", afterNameKor()+(d.aft_surHan||d.aft_givenHan?" ("+((d.aft_surHan||"")+(d.aft_givenHan||""))+")":""));
-  h+=sumRow("본(한자)", d.bon);
-  h+=sumRow("주민등록번호", d.n_jumin?formatJumin(d.n_jumin):"");
-  h+=sumRow("등록기준지", d.n_regBase);
-  h+=sumRow("주소", d.n_addr);
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>개명허가</h4>';
-  h+=sumRow("허가일자", d.permDate);
-  h+=sumRow("법원명", d.court);
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>신고인</h4>';
-  h+=sumRow("성명", (d.r_name||"")+(d.r_qual?" · "+d.r_qual+(d.r_qual==="기타"&&d.r_qualEtc?"("+d.r_qualEtc+")":""):""));
-  h+=sumRow("전화", formatPhone(d.r_phone));
-  h+='</div>';
+  var bef=beforeNameKor(), aft=afterNameKor();
+  h+=sumRowIf("개명 전 → 후", (bef&&aft) ? bef+" → "+aft : "");
+  h+=sumRowIf("⑤ 신고인 자격", (d.r_qual||"")
+    +(d.r_qual==="기타" && d.r_qualEtc ? "("+d.r_qualEtc+")" : ""), 7);
   return h;
 }
 
@@ -61,6 +53,10 @@ var FORM={
     "필요 서류는 직원 확인을 따릅니다.",
     "여기서 접수되지는 않습니다."
   ],
+
+  /* 인쇄 준비 화면의 「인쇄한 뒤에 하실 일」 — 종전 완료 화면 문구 그대로. */
+  afterPrint:"인쇄한 뒤, 신고인이 서명 또는 날인을 직접 하여 민원실에 제출하세요. "
+    +"<b>법원 결정문 원본</b>을 함께 내셔야 하며, 그 밖의 첨부서류는 담당 직원이 안내합니다.",
 
   rerenderOnSet:["r_qual"],
 
@@ -197,7 +193,7 @@ var FORM={
     {n:4, short:"개명자 정보", title:"① 개명자 — 본·주민등록번호·주소",
       q:"개명자 본인의 나머지 정보를 입력하세요.",
       required:function(s){ var m=[];
-        if(!String(s.n_jumin||"").trim()) m.push("주민등록번호");
+        /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         if(!String(s.n_addr||"").trim()) m.push("주소");
         return m; },
       body:function(A){
@@ -242,7 +238,7 @@ var FORM={
       why:"개명자 본인이 신고하면 자격은 ‘본인’이고, 성명은 개명 후의 이름을 적습니다. 미성년자 등은 부모 같은 법정대리인이 신고합니다.",
       required:function(s){ var m=[];
         if(!String(s.r_name||"").trim()) m.push("신고인 성명");
-        if(!String(s.r_jumin||"").trim()) m.push("신고인 주민등록번호");
+        /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         if(!s.r_qual) m.push("신고인 자격");
         /* 화면에 나타났으면 필수 — 「기타」를 골랐을 때만 묻는다 */
         if(s.r_qual==="기타" && !String(s.r_qualEtc||"").trim()) m.push("자격(기타) 상세");
@@ -278,11 +274,9 @@ var FORM={
         return h;
       }},
 
-    {n:9, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:9, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤, 신고인이 서명 또는 날인을 직접 하여 민원실에 제출하세요. '
-          +'<b>법원 결정문 원본</b>을 함께 내셔야 하며, 그 밖의 첨부서류는 담당 직원이 안내합니다.</div>';
+        return buildSummary();
       }}
   ],
 

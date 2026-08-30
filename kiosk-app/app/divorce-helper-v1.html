@@ -645,7 +645,9 @@ html.big{
     mix-blend-mode:multiply;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
 
   /* 미리보기 모달 */
-  .modal-back{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:flex;flex-direction:column;padding:14px;}
+  /* ⚠️ 2026.08.29 — 미리보기가 **인쇄 준비 화면**이 되면서 총 장수·썸네일·안내가
+     이 판 위에 직접 얹힌다. 종전 .6 은 뒤 화면이 비쳐 글이 읽히지 않았다. */
+  .modal-back{position:fixed;inset:0;background:rgba(17,24,39,.94);z-index:50;display:flex;flex-direction:column;padding:14px;}
   .modal-box{display:flex;flex-direction:column;height:100%;max-width:100%;margin:0 auto;}
   .modal-top{display:flex;justify-content:space-between;align-items:center;color:#fff;gap:10px;padding:4px 2px 10px;}
   .modal-top b{font-size:18px;}
@@ -1567,12 +1569,56 @@ body.pv-open .modal-back{display:flex;}
 /* 첨부 페이지 — 내용이 없으면 화면·인쇄에서 사라진다 */
 .paper.extra:empty{display:none !important;}
 
+/* ══ 미리보기 = 인쇄 준비 화면 (2026.08.29 §2) ═══════════════════════════════
+   ⛔ 새 조형을 만들지 않았다 — 색·반경·글자는 전부 기존 토큰을 쓴다.
+   ⛔ 인쇄에는 나가지 않는다(`.modal-back` 을 인쇄 CSS 가 통째로 숨긴다). */
+.pv-head{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;color:#fff;padding:0 2px 10px;}
+.pv-count{font-size:19px;font-weight:800;}
+.pv-count b{color:#ffd88a;}
+.pv-head .print-tip{margin:0;padding:6px 10px;font-size:13.5px;background:rgba(255,255,255,.14);
+  border:0;border-radius:var(--r-sm);color:#fff;}
+.pv-head .print-tip b{color:#ffd88a;}
+.pv-thumbs{display:flex;gap:12px;flex-wrap:wrap;padding:0 2px 12px;}
+.pv-th{margin:0;width:104px;}
+/* 실제 인쇄 노드를 그대로 복제해 A4 비율 상자 안에서 축소한다(210mm → 104px) */
+.pv-th-box{width:104px;height:147px;overflow:hidden;background:#fff;border-radius:var(--r-sm);
+  border:1px solid rgba(255,255,255,.35);}
+.pv-th-inner{width:210mm;transform:scale(.1309);transform-origin:0 0;pointer-events:none;}
+.pv-th figcaption{margin-top:6px;font-size:12px;line-height:1.35;color:#fff;
+  display:flex;gap:5px;align-items:flex-start;word-break:keep-all;overflow-wrap:anywhere;}
+.pv-th-no{flex:0 0 auto;min-width:16px;height:16px;border-radius:50%;background:rgba(255,255,255,.25);
+  font-weight:800;font-size:11px;display:inline-flex;align-items:center;justify-content:center;}
+.pv-notes{display:grid;gap:8px;padding:0 2px 12px;}
+.pv-sec{background:rgba(255,255,255,.12);border-radius:var(--r-md);padding:10px 13px;color:#fff;
+  font-size:14px;line-height:1.55;word-break:keep-all;overflow-wrap:anywhere;}
+.pv-sec h4{margin:0 0 5px;font-size:13px;font-weight:800;color:#ffd88a;letter-spacing:.02em;}
+.pv-sec.ref{background:rgba(255,255,255,.07);}
+.pv-sec:empty,.pv-notes > div:empty{display:none;}
+html.big .pv-count{font-size:22px;}
+html.big .pv-sec{font-size:16px;}
+html.big .pv-th figcaption{font-size:13.5px;}
+
+/* 장수를 재는 자리 — 화면 밖에 **210mm 로 펴 놓고** 잰다.
+   ⚠️ 화면의 종이는 창에 맞춰 줄어 있다(1366px 창에서 720px). 그 좁은 폭에서는 글이
+      더 많이 접혀 **세로가 길어진다** — 그대로 세면 인쇄가 2장인데 「총 3장」이라고
+      말하게 된다(2026.08.30 부동산 별지 최대 상태에서 실제로 그랬다).
+   ⛔ `visibility:hidden` 이다. `display:none` 으로 바꾸지 마라 — 그러면 높이가 0 이라
+      **아무것도 재지 못한다.** */
+.pv-measure{position:fixed;left:-10000px;top:0;width:210mm;visibility:hidden;
+  pointer-events:none;z-index:-1;}
+.pv-measure .xpaper{padding:var(--xpad-print);margin-top:0;}   /* 인쇄와 같은 여백으로 */
+.pv-measure .xpaper::before{display:none;}
+@media print{ .pv-measure{display:none !important;} }
+
 /* ══ 별지(첨부 페이지)의 조판 — ⛔ `engine/base.html` 과 **글자까지 같아야 한다** ═══════
    ⚠️ 2026.08.29 — 부동산을 이 껍데기로 옮길 때 이 규칙이 **통째로 빠져 있었다.**
       화면은 멀쩡한데 **별지 2쪽만** 여백을 잃고 밀렸다(`verify-print` 가 194,677px 로 잡았다).
       옛 껍데기에만 있던 규칙이라, 별지를 쓰는 서식이 부동산 하나뿐이어서 드러나지 않았다.
-   ⛔ 값을 「더 나아 보이게」 고치지 마라 — 두 껍데기가 **같은 인쇄물**을 내야 한다. */
-.xpaper{background:#fff;padding:14mm 12mm;}
+   ⛔ 값을 「더 나아 보이게」 고치지 마라 — 두 껍데기가 **같은 인쇄물**을 내야 한다.
+   ⚠️ **인쇄 여백은 `--xpad-print` 한 곳에만 적는다.** 미리보기가 장수를 재는 자리
+      (`.pv-measure`)가 이 값을 그대로 써야 「총 N장」이 실제 인쇄와 맞는다 —
+      두 벌로 적어 두면 조용히 갈라지고, **화면만 3장이라고 말하는** 일이 생긴다. */
+.xpaper{background:#fff;padding:14mm 12mm; --xpad-print:12mm 10mm;}
 @media screen{
   .form-col .xpaper{margin-top:36px;position:relative;}
   .form-col .xpaper::before{content:"";position:absolute;left:0;right:0;top:-19px;
@@ -1580,7 +1626,7 @@ body.pv-open .modal-back{display:flex;}
 }
 @media print{
   /* 첨부 페이지는 서식 다음 장부터 인쇄 */
-  .xpaper{page-break-before:always;break-before:page;padding:12mm 10mm;}
+  .xpaper{page-break-before:always;break-before:page;padding:var(--xpad-print);}
   .form-col .xpaper{margin-top:0;}
   .form-col .xpaper::before{display:none;}
 }
@@ -1607,8 +1653,10 @@ body.pv-open .modal-back{display:flex;}
 /* 요약 — 엔진은 `.val`, 여권은 `.v` */
 .sum-sec{margin-bottom:18px;}
 .sum-sec h4{margin:0 0 8px;font-size:15px;font-weight:800;color:var(--blue-dark);}
-.sum-row{display:grid;grid-template-columns:150px minmax(0,1fr);gap:14px;align-items:baseline;
-  padding:11px 2px;border-bottom:1px solid var(--line-warm);font-size:var(--fs-sum);}
+/* ⛔ `.sum-row` 의 **골격을 여기서 다시 정하지 마라.** 위쪽(여권에서 뜬 Product UI 값)에
+   `display:grid; 150px minmax(0,1fr) auto` 가 이미 있다. 여기서 2열로 덮으면
+   세 번째 칸(「수정」)이 갈 곳을 잃고 **다음 줄로 떨어진다** — 2026.08.29 에 실제로 그랬다.
+   여기에는 엔진에만 있는 `.val` 색만 둔다. */
 .sum-row .val{font-weight:700;min-width:0;overflow-wrap:anywhere;}
 .sum-row .val.empty{color:var(--m-ink-faint);font-weight:400;}
 
@@ -1737,8 +1785,17 @@ html.big .skip-link{font-size:14.5px;}
 <div class="modal-back" id="modalBack" hidden>
   <div class="modal-box">
     <div class="modal-top"><b id="modalTitle"></b>
-      <span><button class="btn primary" id="btnPrintModal">인쇄</button>
+      <span><button class="btn primary" id="btnPrintModal"><span>인쇄</span></button>
       <button class="btn ghost" id="btnCloseModal">닫기</button></span></div>
+    <!-- ⚠️ 인쇄 준비 화면(2026.08.29 §2) — 총 장수 → 썸네일 → 출력 후 행동 → 참고.
+         ⛔ 여기 문구를 새로 짓지 마라. `FORM.afterPrint`·`FORM.refInfo` 는 완료 화면에
+            **이미 있던 확정 문구**를 옮겨 온 것이고, 없는 서식은 그 구역이 비어 사라진다. -->
+    <div class="pv-head">
+      <div class="pv-count" id="pvCount"></div>
+      <div class="print-tip">인쇄 창에서 <b>여백 «없음»</b> · <b>배율 «100% (실제 크기)»</b>로 맞춰 주세요.</div>
+    </div>
+    <div class="pv-thumbs" id="pvThumbs"></div>
+    <div class="pv-notes"><div id="pvAfter"></div><div id="pvRef"></div></div>
     <div class="modal-scroll"><div class="mstack">
       <div class="paper"><div class="stage"><img class="bg" alt="서식"><div class="ovl" id="ovlModal"></div></div></div>
       <div class="paper extra"></div>
@@ -1821,32 +1878,40 @@ function personKeys(p){
 }
 function childKeys(){
   var a=[];
+  /* ⛔ `c*_effDate` 는 더 이상 **묻지도 담지도 않는다**(2026.08.30 담당자 2차).
+     효력발생일은 이혼 종류에서 그대로 나온다 — `effDateOf()` 참조. */
   for(var i=1;i<=4;i++) a=a.concat(["c"+i+"_name","c"+i+"_jumin","c"+i+"_cust",
-                                    "c"+i+"_effDate","c"+i+"_cause"]);
+                                    "c"+i+"_cause"]);
   return a;
+}
+
+/* ⑤ 친권자 지정의 **효력발생일** — 담당자 2차 확인(2026.08.30)
+     협의이혼   → 협의이혼 **신고일**(= 이 신고서를 내는 날)
+     재판상 이혼 → **재판확정일**(④ 에서 이미 적은 그 날짜)
+   ⛔ **다시 묻지 않는다.** 둘 다 이미 아는 값이라, 같은 날짜를 두 번 적게 하면
+      서로 어긋난 날짜가 한 장에 찍힐 수 있다(종전에는 자녀마다 따로 물었다).
+   ⚠️ 협의이혼의 신고일은 **오늘**이다 — 이 도우미는 창구에 낼 그 날 인쇄한다.
+      ⛔ 서식의 「( 년 월 일 )」 신고일 칸은 이 도우미가 찍지 않는다(종전 그대로). */
+function effDateOf(s){
+  if(s.divType==="재판상 이혼") return String(s.courtDate||"").trim();
+  if(s.divType!=="협의이혼") return "";          // 아직 고르지 않았다
+  var t=APP_TODAY||new Date(), p=function(n){ return (n<10?"0":"")+n; };
+  return t.getFullYear()+"."+p(t.getMonth()+1)+"."+p(t.getDate());
 }
 function fullName(p){ return ((state[p+"_surKor"]||"")+(state[p+"_givenKor"]||"")).trim(); }
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>이혼당사자</h4>';
-  h+=sumRow("남편(부)", fullName("h")+(d.h_jumin?" · "+formatJumin(d.h_jumin):""));
-  h+=sumRow("아내(처)", fullName("w")+(d.w_jumin?" · "+formatJumin(d.w_jumin):""));
-  h+=sumRow("남편 등록기준지", d.h_regBase);
-  h+=sumRow("아내 등록기준지", d.w_regBase);
-  h+='</div>';
-  var n=childN(d), ch='';
-  if(n){
-    for(var i=1;i<=n;i++){ var c="c"+i;
-      ch+=sumRow("자녀 "+i, (d[c+"_name"]||"")
-        +(d[c+"_cust"]?" · 친권자 "+d[c+"_cust"]:"")
-        +(d[c+"_cause"]?" ("+d[c+"_cause"]+")":"")); }
-    h+='<div class="sum-sec"><h4>친권자 지정</h4>'+ch+'</div>';
+  /* ⚠️ 「이혼 종류」·「미성년 자녀 수」에만 [수정]을 단다 — 둘 다 **뒤 화면과 인쇄 칸을
+     바꾸는 갈래**다. 나머지에 기계적으로 달면 Review 가 다시 길어진다. */
+  h+=sumRowIf("이혼 종류", d.divType, 6);
+  h+=sumRowIf("미성년 자녀 수", d.childCnt, 7);
+  var n=childN(d);
+  for(var i=1;i<=n;i++){ var c="c"+i;
+    h+=sumRowIf("자녀 "+i+" 친권자", (d[c+"_cust"]||"")
+      +(d[c+"_cause"]?" ("+d[c+"_cause"]+")":""));
   }
-  h+='<div class="sum-sec"><h4>신고 항목</h4>';
-  h+=sumRow("이혼 종류", d.divType);
-  if(isJudicial(d)) h+=sumRow("재판확정", [d.courtDate, d.courtName?d.courtName+" 법원":""].filter(Boolean).join(" · "));
-  h+=sumRow("출석", [d.attend_h?"남편":"", d.attend_w?"아내":""].filter(Boolean).join(", "));
-  return h+'</div>';
+  h+=sumRowIf("⑥ 출석", [d.attend_h?"남편(부)":"", d.attend_w?"아내(처)":""].filter(Boolean).join(" · "));
+  return h;
 }
 
 var FORM={
@@ -1887,6 +1952,21 @@ var FORM={
       if(b){ s[p+"_birth"]=b; var el=document.getElementById("in_"+p+"_birth"); if(el) el.value=b; }
     }
   },
+
+  /* 인쇄 준비 화면의 「인쇄한 뒤에 하실 일」 — 종전 완료 화면 문구 그대로.
+     ⛔ 서류명을 지어내지 마라 — 담당자 원문이다. */
+  afterPrint:"인쇄한 뒤, 서명 또는 날인을 직접 하고 민원실에 제출하세요. "
+    +"<b>협의서 원본 또는 법원 판결문 원본</b>을 함께 내셔야 하며, "
+    +"그 밖의 첨부서류는 담당 직원이 안내합니다.",
+
+  /* 제목 아래 「( 년 월 일 )」 = **신고일**. 창구에 내는 그 날이라 오늘 날짜를 찍는다.
+     ⚠️ 2026.08.30 담당자 요청 — 종전에는 이혼·혼인만 이 칸을 **비워 둔 채** 인쇄했다.
+        협의이혼은 이 날짜가 곧 ⑤ 친권자 지정의 효력발생일이라(`effDateOf`), 한쪽만 찍히면
+        같은 날을 뜻하는 두 칸이 종이 위에서 어긋나 보였다. 이제 8종이 모두 신고일을 찍는다.
+     ⚠️ 좌표는 `이혼신고서(20260828).pdf` 에서 **잉크를 실측**했다 —
+        「(」101.72 · 「년」143.50 · 「월」174.69 · 「일」206.38, 글자 세로 중앙 89.47.
+        값은 그 사이 빈 곳의 한가운데에 둔다(`.ov` 는 좌표를 **중심**으로 잡는다). */
+  today:{ y:89.5, yx:122.6, mx:159.1, dx:190.5 },
 
   stateKeys:[].concat(personKeys("h"),personKeys("w"),childKeys(),
     ["divType","childCnt","etc","courtDate","courtName",
@@ -2035,12 +2115,25 @@ var FORM={
       var c="c"+i, on=i<=n;
       v[c+"_name"]=on?(d[c+"_name"]||""):"";
       v[c+"_jumin1"]=on?j1(d[c+"_jumin"]):""; v[c+"_jumin2"]=on?j2(d[c+"_jumin"]):"";
-      var ed=ymd(on?d[c+"_effDate"]:"");
+      /* 효력발생일은 자녀마다 묻지 않는다 — 이혼 종류 하나에서 나온다(`effDateOf`) */
+      var ed=ymd(on?effDateOf(d):"");
       v[c+"_effY"]=ed[0]; v[c+"_effM"]=ed[1]; v[c+"_effD"]=ed[2];
     }
     var cd=ymd(d.cohabitDate); v.cohabitY=cd[0]; v.cohabitM=cd[1]; v.cohabitD=cd[2];
     var dv=ymd(d.divorceDate); v.divorceY=dv[0]; v.divorceM=dv[1]; v.divorceD=dv[2];
     return v;
+  },
+
+  /* ④ 법원명 칸에 **인쇄돼 있는 「법원」을 가린다** — 담당자 요청(2026.08.30).
+     ⚠️ 서식은 「법원명 [____] 법원」이라 **앞부분만** 적는 것을 전제한다. 그런데 실제 작성
+        형태는 「수원가정법원 안양지원」처럼 **전체 법원명**이라, 그대로 두면 인쇄물이
+        「… 안양지원 법원」이 된다. 그래서 그 두 글자를 덮는다.
+     ⛔ **적은 값이 있을 때만** 덮는다. 비어 있는 협의이혼에서는 원본을 건드리지 않는다.
+     ⚠️ 좌표는 `이혼신고서(20260828).pdf` 에서 **잉크를 실측**했다 —
+        「법원」 글자 x 485.12~501.31 · y 376.44~384.81, 셀 안쪽은 x 402~551 · y 373~391.
+        아래 상자는 그 사이에 있다. ⛔ 넓히지 마라 — 격자선이나 옆 글자가 지워진다. */
+  covers:function(v){
+    return v.courtName ? [[483.6, 374.6, 502.9, 386.6]] : [];
   },
 
   /* 인쇄 후 직접 서명·날인해야 하는 칸 — 내용이 있을 때만 형광펜을 친다 */
@@ -2114,8 +2207,13 @@ var FORM={
         if(isJudicial(A.state)){
           h+='<div class="note-box"><b>재판상 이혼</b>(판결·조정 등)은 재판이 확정된 날과 법원 이름을 적습니다.</div>';
           h+=A.inputHtml({k:"courtDate", label:"④ 재판확정일자", type:"date", req:true, ph:"2026.05.10"});
-          h+=A.inputHtml({k:"courtName", label:"법원명", req:true, ph:"수원가정",
-            help:"서식에 ‘법원’이 이미 인쇄돼 있으니 앞부분만 적습니다. 예: 수원가정, 서울가정"});
+          /* ⚠️ 2026.08.30 담당자 2차 — **지원까지 적을 수 있어야 한다.** 담당자가 든 실제
+             작성 형태가 「수원가정법원 안양지원」이다. 종전 안내는 「앞부분만 적습니다 ·
+             예: 수원가정」이라 지원을 적지 못하게 막고 있었다.
+             ⛔ 「법원명 정도까지만」으로 되돌리지 마라. ⛔ 지원 입력칸을 따로 만들지도 마라 —
+                이 한 칸에 전체 법원명을 적는다(길이 제한 없음). */
+          h+=A.inputHtml({k:"courtName", label:"법원명", req:true, ph:"수원가정법원 안양지원",
+            help:"지원까지 있으면 함께 적습니다. 예: 수원가정법원 안양지원"});
         }
         h+=A.inputHtml({k:"etc", label:"③ 기타사항", help:"특별히 밝힐 내용이 있을 때만 적습니다."});
         return h;
@@ -2130,9 +2228,9 @@ var FORM={
         var n=childN(s);
         for(var i=1;i<=n;i++){ var c="c"+i;
           if(!String(s[c+"_name"]||"").trim()) m.push("자녀 "+i+" 성명");
-          if(!String(s[c+"_jumin"]||"").trim()) m.push("자녀 "+i+" 주민등록번호");
+          /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
           if(!s[c+"_cust"]) m.push("자녀 "+i+" 친권자");
-          if(!String(s[c+"_effDate"]||"").trim()) m.push("자녀 "+i+" 효력 발생일");
+          /* ⛔ 효력발생일은 여기서 묻지 않으므로 필수 목록에도 없다(`effDateOf`) */
           if(!s[c+"_cause"]) m.push("자녀 "+i+" 원인");
         }
         return m;
@@ -2150,8 +2248,15 @@ var FORM={
           h+=A.inputHtml({k:c+"_jumin", label:"자녀 주민등록번호", type:"jumin", req:true, half:true});
           h+='<div class="field"><label class="field-label">친권자 <span class="fb fb-req">필수</span></label>'
             +A.choiceHtml(c+"_cust",CUST_OPTS,"누가 친권을 갖는지 고르세요.")+'</div>';
-          h+=A.inputHtml({k:c+"_effDate", label:"효력 발생일", type:"date", req:true, ph:"2026.05.10",
-            help:"협의가 성립한 날 또는 재판이 확정된 날."});
+          /* 효력발생일 — **묻지 않고 알려만 준다**(2026.08.30 담당자 2차).
+             ⛔ 다시 입력칸을 만들지 마라. 같은 날짜를 두 번 적게 하면 한 장에 서로 다른
+                날짜가 찍힐 수 있다. 값은 `effDateOf()` 하나에서 나온다. */
+          h+='<div class="field"><label class="field-label">효력 발생일</label>'
+            + '<div class="q-help">'+(A.state.divType==="재판상 이혼"
+                ? "재판상 이혼은 <b>재판확정일</b>이 들어갑니다 — ④ 에 적으신 날짜를 그대로 씁니다."
+                : "협의이혼은 <b>협의이혼 신고일</b>이 들어갑니다 — 이 신고서를 내시는 날입니다.")
+            + '</div>'
+            + '<div class="q-help"><b>'+A.esc(effDateOf(A.state)||"이혼 종류를 먼저 고르세요")+'</b></div></div>';
           h+='<div class="field"><label class="field-label">원인 <span class="fb fb-req">필수</span></label>'
             +A.choiceHtml(c+"_cause",CAUSE_OPTS,"협의로 정했으면 ‘협의’, 재판으로 정했으면 ‘재판’.")+'</div>';
           h+='</div>';
@@ -2213,13 +2318,9 @@ var FORM={
         return h;
       }},
 
-    {n:10, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:10, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        /* ⛔ 서류명을 지어내지 마라 — 준비물은 담당자 원문 그대로 안내 기둥에 있다. */
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤, 서명 또는 날인을 직접 하고 민원실에 제출하세요. '
-          +'<b>협의서 원본 또는 법원 판결문 원본</b>을 함께 내셔야 하며, '
-          +'그 밖의 첨부서류는 담당 직원이 안내합니다.</div>';
+        return buildSummary();
       }}
   ],
 
@@ -2240,18 +2341,19 @@ var FORM={
       w_edu:"대학(교)", w_job:"전문직",
       divType:"협의이혼", courtDate:"", courtName:"",
       childCnt:"2명", childUnder19:"2",
-      c1_name:"김하나", c1_jumin:"1503154000000", c1_cust:"모", c1_effDate:"2026.05.10", c1_cause:"협의",
-      c2_name:"김두리", c2_jumin:"1809204000000", c2_cust:"모", c2_effDate:"2026.05.10", c2_cause:"협의",
+      c1_name:"김하나", c1_jumin:"1503154000000", c1_cust:"모", c1_cause:"협의",
+      c2_name:"김두리", c2_jumin:"1809204000000", c2_cust:"모", c2_cause:"협의",
       attend_h:true, attend_w:true,
       cohabitDate:"2015.05.01", divorceDate:"2026.03.01"
     });
     if(kind==="judicial"){
       /* 재판상 이혼 — ④ 재판확정일자·법원명이 찍히고, 친권자 원인은 「재판」, 자녀 1명 */
       state.divType="재판상 이혼";
-      state.courtDate="2026.05.10"; state.courtName="수원가정";   // 서식에 「법원」이 인쇄돼 있다
+      /* ⚠️ 담당자가 든 실제 작성 형태(2026.08.30 2차) — 지원까지 적는다 */
+      state.courtDate="2026.05.10"; state.courtName="수원가정법원 안양지원";
       state.childCnt="1명"; state.childUnder19="1";
       state.c1_cust="모"; state.c1_cause="재판";
-      state.c2_name=""; state.c2_jumin=""; state.c2_cust=""; state.c2_cause=""; state.c2_effDate="";
+      state.c2_name=""; state.c2_jumin=""; state.c2_cust=""; state.c2_cause="";
     }
   }
 };
@@ -2262,7 +2364,7 @@ function reqPerson(s, p, who){
   if(!String(s[p+"_surKor"]||"").trim()) m.push(who+" 성(한글)");
   if(!String(s[p+"_givenKor"]||"").trim()) m.push(who+" 이름(한글)");
   if(!String(s[p+"_phone"]||"").trim()) m.push(who+" 전화번호");
-  if(!String(s[p+"_jumin"]||"").trim()) m.push(who+" 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   if(!String(s[p+"_birth"]||"").trim()) m.push(who+" 출생연월일");
   if(!String(s[p+"_addr"]||"").trim()) m.push(who+" 주소");
   return m;
@@ -2270,9 +2372,9 @@ function reqPerson(s, p, who){
 function reqParent(s, p, who){
   var m=[];
   if(!String(s[p+"_fName"]||"").trim()) m.push(who+" 아버지 성명");
-  if(!String(s[p+"_fJumin"]||"").trim()) m.push(who+" 아버지 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   if(!String(s[p+"_mName"]||"").trim()) m.push(who+" 어머니 성명");
-  if(!String(s[p+"_mJumin"]||"").trim()) m.push(who+" 어머니 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   return m;
 }
 
@@ -2384,6 +2486,17 @@ function renderForm(){
   var X=function(x){return (x/PW*100).toFixed(2);}, Y=function(y){return (y/PH*100).toFixed(2);};
   var fs=function(pt){return (pt/PW*100).toFixed(2);};   // 포인트 → cqw
 
+  /* 원본 서식에 **인쇄돼 있는 글자를 흰색으로 덮는다** — config 가 필요할 때만 돌려준다.
+     ⛔ 함부로 쓰지 마라. 관공서 서식의 인쇄물을 가리는 일이라 **담당자 요청이 있을 때만** 쓴다.
+     ⛔ 좌표는 원본 PDF 에서 **잉크를 실측**해서 넣는다 — 눈대중으로 덮으면 옆 글자·격자선까지 지운다.
+     ⚠️ 맨 먼저 그린다. 단계 강조·형광펜·값이 모두 이 위에 얹혀야 한다.
+        (여권은 손작성본이라 같은 `.cover` 를 제 코드에서 직접 쓴다 — 껍데기 CSS 는 공용이다.) */
+  var CV=(FORM.covers?FORM.covers(v,state):[])||[];
+  CV.forEach(function(b){
+    h+='<span class="cover" style="left:'+X(b[0])+'%;top:'+Y(b[1])+'%;width:'+
+       ((b[2]-b[0])/PW*100).toFixed(2)+'%;height:'+((b[3]-b[1])/PH*100).toFixed(2)+'%;"></span>';
+  });
+
   // 현재 단계 강조(맨 밑에 깔림)
   h+=stepHighlights(X,Y);
 
@@ -2481,8 +2594,22 @@ function num(i){ return "①②③④⑤⑥⑦⑧⑨⑩".charAt(i); }
    ⚠️ 아무 칸에나 붙이지 마라. 붙는 순간 「비워도 되는 칸」이 된다. */
 var OPT_HINT="모를 경우 비워두세요. 접수 시 알려드리겠습니다.";
 
+/* ══ 주민등록번호는 **언제나 선택**이다 (2026.08.30 담당자) ═══════════════════════
+   여기는 **공용 키오스크**다. 지나가는 사람이 보는 화면에 주민등록번호를 적기 꺼려지는
+   것은 당연하고, 그 사람에게 길이 없으면 도우미를 통째로 포기하게 된다.
+   그래서 여권이 하던 것과 같은 선택권을 7종에도 준다 — **비워 두면 그 칸이 빈 채로
+   인쇄되고, 종이에 직접 적으면 된다.**
+   ⛔ 서식마다 다른 말을 짓지 마라. 문구는 여기 하나뿐이다.
+   ⛔ 대신할 새 입력항목(예: 「생년월일만 적기」)을 만들지 마라 — 그런 요청이 아니다. */
+var JUMIN_HINT="공용 화면에 적기 불편하시면 비워 두세요. 그 칸은 빈 채로 인쇄되고, 인쇄한 뒤 직접 적으셔도 됩니다.";
+
 function inputHtml(f){
-  var v=state[f.k]||"", req=f.req?'<span class="fb fb-req">필수</span>':'<span class="fb fb-opt">선택</span>';
+  /* ⛔ 주민등록번호는 config 가 `req:true` 라 적어도 **선택**으로 낸다.
+     한 곳에서 막아 두면 서식이 서른 몇 군데에서 제각각 되돌아가는 일이 없다.
+     ⚠️ 이것은 **표시**만 바꾼다. 진행을 막는 것은 각 단계의 `required()` 이므로
+        그쪽에서도 주민등록번호를 빼야 실제로 선택이 된다(7종 전부 그렇게 했다). */
+  var isReq = f.req && f.type!=="jumin";
+  var v=state[f.k]||"", req=isReq?'<span class="fb fb-req">필수</span>':'<span class="fb fb-opt">선택</span>';
   // 재렌더(단계 이동·조건부 갱신) 때도 입력 중과 같은 형식으로 보이게 한다
   if(f.type==="money") v=formatMoney(v);
   else if(f.type==="jumin") v=formatJumin(v);
@@ -2491,6 +2618,7 @@ function inputHtml(f){
   var h='<div class="'+cls+'"><label class="field-label" for="in_'+f.k+'">'+esc(f.label)+req+'</label>';
   if(f.help) h+='<div class="q-help">'+esc(f.help)+'</div>';
   if(f.optHint) h+='<div class="q-help opt-hint">'+esc(OPT_HINT)+'</div>';
+  if(f.type==="jumin") h+='<div class="q-help opt-hint">'+esc(JUMIN_HINT)+'</div>';
   h+='<input class="text-input" id="in_'+f.k+'" data-f="'+f.k+'" data-t="'+(f.type||"text")+'" '
     +'value="'+esc(v)+'" '
     +(f.type==="jumin"||f.type==="phone"||f.type==="money"?'inputmode="numeric" ':'')+'autocomplete="off"></div>';
@@ -2511,20 +2639,37 @@ function toggleHtml(field, label){
   var on=state[field]?" sel":"";
   return '<button type="button" class="opt'+on+'" data-toggle="'+field+'">'+(state[field]?"☑ ":"☐ ")+esc(label)+'</button>';
 }
-function sumRow(k,val){
+function sumRow(k,val,step){
   var empty=!val;
+  /* `step` 을 주면 그 단계로 되돌아가는 「수정」이 붙는다(여권과 같은 문법).
+     ⛔ 모든 행에 기계적으로 달지 마라 — Review 가 다시 길어지면 뜻이 없다.
+        되돌아갈 값이 실제로 있는 선택에만 붙인다. */
+  var edit = (step && !empty)
+    ? '<button type="button" class="sum-edit" data-goto="'+step+'">수정</button>' : '';
   return '<div class="sum-row"><span class="k">'+esc(k)+'</span>'
-    +'<span class="val'+(empty?" empty":"")+'">'+(empty?"(비어 있음)":esc(val))+'</span></div>';
+    +'<span class="val'+(empty?" empty":"")+'">'+(empty?"(비어 있음)":esc(val))+'</span>'+edit+'</div>';
+}
+/* ══ Review 전용 — 값이 없거나 해당하지 않으면 **그 줄을 내지 않는다** (2026.08.29 §2 정리)
+   ⛔ Review 는 전체 입력값 요약이 아니다. 시민이 내린 **핵심 선택**만 다시 보여 준다.
+      주관식 개인정보(성명·주민등록번호·주소·전화·이메일·자유입력)는 가운데 PAPER 가
+      실시간으로 보여 주므로 **여기서 되풀이하지 않는다.** */
+function sumRowIf(k,val,step){
+  return (val==null || String(val).trim()==="") ? "" : sumRow(k,String(val).trim(),step);
 }
 
 // 서식 config의 단계 body(API)에 넘길 헬퍼 묶음
 var API={ get state(){return state;}, esc:esc, inputHtml:inputHtml, choiceHtml:choiceHtml,
-  toggleHtml:toggleHtml, sumRow:sumRow, num:num, formatJumin:formatJumin, formatPhone:formatPhone,
-  formatMoney:formatMoney, digits:digits };
+  toggleHtml:toggleHtml, sumRow:sumRow, sumRowIf:sumRowIf, num:num,
+  formatJumin:formatJumin, formatPhone:formatPhone, formatMoney:formatMoney, digits:digits };
 
 function renderStepBody(step){
   var def=FORM.STEPS[step-1], h='';
   h+='<div class="coach-q">'+esc(def.q)+'</div>';
+  /* ⚠️ Review(마지막 확인)에는 **어디를 보면 전체가 있는지** 한 줄로 알려 준다.
+     ⛔ 서식마다 다른 말을 짓지 마라 — 여권과 같은 뜻의 한 문장이다. */
+  if(def.kind==="summary")
+    h+='<div class="why-box"><span class="ic">💡</span><span>적으신 값 전체는 <b>옆의 신청서</b>에 '
+      +'그대로 보입니다. 여기서는 <b>고르신 것</b>만 확인해 주세요.</span></div>';
   if(def.why) h+='<div class="why-box"><span class="ic">💡</span><span>'+esc(def.why)+'</span></div>';
   if(def.body) h+=def.body(API);
   return h;
@@ -2784,8 +2929,112 @@ function onStepperKey(e){
   e.preventDefault(); gotoStep(+t.getAttribute("data-goto"));
 }
 
-/* 미리보기 모달 */
-function openPreview(){ renderForm(); document.body.classList.add("pv-open"); }
+/* ══ 미리보기 = **인쇄 준비 화면** (2026.08.29 §2 정리) ═════════════════════════
+   총 N장 → 축소 썸네일 → 출력물 이름 → 출력 후 행동 → 참고정보 → [N장 인쇄하기].
+   ⛔ 새 업무안내 문구를 만들지 않는다. 완료 화면에 **이미 있던 확정 문구**만 옮겨 왔다
+      (`FORM.afterPrint`). 없는 서식은 그 구역을 아예 내지 않는다.
+   ⛔ 미리보기 전용 렌더러를 만들지 않는다. 아래 썸네일은 **실제 인쇄에 나가는 그 DOM** 이다. */
+
+/* 인쇄에 나가는 쪽 목록. `@page{margin:0}` 이라 한 쪽의 세로/가로 비율은 A4 그대로다.
+   ⛔ 서식별 장수를 적어 두지 마라 — 별지는 내용이 늘면 두 장이 된다. 여기서 **재서** 센다. */
+var A4_RATIO = 297/210;
+function printPageNodes(){
+  var root=document.querySelector(".form-col"); if(!root) return [];
+  var out=[];
+  var main=root.querySelector(".paper:not(.extra)");
+  if(main) out.push({node:main, label:(FORM.formName||"신청서")});
+  root.querySelectorAll(".paper.extra .xpaper").forEach(function(x){
+    var h2=x.querySelector("h2");
+    out.push({node:x, label:(h2?h2.textContent.trim():"별지")});
+  });
+  return out;
+}
+/* 한 노드가 실제로 몇 장을 차지하는가.
+   ⛔ **화면의 그 노드를 그대로 재지 마라.** 화면의 종이는 창에 맞춰 줄어 있고(1366px
+      창에서 720px), 별지는 화면 여백(14mm)과 인쇄 여백(12mm)이 다르다. 좁은 폭에서는
+      글이 더 접혀 세로가 길어지므로 **인쇄는 2장인데 「총 3장」이라고 말하게 된다**
+      (2026.08.30 부동산 별지 최대 상태에서 실측: 화면 1.134쪽 → 인쇄 1쪽).
+   ✅ 그래서 화면 밖 `.pv-measure`(폭 210mm · 인쇄 여백)에 **복제해 펴 놓고** 잰다.
+   ⚠️ 0.02 는 반올림 여유다 — A4 배경 이미지(1191×1684)는 비율이 1.41393 이라
+      그대로 나누면 0.9998 이 나온다. 여유가 없으면 1장이 2장으로 세어진다. */
+var _pvRule=null;
+function measureBox(){
+  if(!_pvRule || !_pvRule.isConnected){
+    _pvRule=document.createElement("div");
+    _pvRule.className="pv-measure";
+    document.body.appendChild(_pvRule);
+  }
+  return _pvRule;
+}
+function pagesOf(node){
+  var box=measureBox(), c=node.cloneNode(true);
+  c.style.width="210mm"; c.style.margin="0"; c.style.height="auto"; c.style.maxHeight="none";
+  box.innerHTML=""; box.appendChild(c);
+  var w=c.clientWidth, h=c.scrollHeight;
+  box.innerHTML="";
+  if(!w || !h) return 1;
+  return Math.max(1, Math.ceil((h/w)/A4_RATIO - 0.02));
+}
+function previewPages(){
+  return printPageNodes().map(function(p){
+    return { label:p.label, node:p.node, pages:pagesOf(p.node) };
+  });
+}
+function renderPreview(){
+  var list=previewPages(), total=0;
+  list.forEach(function(p){ total+=p.pages; });
+
+  var cnt=document.getElementById("pvCount");
+  if(cnt) cnt.innerHTML='총 <b>'+total+'장</b>이 인쇄됩니다';
+
+  /* 썸네일 — 인쇄에 나가는 노드를 그대로 복제해 줄여 보여 준다.
+     ⚠️ 「읽는 것」이 아니라 **무엇이 몇 장 나오는지 알아보는 것**이 목적이다. */
+  var th=document.getElementById("pvThumbs");
+  if(th){
+    var h='', n=0;
+    list.forEach(function(p){
+      for(var i=0;i<p.pages;i++){
+        n++;
+        var cap=esc(p.label)+(p.pages>1?" ("+(i+1)+"/"+p.pages+")":"");
+        h+='<figure class="pv-th"><div class="pv-th-box" data-i="'+n+'"></div>'
+          +'<figcaption><span class="pv-th-no">'+n+'</span>'+cap+'</figcaption></figure>';
+      }
+    });
+    th.innerHTML=h;
+    /* 복제는 innerHTML 을 넣은 **뒤에** 붙인다(위 문자열에 노드를 넣을 수 없다) */
+    var boxes=th.querySelectorAll(".pv-th-box"), bi=0;
+    list.forEach(function(p){
+      for(var i=0;i<p.pages;i++){
+        var box=boxes[bi++]; if(!box) continue;
+        var c=p.node.cloneNode(true);
+        c.style.width="210mm"; c.style.margin="0"; c.style.boxShadow="none";
+        /* 여러 장짜리는 그 장에 해당하는 부분만 보이게 위로 민다 */
+        if(p.pages>1) c.style.marginTop = "-"+(i*297)+"mm";
+        var inner=document.createElement("div");
+        inner.className="pv-th-inner"; inner.appendChild(c);
+        box.appendChild(inner);
+      }
+    });
+  }
+
+  var after=document.getElementById("pvAfter");
+  if(after){
+    var txt=(typeof FORM.afterPrint==="function") ? FORM.afterPrint(state) : (FORM.afterPrint||"");
+    after.innerHTML = txt ? '<div class="pv-sec"><h4>인쇄한 뒤에 하실 일</h4><div>'+txt+'</div></div>' : "";
+  }
+  var ref=document.getElementById("pvRef");
+  if(ref){
+    var rt=(typeof FORM.refInfo==="function") ? FORM.refInfo(state) : (FORM.refInfo||"");
+    ref.innerHTML = rt ? '<div class="pv-sec ref"><h4>참고</h4><div>'+rt+'</div></div>' : "";
+  }
+  var bp=document.getElementById("btnPrintModal");
+  if(bp){ var sp=bp.querySelector("span"); if(sp) sp.textContent=total+"장 인쇄하기"; else bp.textContent=total+"장 인쇄하기"; }
+}
+function openPreview(){
+  renderForm();
+  document.body.classList.add("pv-open");
+  renderPreview();
+}
 function closePreview(){ document.body.classList.remove("pv-open"); }
 
 /* 확인 창 — 네이티브 confirm() 을 쓰지 않는다.

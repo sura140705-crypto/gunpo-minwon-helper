@@ -106,6 +106,17 @@ function renderForm(){
   var X=function(x){return (x/PW*100).toFixed(2);}, Y=function(y){return (y/PH*100).toFixed(2);};
   var fs=function(pt){return (pt/PW*100).toFixed(2);};   // 포인트 → cqw
 
+  /* 원본 서식에 **인쇄돼 있는 글자를 흰색으로 덮는다** — config 가 필요할 때만 돌려준다.
+     ⛔ 함부로 쓰지 마라. 관공서 서식의 인쇄물을 가리는 일이라 **담당자 요청이 있을 때만** 쓴다.
+     ⛔ 좌표는 원본 PDF 에서 **잉크를 실측**해서 넣는다 — 눈대중으로 덮으면 옆 글자·격자선까지 지운다.
+     ⚠️ 맨 먼저 그린다. 단계 강조·형광펜·값이 모두 이 위에 얹혀야 한다.
+        (여권은 손작성본이라 같은 `.cover` 를 제 코드에서 직접 쓴다 — 껍데기 CSS 는 공용이다.) */
+  var CV=(FORM.covers?FORM.covers(v,state):[])||[];
+  CV.forEach(function(b){
+    h+='<span class="cover" style="left:'+X(b[0])+'%;top:'+Y(b[1])+'%;width:'+
+       ((b[2]-b[0])/PW*100).toFixed(2)+'%;height:'+((b[3]-b[1])/PH*100).toFixed(2)+'%;"></span>';
+  });
+
   // 현재 단계 강조(맨 밑에 깔림)
   h+=stepHighlights(X,Y);
 
@@ -203,8 +214,22 @@ function num(i){ return "①②③④⑤⑥⑦⑧⑨⑩".charAt(i); }
    ⚠️ 아무 칸에나 붙이지 마라. 붙는 순간 「비워도 되는 칸」이 된다. */
 var OPT_HINT="모를 경우 비워두세요. 접수 시 알려드리겠습니다.";
 
+/* ══ 주민등록번호는 **언제나 선택**이다 (2026.08.30 담당자) ═══════════════════════
+   여기는 **공용 키오스크**다. 지나가는 사람이 보는 화면에 주민등록번호를 적기 꺼려지는
+   것은 당연하고, 그 사람에게 길이 없으면 도우미를 통째로 포기하게 된다.
+   그래서 여권이 하던 것과 같은 선택권을 7종에도 준다 — **비워 두면 그 칸이 빈 채로
+   인쇄되고, 종이에 직접 적으면 된다.**
+   ⛔ 서식마다 다른 말을 짓지 마라. 문구는 여기 하나뿐이다.
+   ⛔ 대신할 새 입력항목(예: 「생년월일만 적기」)을 만들지 마라 — 그런 요청이 아니다. */
+var JUMIN_HINT="공용 화면에 적기 불편하시면 비워 두세요. 그 칸은 빈 채로 인쇄되고, 인쇄한 뒤 직접 적으셔도 됩니다.";
+
 function inputHtml(f){
-  var v=state[f.k]||"", req=f.req?'<span class="fb fb-req">필수</span>':'<span class="fb fb-opt">선택</span>';
+  /* ⛔ 주민등록번호는 config 가 `req:true` 라 적어도 **선택**으로 낸다.
+     한 곳에서 막아 두면 서식이 서른 몇 군데에서 제각각 되돌아가는 일이 없다.
+     ⚠️ 이것은 **표시**만 바꾼다. 진행을 막는 것은 각 단계의 `required()` 이므로
+        그쪽에서도 주민등록번호를 빼야 실제로 선택이 된다(7종 전부 그렇게 했다). */
+  var isReq = f.req && f.type!=="jumin";
+  var v=state[f.k]||"", req=isReq?'<span class="fb fb-req">필수</span>':'<span class="fb fb-opt">선택</span>';
   // 재렌더(단계 이동·조건부 갱신) 때도 입력 중과 같은 형식으로 보이게 한다
   if(f.type==="money") v=formatMoney(v);
   else if(f.type==="jumin") v=formatJumin(v);
@@ -213,6 +238,7 @@ function inputHtml(f){
   var h='<div class="'+cls+'"><label class="field-label" for="in_'+f.k+'">'+esc(f.label)+req+'</label>';
   if(f.help) h+='<div class="q-help">'+esc(f.help)+'</div>';
   if(f.optHint) h+='<div class="q-help opt-hint">'+esc(OPT_HINT)+'</div>';
+  if(f.type==="jumin") h+='<div class="q-help opt-hint">'+esc(JUMIN_HINT)+'</div>';
   h+='<input class="text-input" id="in_'+f.k+'" data-f="'+f.k+'" data-t="'+(f.type||"text")+'" '
     +'value="'+esc(v)+'" '
     +(f.type==="jumin"||f.type==="phone"||f.type==="money"?'inputmode="numeric" ':'')+'autocomplete="off"></div>';
@@ -233,20 +259,37 @@ function toggleHtml(field, label){
   var on=state[field]?" sel":"";
   return '<button type="button" class="opt'+on+'" data-toggle="'+field+'">'+(state[field]?"☑ ":"☐ ")+esc(label)+'</button>';
 }
-function sumRow(k,val){
+function sumRow(k,val,step){
   var empty=!val;
+  /* `step` 을 주면 그 단계로 되돌아가는 「수정」이 붙는다(여권과 같은 문법).
+     ⛔ 모든 행에 기계적으로 달지 마라 — Review 가 다시 길어지면 뜻이 없다.
+        되돌아갈 값이 실제로 있는 선택에만 붙인다. */
+  var edit = (step && !empty)
+    ? '<button type="button" class="sum-edit" data-goto="'+step+'">수정</button>' : '';
   return '<div class="sum-row"><span class="k">'+esc(k)+'</span>'
-    +'<span class="val'+(empty?" empty":"")+'">'+(empty?"(비어 있음)":esc(val))+'</span></div>';
+    +'<span class="val'+(empty?" empty":"")+'">'+(empty?"(비어 있음)":esc(val))+'</span>'+edit+'</div>';
+}
+/* ══ Review 전용 — 값이 없거나 해당하지 않으면 **그 줄을 내지 않는다** (2026.08.29 §2 정리)
+   ⛔ Review 는 전체 입력값 요약이 아니다. 시민이 내린 **핵심 선택**만 다시 보여 준다.
+      주관식 개인정보(성명·주민등록번호·주소·전화·이메일·자유입력)는 가운데 PAPER 가
+      실시간으로 보여 주므로 **여기서 되풀이하지 않는다.** */
+function sumRowIf(k,val,step){
+  return (val==null || String(val).trim()==="") ? "" : sumRow(k,String(val).trim(),step);
 }
 
 // 서식 config의 단계 body(API)에 넘길 헬퍼 묶음
 var API={ get state(){return state;}, esc:esc, inputHtml:inputHtml, choiceHtml:choiceHtml,
-  toggleHtml:toggleHtml, sumRow:sumRow, num:num, formatJumin:formatJumin, formatPhone:formatPhone,
-  formatMoney:formatMoney, digits:digits };
+  toggleHtml:toggleHtml, sumRow:sumRow, sumRowIf:sumRowIf, num:num,
+  formatJumin:formatJumin, formatPhone:formatPhone, formatMoney:formatMoney, digits:digits };
 
 function renderStepBody(step){
   var def=FORM.STEPS[step-1], h='';
   h+='<div class="coach-q">'+esc(def.q)+'</div>';
+  /* ⚠️ Review(마지막 확인)에는 **어디를 보면 전체가 있는지** 한 줄로 알려 준다.
+     ⛔ 서식마다 다른 말을 짓지 마라 — 여권과 같은 뜻의 한 문장이다. */
+  if(def.kind==="summary")
+    h+='<div class="why-box"><span class="ic">💡</span><span>적으신 값 전체는 <b>옆의 신청서</b>에 '
+      +'그대로 보입니다. 여기서는 <b>고르신 것</b>만 확인해 주세요.</span></div>';
   if(def.why) h+='<div class="why-box"><span class="ic">💡</span><span>'+esc(def.why)+'</span></div>';
   if(def.body) h+=def.body(API);
   return h;
@@ -506,8 +549,112 @@ function onStepperKey(e){
   e.preventDefault(); gotoStep(+t.getAttribute("data-goto"));
 }
 
-/* 미리보기 모달 */
-function openPreview(){ renderForm(); document.body.classList.add("pv-open"); }
+/* ══ 미리보기 = **인쇄 준비 화면** (2026.08.29 §2 정리) ═════════════════════════
+   총 N장 → 축소 썸네일 → 출력물 이름 → 출력 후 행동 → 참고정보 → [N장 인쇄하기].
+   ⛔ 새 업무안내 문구를 만들지 않는다. 완료 화면에 **이미 있던 확정 문구**만 옮겨 왔다
+      (`FORM.afterPrint`). 없는 서식은 그 구역을 아예 내지 않는다.
+   ⛔ 미리보기 전용 렌더러를 만들지 않는다. 아래 썸네일은 **실제 인쇄에 나가는 그 DOM** 이다. */
+
+/* 인쇄에 나가는 쪽 목록. `@page{margin:0}` 이라 한 쪽의 세로/가로 비율은 A4 그대로다.
+   ⛔ 서식별 장수를 적어 두지 마라 — 별지는 내용이 늘면 두 장이 된다. 여기서 **재서** 센다. */
+var A4_RATIO = 297/210;
+function printPageNodes(){
+  var root=document.querySelector(".form-col"); if(!root) return [];
+  var out=[];
+  var main=root.querySelector(".paper:not(.extra)");
+  if(main) out.push({node:main, label:(FORM.formName||"신청서")});
+  root.querySelectorAll(".paper.extra .xpaper").forEach(function(x){
+    var h2=x.querySelector("h2");
+    out.push({node:x, label:(h2?h2.textContent.trim():"별지")});
+  });
+  return out;
+}
+/* 한 노드가 실제로 몇 장을 차지하는가.
+   ⛔ **화면의 그 노드를 그대로 재지 마라.** 화면의 종이는 창에 맞춰 줄어 있고(1366px
+      창에서 720px), 별지는 화면 여백(14mm)과 인쇄 여백(12mm)이 다르다. 좁은 폭에서는
+      글이 더 접혀 세로가 길어지므로 **인쇄는 2장인데 「총 3장」이라고 말하게 된다**
+      (2026.08.30 부동산 별지 최대 상태에서 실측: 화면 1.134쪽 → 인쇄 1쪽).
+   ✅ 그래서 화면 밖 `.pv-measure`(폭 210mm · 인쇄 여백)에 **복제해 펴 놓고** 잰다.
+   ⚠️ 0.02 는 반올림 여유다 — A4 배경 이미지(1191×1684)는 비율이 1.41393 이라
+      그대로 나누면 0.9998 이 나온다. 여유가 없으면 1장이 2장으로 세어진다. */
+var _pvRule=null;
+function measureBox(){
+  if(!_pvRule || !_pvRule.isConnected){
+    _pvRule=document.createElement("div");
+    _pvRule.className="pv-measure";
+    document.body.appendChild(_pvRule);
+  }
+  return _pvRule;
+}
+function pagesOf(node){
+  var box=measureBox(), c=node.cloneNode(true);
+  c.style.width="210mm"; c.style.margin="0"; c.style.height="auto"; c.style.maxHeight="none";
+  box.innerHTML=""; box.appendChild(c);
+  var w=c.clientWidth, h=c.scrollHeight;
+  box.innerHTML="";
+  if(!w || !h) return 1;
+  return Math.max(1, Math.ceil((h/w)/A4_RATIO - 0.02));
+}
+function previewPages(){
+  return printPageNodes().map(function(p){
+    return { label:p.label, node:p.node, pages:pagesOf(p.node) };
+  });
+}
+function renderPreview(){
+  var list=previewPages(), total=0;
+  list.forEach(function(p){ total+=p.pages; });
+
+  var cnt=document.getElementById("pvCount");
+  if(cnt) cnt.innerHTML='총 <b>'+total+'장</b>이 인쇄됩니다';
+
+  /* 썸네일 — 인쇄에 나가는 노드를 그대로 복제해 줄여 보여 준다.
+     ⚠️ 「읽는 것」이 아니라 **무엇이 몇 장 나오는지 알아보는 것**이 목적이다. */
+  var th=document.getElementById("pvThumbs");
+  if(th){
+    var h='', n=0;
+    list.forEach(function(p){
+      for(var i=0;i<p.pages;i++){
+        n++;
+        var cap=esc(p.label)+(p.pages>1?" ("+(i+1)+"/"+p.pages+")":"");
+        h+='<figure class="pv-th"><div class="pv-th-box" data-i="'+n+'"></div>'
+          +'<figcaption><span class="pv-th-no">'+n+'</span>'+cap+'</figcaption></figure>';
+      }
+    });
+    th.innerHTML=h;
+    /* 복제는 innerHTML 을 넣은 **뒤에** 붙인다(위 문자열에 노드를 넣을 수 없다) */
+    var boxes=th.querySelectorAll(".pv-th-box"), bi=0;
+    list.forEach(function(p){
+      for(var i=0;i<p.pages;i++){
+        var box=boxes[bi++]; if(!box) continue;
+        var c=p.node.cloneNode(true);
+        c.style.width="210mm"; c.style.margin="0"; c.style.boxShadow="none";
+        /* 여러 장짜리는 그 장에 해당하는 부분만 보이게 위로 민다 */
+        if(p.pages>1) c.style.marginTop = "-"+(i*297)+"mm";
+        var inner=document.createElement("div");
+        inner.className="pv-th-inner"; inner.appendChild(c);
+        box.appendChild(inner);
+      }
+    });
+  }
+
+  var after=document.getElementById("pvAfter");
+  if(after){
+    var txt=(typeof FORM.afterPrint==="function") ? FORM.afterPrint(state) : (FORM.afterPrint||"");
+    after.innerHTML = txt ? '<div class="pv-sec"><h4>인쇄한 뒤에 하실 일</h4><div>'+txt+'</div></div>' : "";
+  }
+  var ref=document.getElementById("pvRef");
+  if(ref){
+    var rt=(typeof FORM.refInfo==="function") ? FORM.refInfo(state) : (FORM.refInfo||"");
+    ref.innerHTML = rt ? '<div class="pv-sec ref"><h4>참고</h4><div>'+rt+'</div></div>' : "";
+  }
+  var bp=document.getElementById("btnPrintModal");
+  if(bp){ var sp=bp.querySelector("span"); if(sp) sp.textContent=total+"장 인쇄하기"; else bp.textContent=total+"장 인쇄하기"; }
+}
+function openPreview(){
+  renderForm();
+  document.body.classList.add("pv-open");
+  renderPreview();
+}
 function closePreview(){ document.body.classList.remove("pv-open"); }
 
 /* 확인 창 — 네이티브 confirm() 을 쓰지 않는다.

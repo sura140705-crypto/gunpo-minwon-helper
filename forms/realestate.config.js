@@ -102,56 +102,23 @@ function xcell(pre, i, key){
   return g(key);
 }
 
+/* ⛔ Review 는 **핵심 선택**만이다(2026.08.29 §2). 성명·주민등록번호·주소·전화·이메일·
+   자유입력은 가운데 PAPER 가 실시간으로 보여 주므로 여기서 되풀이하지 않는다. */
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>① 매도인</h4>';
-  h+=sumRow("성명(법인명)", d.s_name);
-  h+=sumRow("주민등록번호", d.s_jumin?formatJumin(d.s_jumin):"");
-  h+=sumRow("주소", d.s_addr);
-  h+=sumRow("휴대전화", formatPhone(d.s_mobile));
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>② 매수인</h4>';
-  h+=sumRow("성명(법인명)", d.b_name);
-  h+=sumRow("주민등록번호", d.b_jumin?formatJumin(d.b_jumin):"");
-  h+=sumRow("주소", d.b_addr);
-  h+=sumRow("휴대전화", formatPhone(d.b_mobile));
-  if(d.b_isForeign) h+=sumRow("외국인 매수용도", d.f_use);
-  h+='</div>';
-  if(d.hasAgent){
-    h+='<div class="sum-sec"><h4>개업공인중개사</h4>';
-    h+=sumRow("성명(법인명)", d.a_name);
-    h+=sumRow("상호", d.a_office);
-    h+=sumRow("등록번호", d.a_regno);
-    h+='</div>';
-  }
-  h+='<div class="sum-sec"><h4>거래대상</h4>';
-  h+=sumRow("종류", d.d_kind+(d.d_bldgKind?" ("+d.d_bldgKind+")":""));
-  if(d.d_supply) h+=sumRow("계약 종류", d.d_supply+(d.d_rightKind?" · "+d.d_rightKind:"")+(d.d_stage?" · "+d.d_stage:""));
-  h+=sumRow("소재지", d.p_addr);
-  h+=sumRow("계약대상 면적", [d.c_landArea?"토지 "+d.c_landArea+"㎡":"", d.c_bldgArea?"건축물 "+d.c_bldgArea+"㎡":""].filter(Boolean).join(" / "));
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>거래가격</h4>';
-  h+=sumRow("물건별 거래가격", d.pr_item?formatMoney(d.pr_item)+"원":"");
-  h+=sumRow("총 실제거래가격(합계)", d.pr_total?formatMoney(d.pr_total)+"원":"");
-  if(d.pr_total) h+=sumRow("", moneyKor(d.pr_total));
-  h+=sumRow("계약금", d.pr_down?formatMoney(d.pr_down)+"원":"");
-  h+=sumRow("계약 체결일", d.dt_contract);
-  h+=sumRow("중도금 / 지급일", [d.pr_mid?formatMoney(d.pr_mid)+"원":"", d.dt_mid].filter(Boolean).join(" / "));
-  h+=sumRow("잔금 / 지급일", [d.pr_bal?formatMoney(d.pr_bal)+"원":"", d.dt_bal].filter(Boolean).join(" / "));
-  h+='</div>';
-  if(isPrevNeeded()){
-    h+='<div class="sum-sec"><h4>⑩ 종전 부동산</h4>';
-    h+=sumRow("소재지", d.v_addr);
-    h+=sumRow("거래금액 합계", d.v_total?formatMoney(d.v_total)+"원":"");
-    h+='</div>';
-  }
-  if(xAnyExtra()){
-    h+='<div class="sum-sec"><h4>별지 (첨부)</h4>';
-    XSEC.forEach(function(sec){
-      var n=xcount(sec.n); if(n) h+=sumRow(sec.label, n+"건");
-    });
-    h+='</div>';
-  }
+  /* ⚠️ 「거래대상 종류」·「중개 여부」에만 [수정]을 단다 — 뒤 화면과 별지를 바꾸는 갈래다. */
+  h+=sumRowIf("④ 거래대상 종류", (d.d_kind||"")+(d.d_bldgKind?" ("+d.d_bldgKind+")":""), 6);
+  h+=sumRowIf("⑤ 계약 종류", [d.d_supply, d.d_rightKind, d.d_stage].filter(Boolean).join(" · "));
+  /* 금액·날짜는 개인정보가 아니고 **과태료 기준**이라 마지막에 다시 본다 */
+  h+=sumRowIf("⑨ 총 실제거래가격", d.pr_total ? formatMoney(d.pr_total)+"원 ("+moneyKor(d.pr_total)+")" : "");
+  h+=sumRowIf("계약 체결일", d.dt_contract);
+  h+=sumRowIf("개업공인중개사 중개", d.hasAgent ? "예" : "", 5);
+  h+=sumRowIf("매수인 외국인", d.b_isForeign ? "예"+(d.f_use?" · "+d.f_use:"") : "");
+  h+=sumRowIf("③ 법인신고서등", d.corpDoc);
+  /* 출력 장수를 바꾸는 선택 */
+  var xs=[];
+  XSEC.forEach(function(sec){ var n=xcount(sec.n); if(n) xs.push(sec.label+" "+n+"건"); });
+  h+=sumRowIf("별지 추가", xs.join(" · "), 11);
   return h;
 }
 
@@ -182,6 +149,15 @@ var FORM={
     "필요 서류는 직원 확인을 따릅니다.",
     "여기서 접수되지는 않습니다."
   ],
+  /* 인쇄 준비 화면 — 종전 완료 화면의 세 상자를 **행동**과 **참고**로 갈라 옮겼다.
+     ⛔ 문구를 새로 짓지 않았다. */
+  afterPrint:"인쇄한 뒤 <b>매도인·매수인</b>(중개 거래는 개업공인중개사)이 서명 또는 날인하여 "
+    +"부동산 소재지 관할 <b>시·군·구청</b>에 제출하세요. "
+    +"신고 기한은 <b>계약 체결일부터 30일 이내</b>이며, 기한을 넘기거나 거짓으로 신고하면 과태료가 부과됩니다."
+    +"<br>첨부서류 — 단독신고이거나 개업공인중개사가 신고하는 경우: 거래계약서 사본, "
+    +"계약금 지급을 확인할 수 있는 서류(영수증·통장 사본 등). 단독신고는 <b>단독신고사유서</b>도 필요합니다.",
+  refInfo:"소유권이전등기는 별도로, 「부동산등기 특별조치법」에 따른 날부터 <b>60일 이내</b>에 신청해야 합니다.",
+
   /* 선택 즉시 조건부 입력칸이 나타나야 하는 항목 */
   rerenderOnSet:["d_kind","d_supply","d_rightKind","f_visaType"],
 
@@ -777,17 +753,9 @@ var FORM={
             +'인쇄한 뒤 신고서와 별지 사이에 <b>간인</b>하세요.</div>';
         return h; }},
 
-    {n:12, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:12, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤 <b>매도인·매수인</b>(중개 거래는 개업공인중개사)이 '
-          +'서명 또는 날인하여 부동산 소재지 관할 <b>시·군·구청</b>에 제출하세요. '
-          +'신고 기한은 <b>계약 체결일부터 30일 이내</b>이며, 기한을 넘기거나 거짓으로 신고하면 과태료가 부과됩니다.</div>'
-          +'<div class="note-box">첨부서류 — 단독신고이거나 개업공인중개사가 신고하는 경우: '
-          +'거래계약서 사본, 계약금 지급을 확인할 수 있는 서류(영수증·통장 사본 등). '
-          +'단독신고는 <b>단독신고사유서</b>도 필요합니다.</div>'
-          +'<div class="note-box">소유권이전등기는 별도로, 「부동산등기 특별조치법」에 따른 날부터 '
-          +'<b>60일 이내</b>에 신청해야 합니다.</div>';
+        return buildSummary();
       }}
   ],
 

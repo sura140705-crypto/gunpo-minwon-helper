@@ -65,32 +65,40 @@ function personKeys(p){
 }
 function childKeys(){
   var a=[];
+  /* ⛔ `c*_effDate` 는 더 이상 **묻지도 담지도 않는다**(2026.08.30 담당자 2차).
+     효력발생일은 이혼 종류에서 그대로 나온다 — `effDateOf()` 참조. */
   for(var i=1;i<=4;i++) a=a.concat(["c"+i+"_name","c"+i+"_jumin","c"+i+"_cust",
-                                    "c"+i+"_effDate","c"+i+"_cause"]);
+                                    "c"+i+"_cause"]);
   return a;
+}
+
+/* ⑤ 친권자 지정의 **효력발생일** — 담당자 2차 확인(2026.08.30)
+     협의이혼   → 협의이혼 **신고일**(= 이 신고서를 내는 날)
+     재판상 이혼 → **재판확정일**(④ 에서 이미 적은 그 날짜)
+   ⛔ **다시 묻지 않는다.** 둘 다 이미 아는 값이라, 같은 날짜를 두 번 적게 하면
+      서로 어긋난 날짜가 한 장에 찍힐 수 있다(종전에는 자녀마다 따로 물었다).
+   ⚠️ 협의이혼의 신고일은 **오늘**이다 — 이 도우미는 창구에 낼 그 날 인쇄한다.
+      ⛔ 서식의 「( 년 월 일 )」 신고일 칸은 이 도우미가 찍지 않는다(종전 그대로). */
+function effDateOf(s){
+  if(s.divType==="재판상 이혼") return String(s.courtDate||"").trim();
+  if(s.divType!=="협의이혼") return "";          // 아직 고르지 않았다
+  var t=APP_TODAY||new Date(), p=function(n){ return (n<10?"0":"")+n; };
+  return t.getFullYear()+"."+p(t.getMonth()+1)+"."+p(t.getDate());
 }
 function fullName(p){ return ((state[p+"_surKor"]||"")+(state[p+"_givenKor"]||"")).trim(); }
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>이혼당사자</h4>';
-  h+=sumRow("남편(부)", fullName("h")+(d.h_jumin?" · "+formatJumin(d.h_jumin):""));
-  h+=sumRow("아내(처)", fullName("w")+(d.w_jumin?" · "+formatJumin(d.w_jumin):""));
-  h+=sumRow("남편 등록기준지", d.h_regBase);
-  h+=sumRow("아내 등록기준지", d.w_regBase);
-  h+='</div>';
-  var n=childN(d), ch='';
-  if(n){
-    for(var i=1;i<=n;i++){ var c="c"+i;
-      ch+=sumRow("자녀 "+i, (d[c+"_name"]||"")
-        +(d[c+"_cust"]?" · 친권자 "+d[c+"_cust"]:"")
-        +(d[c+"_cause"]?" ("+d[c+"_cause"]+")":"")); }
-    h+='<div class="sum-sec"><h4>친권자 지정</h4>'+ch+'</div>';
+  /* ⚠️ 「이혼 종류」·「미성년 자녀 수」에만 [수정]을 단다 — 둘 다 **뒤 화면과 인쇄 칸을
+     바꾸는 갈래**다. 나머지에 기계적으로 달면 Review 가 다시 길어진다. */
+  h+=sumRowIf("이혼 종류", d.divType, 6);
+  h+=sumRowIf("미성년 자녀 수", d.childCnt, 7);
+  var n=childN(d);
+  for(var i=1;i<=n;i++){ var c="c"+i;
+    h+=sumRowIf("자녀 "+i+" 친권자", (d[c+"_cust"]||"")
+      +(d[c+"_cause"]?" ("+d[c+"_cause"]+")":""));
   }
-  h+='<div class="sum-sec"><h4>신고 항목</h4>';
-  h+=sumRow("이혼 종류", d.divType);
-  if(isJudicial(d)) h+=sumRow("재판확정", [d.courtDate, d.courtName?d.courtName+" 법원":""].filter(Boolean).join(" · "));
-  h+=sumRow("출석", [d.attend_h?"남편":"", d.attend_w?"아내":""].filter(Boolean).join(", "));
-  return h+'</div>';
+  h+=sumRowIf("⑥ 출석", [d.attend_h?"남편(부)":"", d.attend_w?"아내(처)":""].filter(Boolean).join(" · "));
+  return h;
 }
 
 var FORM={
@@ -131,6 +139,21 @@ var FORM={
       if(b){ s[p+"_birth"]=b; var el=document.getElementById("in_"+p+"_birth"); if(el) el.value=b; }
     }
   },
+
+  /* 인쇄 준비 화면의 「인쇄한 뒤에 하실 일」 — 종전 완료 화면 문구 그대로.
+     ⛔ 서류명을 지어내지 마라 — 담당자 원문이다. */
+  afterPrint:"인쇄한 뒤, 서명 또는 날인을 직접 하고 민원실에 제출하세요. "
+    +"<b>협의서 원본 또는 법원 판결문 원본</b>을 함께 내셔야 하며, "
+    +"그 밖의 첨부서류는 담당 직원이 안내합니다.",
+
+  /* 제목 아래 「( 년 월 일 )」 = **신고일**. 창구에 내는 그 날이라 오늘 날짜를 찍는다.
+     ⚠️ 2026.08.30 담당자 요청 — 종전에는 이혼·혼인만 이 칸을 **비워 둔 채** 인쇄했다.
+        협의이혼은 이 날짜가 곧 ⑤ 친권자 지정의 효력발생일이라(`effDateOf`), 한쪽만 찍히면
+        같은 날을 뜻하는 두 칸이 종이 위에서 어긋나 보였다. 이제 8종이 모두 신고일을 찍는다.
+     ⚠️ 좌표는 `이혼신고서(20260828).pdf` 에서 **잉크를 실측**했다 —
+        「(」101.72 · 「년」143.50 · 「월」174.69 · 「일」206.38, 글자 세로 중앙 89.47.
+        값은 그 사이 빈 곳의 한가운데에 둔다(`.ov` 는 좌표를 **중심**으로 잡는다). */
+  today:{ y:89.5, yx:122.6, mx:159.1, dx:190.5 },
 
   stateKeys:[].concat(personKeys("h"),personKeys("w"),childKeys(),
     ["divType","childCnt","etc","courtDate","courtName",
@@ -279,12 +302,25 @@ var FORM={
       var c="c"+i, on=i<=n;
       v[c+"_name"]=on?(d[c+"_name"]||""):"";
       v[c+"_jumin1"]=on?j1(d[c+"_jumin"]):""; v[c+"_jumin2"]=on?j2(d[c+"_jumin"]):"";
-      var ed=ymd(on?d[c+"_effDate"]:"");
+      /* 효력발생일은 자녀마다 묻지 않는다 — 이혼 종류 하나에서 나온다(`effDateOf`) */
+      var ed=ymd(on?effDateOf(d):"");
       v[c+"_effY"]=ed[0]; v[c+"_effM"]=ed[1]; v[c+"_effD"]=ed[2];
     }
     var cd=ymd(d.cohabitDate); v.cohabitY=cd[0]; v.cohabitM=cd[1]; v.cohabitD=cd[2];
     var dv=ymd(d.divorceDate); v.divorceY=dv[0]; v.divorceM=dv[1]; v.divorceD=dv[2];
     return v;
+  },
+
+  /* ④ 법원명 칸에 **인쇄돼 있는 「법원」을 가린다** — 담당자 요청(2026.08.30).
+     ⚠️ 서식은 「법원명 [____] 법원」이라 **앞부분만** 적는 것을 전제한다. 그런데 실제 작성
+        형태는 「수원가정법원 안양지원」처럼 **전체 법원명**이라, 그대로 두면 인쇄물이
+        「… 안양지원 법원」이 된다. 그래서 그 두 글자를 덮는다.
+     ⛔ **적은 값이 있을 때만** 덮는다. 비어 있는 협의이혼에서는 원본을 건드리지 않는다.
+     ⚠️ 좌표는 `이혼신고서(20260828).pdf` 에서 **잉크를 실측**했다 —
+        「법원」 글자 x 485.12~501.31 · y 376.44~384.81, 셀 안쪽은 x 402~551 · y 373~391.
+        아래 상자는 그 사이에 있다. ⛔ 넓히지 마라 — 격자선이나 옆 글자가 지워진다. */
+  covers:function(v){
+    return v.courtName ? [[483.6, 374.6, 502.9, 386.6]] : [];
   },
 
   /* 인쇄 후 직접 서명·날인해야 하는 칸 — 내용이 있을 때만 형광펜을 친다 */
@@ -358,8 +394,13 @@ var FORM={
         if(isJudicial(A.state)){
           h+='<div class="note-box"><b>재판상 이혼</b>(판결·조정 등)은 재판이 확정된 날과 법원 이름을 적습니다.</div>';
           h+=A.inputHtml({k:"courtDate", label:"④ 재판확정일자", type:"date", req:true, ph:"2026.05.10"});
-          h+=A.inputHtml({k:"courtName", label:"법원명", req:true, ph:"수원가정",
-            help:"서식에 ‘법원’이 이미 인쇄돼 있으니 앞부분만 적습니다. 예: 수원가정, 서울가정"});
+          /* ⚠️ 2026.08.30 담당자 2차 — **지원까지 적을 수 있어야 한다.** 담당자가 든 실제
+             작성 형태가 「수원가정법원 안양지원」이다. 종전 안내는 「앞부분만 적습니다 ·
+             예: 수원가정」이라 지원을 적지 못하게 막고 있었다.
+             ⛔ 「법원명 정도까지만」으로 되돌리지 마라. ⛔ 지원 입력칸을 따로 만들지도 마라 —
+                이 한 칸에 전체 법원명을 적는다(길이 제한 없음). */
+          h+=A.inputHtml({k:"courtName", label:"법원명", req:true, ph:"수원가정법원 안양지원",
+            help:"지원까지 있으면 함께 적습니다. 예: 수원가정법원 안양지원"});
         }
         h+=A.inputHtml({k:"etc", label:"③ 기타사항", help:"특별히 밝힐 내용이 있을 때만 적습니다."});
         return h;
@@ -374,9 +415,9 @@ var FORM={
         var n=childN(s);
         for(var i=1;i<=n;i++){ var c="c"+i;
           if(!String(s[c+"_name"]||"").trim()) m.push("자녀 "+i+" 성명");
-          if(!String(s[c+"_jumin"]||"").trim()) m.push("자녀 "+i+" 주민등록번호");
+          /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
           if(!s[c+"_cust"]) m.push("자녀 "+i+" 친권자");
-          if(!String(s[c+"_effDate"]||"").trim()) m.push("자녀 "+i+" 효력 발생일");
+          /* ⛔ 효력발생일은 여기서 묻지 않으므로 필수 목록에도 없다(`effDateOf`) */
           if(!s[c+"_cause"]) m.push("자녀 "+i+" 원인");
         }
         return m;
@@ -394,8 +435,15 @@ var FORM={
           h+=A.inputHtml({k:c+"_jumin", label:"자녀 주민등록번호", type:"jumin", req:true, half:true});
           h+='<div class="field"><label class="field-label">친권자 <span class="fb fb-req">필수</span></label>'
             +A.choiceHtml(c+"_cust",CUST_OPTS,"누가 친권을 갖는지 고르세요.")+'</div>';
-          h+=A.inputHtml({k:c+"_effDate", label:"효력 발생일", type:"date", req:true, ph:"2026.05.10",
-            help:"협의가 성립한 날 또는 재판이 확정된 날."});
+          /* 효력발생일 — **묻지 않고 알려만 준다**(2026.08.30 담당자 2차).
+             ⛔ 다시 입력칸을 만들지 마라. 같은 날짜를 두 번 적게 하면 한 장에 서로 다른
+                날짜가 찍힐 수 있다. 값은 `effDateOf()` 하나에서 나온다. */
+          h+='<div class="field"><label class="field-label">효력 발생일</label>'
+            + '<div class="q-help">'+(A.state.divType==="재판상 이혼"
+                ? "재판상 이혼은 <b>재판확정일</b>이 들어갑니다 — ④ 에 적으신 날짜를 그대로 씁니다."
+                : "협의이혼은 <b>협의이혼 신고일</b>이 들어갑니다 — 이 신고서를 내시는 날입니다.")
+            + '</div>'
+            + '<div class="q-help"><b>'+A.esc(effDateOf(A.state)||"이혼 종류를 먼저 고르세요")+'</b></div></div>';
           h+='<div class="field"><label class="field-label">원인 <span class="fb fb-req">필수</span></label>'
             +A.choiceHtml(c+"_cause",CAUSE_OPTS,"협의로 정했으면 ‘협의’, 재판으로 정했으면 ‘재판’.")+'</div>';
           h+='</div>';
@@ -457,13 +505,9 @@ var FORM={
         return h;
       }},
 
-    {n:10, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:10, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        /* ⛔ 서류명을 지어내지 마라 — 준비물은 담당자 원문 그대로 안내 기둥에 있다. */
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤, 서명 또는 날인을 직접 하고 민원실에 제출하세요. '
-          +'<b>협의서 원본 또는 법원 판결문 원본</b>을 함께 내셔야 하며, '
-          +'그 밖의 첨부서류는 담당 직원이 안내합니다.</div>';
+        return buildSummary();
       }}
   ],
 
@@ -484,18 +528,19 @@ var FORM={
       w_edu:"대학(교)", w_job:"전문직",
       divType:"협의이혼", courtDate:"", courtName:"",
       childCnt:"2명", childUnder19:"2",
-      c1_name:"김하나", c1_jumin:"1503154000000", c1_cust:"모", c1_effDate:"2026.05.10", c1_cause:"협의",
-      c2_name:"김두리", c2_jumin:"1809204000000", c2_cust:"모", c2_effDate:"2026.05.10", c2_cause:"협의",
+      c1_name:"김하나", c1_jumin:"1503154000000", c1_cust:"모", c1_cause:"협의",
+      c2_name:"김두리", c2_jumin:"1809204000000", c2_cust:"모", c2_cause:"협의",
       attend_h:true, attend_w:true,
       cohabitDate:"2015.05.01", divorceDate:"2026.03.01"
     });
     if(kind==="judicial"){
       /* 재판상 이혼 — ④ 재판확정일자·법원명이 찍히고, 친권자 원인은 「재판」, 자녀 1명 */
       state.divType="재판상 이혼";
-      state.courtDate="2026.05.10"; state.courtName="수원가정";   // 서식에 「법원」이 인쇄돼 있다
+      /* ⚠️ 담당자가 든 실제 작성 형태(2026.08.30 2차) — 지원까지 적는다 */
+      state.courtDate="2026.05.10"; state.courtName="수원가정법원 안양지원";
       state.childCnt="1명"; state.childUnder19="1";
       state.c1_cust="모"; state.c1_cause="재판";
-      state.c2_name=""; state.c2_jumin=""; state.c2_cust=""; state.c2_cause=""; state.c2_effDate="";
+      state.c2_name=""; state.c2_jumin=""; state.c2_cust=""; state.c2_cause="";
     }
   }
 };
@@ -506,7 +551,7 @@ function reqPerson(s, p, who){
   if(!String(s[p+"_surKor"]||"").trim()) m.push(who+" 성(한글)");
   if(!String(s[p+"_givenKor"]||"").trim()) m.push(who+" 이름(한글)");
   if(!String(s[p+"_phone"]||"").trim()) m.push(who+" 전화번호");
-  if(!String(s[p+"_jumin"]||"").trim()) m.push(who+" 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   if(!String(s[p+"_birth"]||"").trim()) m.push(who+" 출생연월일");
   if(!String(s[p+"_addr"]||"").trim()) m.push(who+" 주소");
   return m;
@@ -514,8 +559,8 @@ function reqPerson(s, p, who){
 function reqParent(s, p, who){
   var m=[];
   if(!String(s[p+"_fName"]||"").trim()) m.push(who+" 아버지 성명");
-  if(!String(s[p+"_fJumin"]||"").trim()) m.push(who+" 아버지 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   if(!String(s[p+"_mName"]||"").trim()) m.push(who+" 어머니 성명");
-  if(!String(s[p+"_mJumin"]||"").trim()) m.push(who+" 어머니 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   return m;
 }

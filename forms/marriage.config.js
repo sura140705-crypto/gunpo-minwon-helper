@@ -66,21 +66,19 @@ function personKeys(p){
           p+"_cFather",p+"_cMother",p+"_gName",p+"_gJumin"];
 }
 function fullName(p){ return ((state[p+"_surKor"]||"")+(state[p+"_givenKor"]||"")).trim(); }
+/* ⛔ Review 는 **핵심 선택**만이다(2026.08.29 §2). 성명·주민등록번호·주소·전화·
+   자유입력은 가운데 PAPER 가 실시간으로 보여 주므로 여기서 되풀이하지 않는다.
+   ⚠️ 셋째 인자는 [수정]이 되돌아갈 단계다 — **시민이 고른 값**에만 붙인다.
+      ⑧ 은 생년월일에서 저절로 갈리는 값이라 되돌아갈 선택이 없다(그래서 안 붙인다). */
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>혼인당사자</h4>';
-  h+=sumRow("남편(부)", fullName("h")+(d.h_jumin?" · "+formatJumin(d.h_jumin):""));
-  h+=sumRow("아내(처)", fullName("w")+(d.w_jumin?" · "+formatJumin(d.w_jumin):""));
-  h+=sumRow("남편 등록기준지", d.h_regBase);
-  h+=sumRow("아내 등록기준지", d.w_regBase);
-  h+='</div><div class="sum-sec"><h4>증인</h4>';
-  h+=sumRow("증인 1", (d.wit1_name||"")+(d.wit1_jumin?" · "+formatJumin(d.wit1_jumin):""));
-  h+=sumRow("증인 2", (d.wit2_name||"")+(d.wit2_jumin?" · "+formatJumin(d.wit2_jumin):""));
-  h+='</div><div class="sum-sec"><h4>신고 항목</h4>';
-  h+=sumRow("근친혼 여부", d.kinship);
-  h+=sumRow("성·본 협의", d.seongbon);
-  h+=sumRow("출석", [d.attend_h?"남편":"", d.attend_w?"아내":""].filter(Boolean).join(", "));
-  return h+'</div>';
+  h+=sumRowIf("④ 성·본의 협의", d.seongbon, 6);
+  h+=sumRowIf("⑤ 근친혼 여부", d.kinship, 6);
+  h+=sumRowIf("⑨ 출석", [d.attend_h?"남편(부)":"", d.attend_w?"아내(처)":""].filter(Boolean).join(" · "), 8);
+  /* 출력되는 칸이 바뀌는 자리 — ⑧ 동의자란은 미성년일 때만 채워진다 */
+  var minor=[isMinor("h")?"남편(부)":"", isMinor("w")?"아내(처)":""].filter(Boolean).join(" · ");
+  h+=sumRowIf("⑧ 미성년자 동의 필요", minor);
+  return h;
 }
 
 var FORM={
@@ -92,12 +90,13 @@ var FORM={
   sampleLabels:["작성예시(성인)","작성예시(미성년)"],
   sampleKinds:["adult","minor"],
 
-  /* 안내 기둥의 준비물 — 담당자 확인(2026.08.29).
+  /* 안내 기둥의 준비물 — 담당자 확인(2026.08.29) · **2차 확인으로 정정**(2026.08.30).
      ⛔ 지어내지 마라. 서식 첨부서류는 대부분 조건부이고, 상시 필요한 것은 신분확인뿐이다.
-     ⚠️ 혼인은 **당사자가 둘**이라 신분증도 둘이다 — 한 줄로 묶지 않는다. */
+     ⚠️ 종전에는 「남편(부) 신분증」·「아내(처) 신분증」 두 줄이었다. 담당자 2차 표기는
+        **「당사자 신분증」 한 줄**이다(이혼과 같은 표기) — 그대로 따른다.
+     ⛔ 「당사자가 둘이니 두 줄이 낫다」는 판단으로 되돌리지 마라. 원본은 담당자 표기다. */
   ready:[
-    { t:"남편(부) 신분증", s:"접수할 때 창구에서 확인합니다", g:"idcard", req:true },
-    { t:"아내(처) 신분증", s:"접수할 때 창구에서 확인합니다", g:"idcard", req:true },
+    { t:"당사자 신분증", s:"접수할 때 창구에서 확인합니다", g:"idcard", req:true },
     { t:"도장", s:"서명으로 갈음할 수 있습니다", g:"stamp", req:true }
   ],
 
@@ -114,6 +113,22 @@ var FORM={
       if(b){ s[p+"_birth"]=b; var el=document.getElementById("in_"+p+"_birth"); if(el) el.value=b; }
     }
   },
+
+  /* 인쇄 준비 화면의 「인쇄한 뒤에 하실 일」 — 종전 완료 화면 문구를 그대로 옮겼다.
+     ⚠️ 「부모 서명」은 미성년 혼인일 때만이므로 그때만 말한다(QA W6 은 업무 확인 항목으로 남는다). */
+  afterPrint:function(s){
+    var minor = isMinor("h") || isMinor("w");
+    return "인쇄한 뒤, 서명·날인을 직접 하고 증인"+(minor?"·부모":"")+" 서명을 받아 민원실에 제출하세요. "
+      + "첨부서류(기본·혼인관계·가족관계증명서 등)는 담당 직원이 안내합니다.";
+  },
+
+  /* 제목 아래 「( 년 월 일 )」 = **신고일**. 창구에 내는 그 날이라 오늘 날짜를 찍는다.
+     ⚠️ 2026.08.30 담당자 요청 — 종전에는 혼인·이혼만 이 칸을 **비워 둔 채** 인쇄했다.
+        나머지 6종은 이미 찍고 있었다. 이제 8종이 모두 같다.
+     ⚠️ 좌표는 `혼인신고서(20260828).pdf` 에서 **잉크를 실측**했다 —
+        「(」76.59 · 「년」127.22 · 「월」171.06 · 「일」215.19, 글자 세로 중앙 84.0.
+        값은 그 사이 빈 곳의 한가운데에 둔다(`.ov` 는 좌표를 **중심**으로 잡는다). */
+  today:{ y:84.0, yx:101.9, mx:149.1, dx:193.1 },
 
   stateKeys:[].concat(personKeys("h"),personKeys("w"),
     ["seongbon","kinship","foreignDate","etc",
@@ -288,8 +303,16 @@ var FORM={
         var h='';
         h+=A.inputHtml({k:"foreignDate", label:"③ 외국방식 혼인성립일자", type:"date",
           ph:"2026.01.01", help:"외국 방식으로 이미 혼인한 경우에만 적습니다. 아니면 비워 두세요."});
+        /* ⚠️ 2026.08.30 담당자 2차 — 설명을 **고르는 기준**으로 바꿨다. 종전 「해당 없으면
+           ‘아니요’」는 아버지의 성·본을 따르는 보통의 경우를 「해당 없음」처럼 읽히게 했다.
+           ⛔ 서식 표현 「④ 성·본의 협의」는 그대로 둔다 — 없애라는 뜻이 아니다.
+           ⛔ 값 매핑을 바꾸지 마라: **예 = 모(어머니)의 성·본 / 아니요 = 부(아버지)의 성·본.**
+              서식 원문이 「자녀의 성·본을 **모**의 성·본으로 하는 협의를 하였습니까?」이고,
+              영표 좌표도 예=437.0 · 아니요=489.0 으로 그 순서에 맞춰져 있다. */
         h+='<div class="field"><label class="field-label">④ 성·본의 협의 <span class="fb fb-req">필수</span></label>';
-        h+=A.choiceHtml("seongbon",["예","아니요"],"자녀의 성·본을 어머니의 성·본으로 하기로 협의했나요? 해당 없으면 ‘아니요’.")+'</div>';
+        h+=A.choiceHtml("seongbon",["예","아니요"],
+            "자녀의 성·본을 어머니의 성·본으로 하기로 협의했나요? "
+            +"어머니의 성·본으로 하는 경우 ‘예’, 아버지의 성·본으로 하는 경우 ‘아니요’를 선택해 주세요.")+'</div>';
         h+='<div class="field"><label class="field-label">⑤ 근친혼 여부 <span class="fb fb-req">필수</span></label>';
         h+=A.choiceHtml("kinship",["예","아니요"],"두 사람이 8촌 이내 혈족인가요? 보통은 ‘아니요’입니다.")+'</div>';
         h+=A.inputHtml({k:"etc", label:"⑥ 기타사항", help:"특별히 밝힐 내용이 있을 때만 적습니다."});
@@ -302,7 +325,7 @@ var FORM={
       required:function(s){ var m=[];
         ["wit1","wit2"].forEach(function(w,i){
           if(!String(s[w+"_name"]||"").trim()) m.push("증인 "+(i+1)+" 성명");
-          if(!String(s[w+"_jumin"]||"").trim()) m.push("증인 "+(i+1)+" 주민등록번호");
+          /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
           if(!String(s[w+"_addr"]||"").trim()) m.push("증인 "+(i+1)+" 주소");
         });
         return m; },
@@ -384,11 +407,9 @@ var FORM={
         return h;
       }},
 
-    {n:10, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:10, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤, 서명·날인을 직접 하고 증인·부모 서명을 받아 '
-          +'민원실에 제출하세요. 첨부서류(기본·혼인관계·가족관계증명서 등)는 담당 직원이 안내합니다.</div>';
+        return buildSummary();
       }}
   ],
 
@@ -426,7 +447,7 @@ function reqPerson(s, p, who){
   if(!String(s[p+"_surKor"]||"").trim()) m.push(who+" 성(한글)");
   if(!String(s[p+"_givenKor"]||"").trim()) m.push(who+" 이름(한글)");
   if(!String(s[p+"_phone"]||"").trim()) m.push(who+" 전화번호");
-  if(!String(s[p+"_jumin"]||"").trim()) m.push(who+" 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   if(!String(s[p+"_birth"]||"").trim()) m.push(who+" 출생연월일");
   if(!String(s[p+"_addr"]||"").trim()) m.push(who+" 주소");
   return m;
@@ -434,8 +455,8 @@ function reqPerson(s, p, who){
 function reqParent(s, p, who){
   var m=[];
   if(!String(s[p+"_fName"]||"").trim()) m.push(who+" 아버지 성명");
-  if(!String(s[p+"_fJumin"]||"").trim()) m.push(who+" 아버지 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   if(!String(s[p+"_mName"]||"").trim()) m.push(who+" 어머니 성명");
-  if(!String(s[p+"_mJumin"]||"").trim()) m.push(who+" 어머니 주민등록번호");
+  /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
   return m;
 }

@@ -59,24 +59,18 @@ function reporterFields(){
 }
 function childName(){ return ((state.child_surKor||"")+(state.child_givenKor||"")).trim(); }
 function parentName(p){ return (state[p+"_name"]||"").trim(); }
+/* ⛔ Review 는 **핵심 선택**만이다(2026.08.29 §2). 이름·주민등록번호·주소·전화는
+   가운데 PAPER 가 실시간으로 보여 주므로 여기서 되풀이하지 않는다.
+   ⚠️ 「혼인 중/외」에만 [수정]을 단다 — 그 답이 **아버지 단계를 없애거나 살리는** 갈래다. */
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>출생자</h4>';
-  h+=sumRow("이름", childName()+(d.child_sex?" · "+d.child_sex:""));
-  h+=sumRow("출생일시", [d.child_birthDate, (d.child_birthHour?d.child_birthHour+"시":"")+(d.child_birthMin?" "+d.child_birthMin+"분":"")].filter(function(x){return x&&x.trim();}).join(" "));
-  h+=sumRow("출생장소", [d.child_birthPlace, d.child_birthPlaceEtc, d.child_birthPlaceAddr]
+  h+=sumRowIf("성별", d.child_sex, 2);
+  h+=sumRowIf("혼인 중/외의 출생자", d.child_marital, 2);
+  h+=sumRowIf("출생 장소", [d.child_birthPlace, d.child_birthPlaceEtc]
     .filter(function(x){ return x && x.trim(); }).join(" · "));
-  h+=sumRow("등록기준지", d.child_regBase);
-  h+=sumRow("주소", d.child_addr);
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>부모</h4>';
-  h+=sumRow("아버지(부)", parentName("f")+(d.f_jumin?" · "+formatJumin(d.f_jumin):""));
-  h+=sumRow("어머니(모)", parentName("m")+(d.m_jumin?" · "+formatJumin(d.m_jumin):""));
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>신고인</h4>';
-  h+=sumRow("성명", d.reporter_name+(d.reporter_qual?" · "+d.reporter_qual+(d.reporter_qual==="기타"&&d.reporter_qualEtc?"("+d.reporter_qualEtc+")":""):""));
-  h+=sumRow("전화", formatPhone(d.reporter_phone));
-  h+='</div>';
+  h+=sumRowIf("성·본 협의서 제출", d.sonbon_consent);
+  h+=sumRowIf("신고인 자격", (d.reporter_qual||"")
+    +(d.reporter_qual==="기타" && d.reporter_qualEtc ? "("+d.reporter_qualEtc+")" : ""));
   return h;
 }
 
@@ -110,6 +104,11 @@ var FORM={
   ],
   rerenderOnSet:["child_birthPlace","reporter_qual"],
   today:{ y:87.8, yx:99.8, mx:145.1, dx:190.3 },
+
+  /* 인쇄 준비 화면(미리보기)의 「인쇄한 뒤에 하실 일」.
+     ⛔ 새로 지은 문구가 아니다 — 종전 완료 화면의 안내를 그대로 옮겼다. */
+  afterPrint:"인쇄한 뒤, 신고인이 서명·날인을 직접 하여 민원실에 제출하세요. "
+    +"출생증명서(병원 발급) 등 첨부서류는 담당 직원이 안내합니다.",
 
   stateKeys:[].concat(
     ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon",
@@ -291,9 +290,12 @@ var FORM={
            칸(`child_birthPlace`) · 어디인지 적는 칸(`child_birthPlaceAddr`) ·
            「기타」가 무엇인지 적는 칸(`child_birthPlaceEtc`) 셋을 섞지 않는다.
            ⛔ 주소칸을 조건부로 만들지 마라 — 자택·병원이어도 주소는 있어야 한다. */
+        /* ⚠️ 2026.08.30 담당자 2차 — **주소까지만.** 종전에는 「병원이면 병원 이름까지 적으면
+           좋습니다」라고 안내하고 예시에도 병원명을 넣어 두었다. 담당자 확인: 병원명은 적지 않는다.
+           ⛔ 시설명을 적도록 유도하지 마라(예시·도움말 둘 다). */
         h+=A.inputHtml({k:"child_birthPlaceAddr", label:"출생 장소 주소", req:true,
-          ph:"예: 경기도 군포시 산본로 000 △△병원",
-          help:"태어난 곳의 주소. 병원이면 병원 이름까지 적으면 좋습니다."});
+          ph:"예: 경기도 군포시 산본로 000",
+          help:"출생한 곳의 주소까지만 적어 주세요. 병원명은 적지 않습니다."});
         if(A.state.child_birthPlace==="기타")
           h+=A.inputHtml({k:"child_birthPlaceEtc", label:"출생 장소(기타) 상세", req:true,
             ph:"예: 이동 중 차량 안",
@@ -320,14 +322,14 @@ var FORM={
       kind:"fields",
       required:function(s){ var m=[];
         if(!String(s.f_name||"").trim()) m.push("아버지 성명(한글)");
-        if(!String(s.f_jumin||"").trim()) m.push("아버지 주민등록번호");
+        /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         return m; },
       body:function(A){ var h='', ff=parentFields("f"); for(var i=0;i<ff.length;i++) h+=A.inputHtml(ff[i]); return h; }},
     {n:5, short:"모(母)", title:"② 어머니(모) 정보",
       q:"어머니(모)의 정보를 입력하세요.", kind:"mother",
       required:function(s){ var m=[];
         if(!String(s.m_name||"").trim()) m.push("어머니 성명(한글)");
-        if(!String(s.m_jumin||"").trim()) m.push("어머니 주민등록번호");
+        /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         /* ⛔ 등록기준지는 필수가 아니다 — 모르면 창구가 알려 준다(`OPT_HELP`). */
         if(s.child_marital!==UNWED && !s.sonbon_consent) m.push("성·본 협의서 제출 여부");
         return m; },
@@ -362,7 +364,7 @@ var FORM={
       kind:"reporter",
       required:function(s){ var m=[];
         if(!String(s.reporter_name||"").trim()) m.push("신고인 성명");
-        if(!String(s.reporter_jumin||"").trim()) m.push("신고인 주민등록번호");
+        /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         if(!String(s.reporter_addr||"").trim()) m.push("신고인 주소");
         if(!String(s.reporter_phone||"").trim()) m.push("전화번호");
         if(!s.reporter_qual) m.push("신고인 자격");
@@ -406,11 +408,10 @@ var FORM={
           +' <span class="fb fb-req">필수</span></label>'+A.choiceHtml("m_edu",EDU)+'</div>';
         return h;
       }},
-    {n:10, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:10, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤, 신고인이 서명·날인을 직접 하여 민원실에 제출하세요. '
-          +'출생증명서(병원 발급) 등 첨부서류는 담당 직원이 안내합니다.</div>';
+        /* ⛔ 출력 후 행동은 여기 두지 않는다 — 미리보기(인쇄 준비 화면)의 `afterPrint` 로 옮겼다. */
+        return buildSummary();
       }}
   ],
 
@@ -421,7 +422,9 @@ var FORM={
       child_bon:"金海", child_sex:"여", child_marital:"혼인 중",
       child_birthDate:"2026.07.20", child_birthHour:"14", child_birthMin:"30",
       child_birthPlace:"병원",
-      child_birthPlaceAddr:"경기도 군포시 산본로 000 △△여성병원",
+      /* ⛔ 작성예시에 **병원명을 넣지 마라**(2026.08.30 담당자 2차). 예시가 곧 본보기다 —
+         여기에 시설명이 있으면 안내문으로 아무리 막아도 그대로 따라 적는다. */
+      child_birthPlaceAddr:"경기도 군포시 산본로 000",
       child_regBase:"경기도 군포시 산본로 000",
       child_addr:"경기도 군포시 산본로 000, 101동 1001호",
       child_headName:"김철수", child_headRel:"자녀(녀)",

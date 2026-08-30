@@ -58,6 +58,7 @@ python tools/check-site-block.py        # 기관별 설정 블록이 9개 화면
 python tools/check-design-tokens.py     # 디자인 토큰 블록이 9개 화면에서 같은지 — 다르면 exit 1
 python tools/verify-site-config.py      # 환경설정 값이 화면에 걸리는지(6가지 조합) — 다르면 exit 1
 python tools/measure-screen.py          # 화면 구조 실측 — 가로 넘침·종이 축소가 생기면 exit 1
+python tools/verify-review.py           # Review·인쇄 준비 화면 실측(8종×2) — 다르면 exit 1
 node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 ```
 
@@ -82,6 +83,15 @@ node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 기준선보다 작아짐 · 측정 실패). 값이 달라지는 것은 정상이고, 의도한 변화면
 **왜 달라졌는지 적고** `--baseline` 으로 기준선(`tests/screen-baseline.json`)을 갱신한다.
 눈으로 볼 것은 `python tools/design-shots.py` 갈무리가 맡는다 — 둘은 같은 상태 스크립트를 쓴다.
+
+**Review·미리보기를 건드렸으면 `verify-review.py` 를 돌려라.** 이 두 화면은 **다른 도구가
+전부 못 보는 사각지대**다 — 인쇄 CSS 가 `.modal-back` 을 숨기므로 `verify-print.py` 는
+미리보기를 못 보고, `measure-screen.py` 는 모달을 열지도 [수정]을 누르지도 않는다.
+**화면이 통째로 죽어도 19쪽 0px 가 그대로 통과한다.** 이 도구가 재는 것은 두 가지다 —
+「총 N장」이 인쇄 기준선 쪽수와 맞는가(썸네일 개수·내용 채움·단추 라벨 포함),
+Review 의 [수정]이 **눌러서 실제로 그 단계로 가는가**.
+⚠️ `gotoStep(n)` 은 `n < state.step && stepActive(n)` 일 때만 움직이므로, 번호를 잘못 달면
+**눈에는 멀쩡한 죽은 단추**가 된다(2026.08.30 혼인에서 실제로 나왔다).
 
 ## 3. 하지 말 것
 

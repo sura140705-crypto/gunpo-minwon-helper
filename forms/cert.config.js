@@ -36,27 +36,17 @@ function certRows(){
   ];
 }
 
+/* ⛔ Review 는 **핵심 선택**만이다(2026.08.29 §2). 성명·주민등록번호·주소·전화·이메일·
+   자유입력은 가운데 PAPER 가 실시간으로 보여 주므로 여기서 되풀이하지 않는다. */
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>발급 대상자</h4>';
-  h+=sumRow("성명", (d.t_name||"")+(d.t_nameHan?" ("+d.t_nameHan+")":""));
-  h+=sumRow("등록기준지", d.t_regBase);
-  h+=sumRow("주민등록번호", d.t_jumin?formatJumin(d.t_jumin):"");
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>신청 증명서</h4>';
-  var any='';
-  certRows().forEach(function(r){ var n=digits(r[1]); if(n && +n>0) any+=sumRow(r[0], n+r[2]); });
-  h+= any || '<div class="sum-row"><span class="val empty">(선택된 증명서가 없습니다)</span></div>';
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>신청인</h4>';
-  h+=sumRow("성명", d.ap_name);
-  h+=sumRow("자격", d.ap_qual);
-  h+=sumRow("전화", formatPhone(d.ap_phone));
-  h+='</div>';
-  if(d.del_name){
-    h+='<div class="sum-sec"><h4>위임인</h4>'+sumRow("성명", d.del_name)
-      +sumRow("주민등록번호", d.del_jumin?formatJumin(d.del_jumin):"")+'</div>';
-  }
+  /* 이 서식의 핵심 선택은 **무엇을 몇 통 떼는가**다 — 0통은 내지 않는다. */
+  certRows().forEach(function(r){
+    var n=digits(r[1]); if(n && +n>0) h+=sumRowIf(r[0], n+r[2], 3);
+  });
+  h+=sumRowIf("대리 신청", d.del_name ? "예" : "");
+  h+=sumRowIf("주민등록번호 공개", [d.disc_scope, d.disc_reason].filter(Boolean).join(" · "));
+  h+=sumRowIf("아포스티유 제출용", d.apostille ? "동의" : "");
   return h;
 }
 
@@ -68,6 +58,12 @@ var FORM={
   org:{ orgName:"경기도 군포시", officeName:"군포시청 민원실" },
   sampleLabels:["작성예시(본인 신청)","작성예시(대리 신청)"],
   sampleKinds:["self","agent"],
+  /* 인쇄 준비 화면 — 종전 완료 화면 문구를 **행동**과 **참고**로 갈라 옮겼다.
+     ⛔ 문구를 새로 짓지 않았다. */
+  afterPrint:"인쇄한 뒤, 신청인이 서명·날인을 직접 하여 민원실에 제출하세요. "
+    +"신분증을 함께 준비하고, 대리 신청은 위임장과 대리인 신분증이 필요합니다.",
+  refInfo:"수수료는 증명서 1통당 1,000원(제적초본 500원, 열람·증명 1건당 200원)입니다.",
+
   rerenderOnSet:[],
 
   /* ⛔ **이 서식은 「가족관계등록 신고서」가 아니다.** 2026.08.29 담당자 확정본의
@@ -338,12 +334,9 @@ var FORM={
           +A.choiceHtml("disc_reason",["정확기재","본인·가족","재판소명","공용소명"],"해당하는 사유 하나를 고르세요.")+'</div>';
         return h; }},
 
-    {n:7, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:7, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤, 신청인이 서명·날인을 직접 하여 민원실에 제출하세요. '
-          +'신분증을 함께 준비하고, 대리 신청은 위임장과 대리인 신분증이 필요합니다. '
-          +'수수료는 증명서 1통당 1,000원(제적초본 500원, 열람·증명 1건당 200원)입니다.</div>';
+        return buildSummary();
       }}
   ],
 

@@ -22,20 +22,15 @@ function deathTime(){
   var d=state, hm=(d.d_deathHour?d.d_deathHour+"시":"")+(d.d_deathMin?" "+d.d_deathMin+"분":"");
   return [d.d_deathDate, hm].filter(function(x){ return x && x.trim(); }).join(" ");
 }
+/* ⛔ Review 는 **핵심 선택**만이다(2026.08.29 §2). 성명·주민등록번호·주소·전화·이메일·
+   자유입력은 가운데 PAPER 가 실시간으로 보여 주므로 여기서 되풀이하지 않는다. */
 function buildSummary(){
   var d=state, h='';
-  h+='<div class="sum-sec"><h4>사망자</h4>';
-  h+=sumRow("성명", deceasedName()+(d.d_sex?" · "+d.d_sex:""));
-  h+=sumRow("주민등록번호", d.d_jumin?formatJumin(d.d_jumin):"");
-  h+=sumRow("사망일시", deathTime());
-  h+=sumRow("사망장소", (d.d_place||"")+(d.d_place==="기타"&&d.d_placeEtc?" · "+d.d_placeEtc:"")
-      +(d.d_placeDetail?" ("+d.d_placeDetail+")":""));
-  h+=sumRow("주소", d.d_addr);
-  h+='</div>';
-  h+='<div class="sum-sec"><h4>신고인</h4>';
-  h+=sumRow("성명", (d.r_name||"")+(d.r_qual?" · "+d.r_qual:"")+(d.r_rel?" ("+d.r_rel+")":""));
-  h+=sumRow("전화", formatPhone(d.r_phone));
-  h+='</div>';
+  h+=sumRowIf("성별", d.d_sex);
+  h+=sumRowIf("사망 장소 구분", (d.d_place||"")
+    +(d.d_place==="기타" && d.d_placeEtc ? " · "+d.d_placeEtc : ""), 3);
+  h+=sumRowIf("③ 신고인 자격", d.r_qual);
+  h+=sumRowIf("㉯ 혼인 상태", d.d_marital);
   return h;
 }
 
@@ -63,6 +58,11 @@ var FORM={
     "필요 서류는 직원 확인을 따릅니다.",
     "여기서 접수되지는 않습니다."
   ],
+
+  /* 인쇄 준비 화면의 「인쇄한 뒤에 하실 일」 — 종전 완료 화면 문구 그대로. */
+  afterPrint:"인쇄한 뒤, 신고인이 서명 또는 날인을 직접 하여 민원실에 제출하세요. "
+    +"<b>사망진단서(또는 시체검안서) 원본</b>을 함께 내셔야 하며, "
+    +"그 밖의 첨부서류는 담당 직원이 안내합니다.",
 
   rerenderOnSet:["d_place"],
 
@@ -187,7 +187,7 @@ var FORM={
         if(!String(s.d_surKor||"").trim()) m.push("성(한글)");
         if(!String(s.d_givenKor||"").trim()) m.push("이름(한글)");
         if(!s.d_sex) m.push("성별");
-        if(!String(s.d_jumin||"").trim()) m.push("주민등록번호");
+        /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         if(!String(s.d_addr||"").trim()) m.push("주소");
         if(!String(s.d_headName||"").trim()) m.push("세대주 성명");
         if(!String(s.d_headRel||"").trim()) m.push("세대주와의 관계");
@@ -239,8 +239,12 @@ var FORM={
         h+=A.inputHtml({k:"d_deathHour", label:"시", req:true, half:true, ph:"9",
           help:"24시각제. 오후 2시 → 14"});   /* ⚠️ 출생과 **같은 문장**이다. 길어지면 반 칸에서 두 줄이 돼 짝이 어긋난다 */
         h+=A.inputHtml({k:"d_deathMin", label:"분", req:true, half:true, ph:"20"});
-        h+=A.inputHtml({k:"d_placeDetail", label:"사망 장소(상세)", req:true, ph:"예: ○○대학교병원 / 자택 주소",
-          help:"돌아가신 곳의 이름이나 주소."});
+        /* ⚠️ 2026.08.30 담당자 2차 — **주소까지만.** 종전에는 「돌아가신 곳의 이름이나 주소」라
+           안내하고 예시로 병원명을 보여 줬다. 담당자 확인: 병원명·건물명은 적지 않는다.
+           ⛔ 시설명·건물명을 적도록 유도하지 마라(예시·도움말 둘 다). */
+        h+=A.inputHtml({k:"d_placeDetail", label:"사망 장소(상세)", req:true,
+          ph:"예: 경기도 군포시 산본로 000",
+          help:"돌아가신 곳의 주소까지만 적어 주세요. 병원명이나 건물명은 적지 않습니다."});
         h+='<div class="field"><label class="field-label">사망 장소 구분 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("d_place",PLACE_OPTS,"해당하는 한 곳을 고르세요.")+'</div>';
         if(A.state.d_place==="기타")
@@ -262,7 +266,7 @@ var FORM={
       why:"신고인은 보통 동거친족(함께 살던 가족) 등입니다. 사망자와의 관계를 함께 적습니다.",
       required:function(s){ var m=[];
         if(!String(s.r_name||"").trim()) m.push("신고인 성명");
-        if(!String(s.r_jumin||"").trim()) m.push("신고인 주민등록번호");
+        /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         if(!s.r_qual) m.push("신고인 자격");
         if(!String(s.r_rel||"").trim()) m.push("사망자와의 관계");
         if(!String(s.r_addr||"").trim()) m.push("신고인 주소");
@@ -312,11 +316,9 @@ var FORM={
         return h;
       }},
 
-    {n:8, short:"완료", title:"작성 내용 확인", q:"입력한 내용을 확인하세요.", kind:"summary",
+    {n:8, short:"완료", title:"작성 내용 확인", q:"고르신 것만 다시 확인해 주세요.", kind:"summary",
       body:function(){
-        return buildSummary()
-          +'<div class="info-box">인쇄한 뒤, 신고인이 서명 또는 날인을 직접 하여 민원실에 제출하세요. '
-          +'<b>사망진단서(또는 시체검안서) 원본</b>을 함께 내셔야 하며, 그 밖의 첨부서류는 담당 직원이 안내합니다.</div>';
+        return buildSummary();
       }}
   ],
 
@@ -328,7 +330,10 @@ var FORM={
       d_addr:"경기도 군포시 산본로 000, 101동 1001호",
       d_headName:"김판석", d_headRel:"본인",
       d_deathDate:"2026.07.10", d_deathHour:"9", d_deathMin:"20",
-      d_placeDetail:"○○대학교병원", d_place:"의료기관", d_placeEtc:"",
+      /* ⛔ 작성예시에 **병원명·건물명을 넣지 마라**(2026.08.30 담당자 2차). 예시가 곧 본보기다 —
+         여기에 시설명이 있으면 안내문으로 아무리 막아도 그대로 따라 적는다.
+         ⚠️ 「의료기관」은 장소 **구분**(영표)이라 그대로 둔다 — 주소칸과 다른 것이다. */
+      d_placeDetail:"경기도 군포시 산본로 000", d_place:"의료기관", d_placeEtc:"",
       d_edu:"고등학교", d_marital:"사별",
       etc:"",
       r_name:"김철수", r_jumin:"7203151000000", r_qual:"동거친족", r_rel:"자(子)",
