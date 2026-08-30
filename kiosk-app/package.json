@@ -1,6 +1,6 @@
 {
   "name": "gunpo-minwon-kiosk",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "군포시 민원 서식 작성 도우미 (키오스크)",
   "author": "군포시청 민원실",
   "main": "main.js",
