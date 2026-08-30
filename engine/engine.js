@@ -383,6 +383,25 @@ function renderStepper(){
   el.stepper.setAttribute("aria-valuenow", pos);
   el.stepper.setAttribute("aria-valuetext", pos+" / "+TOTAL+" 단계 · "+STEPS[cur-1].short);
 }
+/* ══ 단계가 바뀔 때만 질문면을 짧게 들여보낸다 (2026.08.30 · 공통 마감 ⑤) ═══════
+   ⛔ **매번 돌리지 마라.** 선택지를 하나 누를 때마다 `renderAll()` 이 질문면을 다시
+      그리는데, 그때도 연출이 돌면 고를 때마다 화면이 들썩인다.
+   ⚠️ 그래서 「단계 번호가 달라졌을 때」만 class 를 다시 건다.
+   ⚠️ 줄여 달라고 한 사용자에게는 CSS 가 애니메이션을 통째로 끈다(§17) — 여기서
+      따로 갈라 두지 않아도 된다. class 만 붙고 아무 일도 일어나지 않는다.
+   ⛔ **이 둘은 최상위여야 한다.** 한 번 `renderStepper()` 안에 넣었다가 `stepMotion` 이
+      지역 함수가 되어 `renderStep()` 이 ReferenceError 로 죽었다 — 화면이 아니라
+      **인쇄물 16쪽**이 깨져서야 드러났다(2026.08.30). */
+var lastMotionStep=null;
+function stepMotion(step){
+  if(!el.wizBody) return;
+  if(step===lastMotionStep) return;
+  lastMotionStep=step;
+  el.wizBody.classList.remove("step-in");
+  void el.wizBody.offsetWidth;          // ⚠️ 리플로우 — 없으면 다시 타지 않는다
+  el.wizBody.classList.add("step-in");
+}
+
 function renderStep(){
   var def=FORM.STEPS[state.step-1];
   var act=activeSteps(), TOTAL=act.length, pos=act.indexOf(state.step)+1;
@@ -394,6 +413,7 @@ function renderStep(){
   el.wizTitle.textContent = (typeof def.title==="function") ? def.title(state) : def.title;
   el.wizCount.textContent="진행 "+pos+" / "+TOTAL;   // 여권과 같은 문구
   el.wizBody.innerHTML=renderStepBody(state.step);
+  stepMotion(state.step);
   el.stepWarn.textContent="";
   el.btnPrev.disabled = !prevActive(state.step);
   /* ⛔ 새 껍데기에서는 이모지·화살표 활자를 쓰지 않는다 — 선 아이콘이 껍데기 안에 있다.

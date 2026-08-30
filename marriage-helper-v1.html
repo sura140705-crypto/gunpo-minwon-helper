@@ -581,6 +581,24 @@ html.big{
   .btn.ghost:hover{background:var(--m-bg);border-color:var(--m-border-mid);}
   .btn:disabled{opacity:.45;cursor:default;}
 
+  /* ══ 눌림 반응 (2026.08.30 · 공통 마감 ⑤ Motion) ═════════════════════════
+     ⚠️ 종전에는 **9개 화면 어디에도 `:active` 가 없었다.** 손가락으로 눌렀을 때
+        화면이 아무 대꾸도 하지 않아, 눌린 것인지 몰라 두 번 누르는 일이 생긴다.
+     ⛔ 크게 움직이지 마라. 「눌렀다」만 알리면 된다 — 1px 내려앉고 그것으로 끝.
+        Idle 시연이 모션의 상한선이고, 여기는 그 절반 이하다(모션 원칙 §12). */
+  .btn:active:not(:disabled){transform:translateY(1px);}
+  .opt:active,.card-sub:active,.rail-step:active,.sum-edit:active{transform:translateY(1px);}
+
+  /* ══ 단계가 바뀔 때 질문면이 **아주 짧게** 들어온다 ═══════════════════════
+     ⚠️ 종전에는 단계가 뚝 바뀌었다. 같은 자리에 다른 글이 갑자기 서면 어디를 읽던
+        중이었는지 놓친다.
+     ⛔ **단계가 바뀔 때만**이다. 선택지를 누를 때마다 질문면은 다시 그려지지만
+        (`renderAll`), 그때 이 연출이 또 돌면 화면이 들썩인다 — 엔진·여권 모두
+        「단계 번호가 달라졌을 때만」 이 class 를 다시 건다.
+     ⛔ 값(160ms · 6px)을 키우지 마라. 작성 화면은 Idle 의 절반 이하다. */
+  .wiz-body.step-in{animation:stepIn 160ms var(--ease-out) both;}
+  @keyframes stepIn{ from{opacity:0;transform:translateY(6px);} to{opacity:1;transform:translateY(0);} }
+
   /* ===== 3영역 레이아웃 (2026.08.21 디자인 개편) =====
      Writing Desk(질문) · Paper(서식) · Companion Rail(진행·준비물).
      세 면의 바탕색이 조금씩 달라 선을 긋지 않아도 영역이 갈린다.
@@ -1699,7 +1717,13 @@ html.big .skip-link{font-size:14.5px;}
             title="담당자 점검용 · 가상 인물로 채웁니다"></button>
     <!-- ⛔ BAR 에 직접 인쇄 단추를 두지 않는다. 인쇄는 **작성 → 미리보기 → 인쇄** 하나로 간다
          (`docs/PRODUCT_SKIN_v1.md` §1-1). 확인하지 않고 찍으면 종이와 개인정보가 버려진다. -->
-    <button class="btn primary" id="btnPreview"><svg class="btn-ic" viewBox="0 0 24 24" fill="none"
+    <!-- ⚠️ 2026.08.30 — **Role ②(대표색 테두리·흰 면)** 다. 종전에는 `primary`(채운 파랑)라
+         본문의 [다음]과 **같은 강도**로 경쟁했다. 바로 아래 「메인으로」 규칙이 이미
+         「채운 파란 단추가 둘이면 어느 쪽이 진행인지 흐려진다」고 못박고 있었는데,
+         정작 이 단추가 그 상태였다. 이제 화면에서 **채운 파랑은 본문 [다음] 하나뿐**이다.
+         ⛔ `primary` 를 다시 붙이지 마라. BAR 는 도구 자리이지 진행하는 자리가 아니다.
+         ⚠️ 회색 `ghost`(작성예시·크게 보기)와도 갈린다 — 세 단계가 그대로 남는다. -->
+    <button class="btn" id="btnPreview"><svg class="btn-ic" viewBox="0 0 24 24" fill="none"
       stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"
       aria-hidden="true"><circle cx="10.6" cy="10.6" r="6.6"/><path d="M15.4 15.4L21 21"/></svg>
       <span>미리보기</span></button>
@@ -2659,6 +2683,25 @@ function renderStepper(){
   el.stepper.setAttribute("aria-valuenow", pos);
   el.stepper.setAttribute("aria-valuetext", pos+" / "+TOTAL+" 단계 · "+STEPS[cur-1].short);
 }
+/* ══ 단계가 바뀔 때만 질문면을 짧게 들여보낸다 (2026.08.30 · 공통 마감 ⑤) ═══════
+   ⛔ **매번 돌리지 마라.** 선택지를 하나 누를 때마다 `renderAll()` 이 질문면을 다시
+      그리는데, 그때도 연출이 돌면 고를 때마다 화면이 들썩인다.
+   ⚠️ 그래서 「단계 번호가 달라졌을 때」만 class 를 다시 건다.
+   ⚠️ 줄여 달라고 한 사용자에게는 CSS 가 애니메이션을 통째로 끈다(§17) — 여기서
+      따로 갈라 두지 않아도 된다. class 만 붙고 아무 일도 일어나지 않는다.
+   ⛔ **이 둘은 최상위여야 한다.** 한 번 `renderStepper()` 안에 넣었다가 `stepMotion` 이
+      지역 함수가 되어 `renderStep()` 이 ReferenceError 로 죽었다 — 화면이 아니라
+      **인쇄물 16쪽**이 깨져서야 드러났다(2026.08.30). */
+var lastMotionStep=null;
+function stepMotion(step){
+  if(!el.wizBody) return;
+  if(step===lastMotionStep) return;
+  lastMotionStep=step;
+  el.wizBody.classList.remove("step-in");
+  void el.wizBody.offsetWidth;          // ⚠️ 리플로우 — 없으면 다시 타지 않는다
+  el.wizBody.classList.add("step-in");
+}
+
 function renderStep(){
   var def=FORM.STEPS[state.step-1];
   var act=activeSteps(), TOTAL=act.length, pos=act.indexOf(state.step)+1;
@@ -2670,6 +2713,7 @@ function renderStep(){
   el.wizTitle.textContent = (typeof def.title==="function") ? def.title(state) : def.title;
   el.wizCount.textContent="진행 "+pos+" / "+TOTAL;   // 여권과 같은 문구
   el.wizBody.innerHTML=renderStepBody(state.step);
+  stepMotion(state.step);
   el.stepWarn.textContent="";
   el.btnPrev.disabled = !prevActive(state.step);
   /* ⛔ 새 껍데기에서는 이모지·화살표 활자를 쓰지 않는다 — 선 아이콘이 껍데기 안에 있다.
