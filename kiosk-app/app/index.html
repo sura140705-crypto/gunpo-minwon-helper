@@ -520,7 +520,9 @@ html.big{
   }
   .task-col{display:flex;flex-direction:column;min-width:0;overflow:hidden;
     background:var(--m-surface);border-right:1px solid var(--m-border);}
-  .ready-col{min-width:0;overflow-y:auto;background:var(--m-bg);
+  /* ⚠️ `position:relative` 는 **Idle 소개 덮개의 기준점**일 뿐이다(2026.08.30).
+     보이는 것은 하나도 바뀌지 않는다 — 덮개는 `html.demo` 에서만 나타난다. */
+  .ready-col{min-width:0;overflow-y:auto;background:var(--m-bg);position:relative;
     display:flex;flex-direction:column;align-items:center;justify-content:center;
     padding:40px 32px;}
   .rail-col{min-width:0;overflow-y:auto;background:var(--m-surface);
@@ -541,7 +543,9 @@ html.big{
     transition:border-color var(--dur-base) var(--ease-out);}
   .task-col.scrolls .ask-foot{border-top-color:var(--m-border);}
   /* 목록 카드 — **큰 글씨 = 시민이 하려는 일 / 작은 글씨 = 행정명칭**(철학 §3) */
-  .cards{display:flex;flex-direction:column;gap:5px;margin:0 0 6px;}
+  /* ⚠️ `position:relative` 는 **Idle 이동 블록의 기준점**일 뿐이다(2026.08.30).
+     보이는 것은 하나도 바뀌지 않는다 — 그 블록은 `html.demo` 에서만 나타난다. */
+  .cards{display:flex;flex-direction:column;gap:5px;margin:0 0 6px;position:relative;}
   .card{display:flex;align-items:center;gap:13px;width:100%;
     min-height:var(--row-h);padding:11px 13px;
     background:#fafafa;border:1.5px solid var(--m-border);border-radius:var(--m-r-row);
@@ -731,6 +735,105 @@ html.big{
     .task-col{overflow:visible;}
     .ask-body{overflow:visible;}
   }
+
+  /* ══ Idle Motion v2 — 아무도 쓰지 않을 때 도는 자동 시연 (2026.08.30) ════════
+     「대기화면은 광고판이 아니라 사용해도 된다는 신호다」(철학 §22)
+
+     ⛔ 이 블록의 규칙은 **전부 `html.demo` 안에서만** 산다. 사람이 화면을 만지는 순간
+        `stopDemo()` 가 그 class 를 떼므로 **실제 작성 화면은 종전 그대로 조용하다.**
+        모션 강도의 상한선이 여기다 — 작성 화면은 이것의 절반 이하로 둔다.
+     ⛔ 구조·레이아웃·색·타이포를 바꾸지 않는다. 이 블록은 **모션만** 얹는다.
+     ⛔ 무한 pulse · bounce · flash · carousel · gradient · 떠다니는 아이콘을 쓰지 않는다.
+        모든 연출은 **한 번 일어나고 멎는다**(`both` 로 끝 상태에 머문다).
+     ⚠️ `prefers-reduced-motion` 은 **두 겹**으로 막힌다 — 위 §17 블록이 animation 을
+        통째로 끄고, JS 의 `calmMotion()` 이 순회 자체를 시작하지 않는다.
+     ══════════════════════════════════════════════════════════════════════════ */
+
+  /* ① LEFT 가 **먼저** 옮겨 간다(240ms). 선택 표시가 점멸하지 않고 **다음 카드로
+        흘러가야** 하므로, 그 표시를 카드에서 떼어 **움직이는 블록 하나**에 맡긴다.
+     ⚠️ 블록은 카드 **위**에 얹힌다(z-index 2). 아래에 두면 지나가는 길의 카드들이
+        불투명한 `#fafafa` 라 **블록이 중간에 사라졌다 나타난다.**
+        6% 투명이라 지나가는 카드의 글자는 그대로 읽힌다.
+     ⚠️ 고른 카드는 제 배경·테두리를 **블록에 넘긴다**(투명). 그래야 두 겹으로 짙어지지
+        않는다 — 결과 색은 종전 「고른 카드」와 같다(흰 바탕 + `--m-a06` + `--m-a35` 테두리).
+     ⛔ 고르지 않은 카드는 **손대지 않는다.** Idle 이 돌아도 목록 자체는 그대로다. */
+  html.demo .card{transition:border-color 240ms var(--ease-move),
+                             background 240ms var(--ease-move);}
+  html.demo .card[aria-pressed="true"]{background:transparent;border-color:transparent;}
+  html.demo .card-selector{display:block;}
+  html.demo .card-ic{transition:background 240ms var(--ease-move),
+                                color 240ms var(--ease-move),
+                                transform 240ms var(--ease-move);}
+  html.demo .card-label,html.demo .card-arrow{transition:color 240ms var(--ease-move);}
+  html.demo .card[aria-pressed="true"] .card-ic{transform:scale(1.04);}
+
+  /* 이동 블록 — 자리와 높이는 JS 가 `--sel-y`·`--sel-h` 로 넘긴다(카드마다 높이가 다르고
+     「크게 보기」에서 또 달라진다. 값을 박아 두면 어긋난다).
+     ⛔ 기본은 `display:none` 이다 — 사람이 쓰는 화면에는 **없는 것과 같다.**
+     ⛔ `pointer-events:none` — 카드 누름을 가로채면 안 된다. */
+  .card-selector{display:none;}
+  html.demo .card-selector{position:absolute;left:0;right:0;top:0;
+    height:var(--sel-h,0px);transform:translateY(var(--sel-y,0px));
+    background:var(--m-a06);border:1.5px solid var(--m-a35);
+    border-radius:var(--m-r-row);pointer-events:none;z-index:2;
+    transition:transform 240ms var(--ease-move),height 240ms var(--ease-move);}
+
+  /* ② 기존 CENTER 퇴장(200ms) → ③ 다 사라지기를 기다리지 않고 110ms 에 새 CENTER 가
+        겹쳐 올라온다(390ms). 두 동작이 물려 있어 끊겨 보이지 않는다.
+     ⛔ 화면을 가로지르는 slide 가 아니다. 세로로 12~15px 만 움직인다. */
+  html.demo #ready.pv-leave{animation:idleOut 200ms var(--ease-in) both;}
+  html.demo #ready.pv-enter{animation:idleIn 390ms var(--ease-out) both;}
+  @keyframes idleOut{ to{opacity:0;transform:translateY(-12px);} }
+  @keyframes idleIn{ from{opacity:0;transform:translateY(15px);} to{opacity:1;transform:translateY(0);} }
+
+  /* ④ CENTER 안이 한꺼번에 나타나지 않는다 — 제목 → 준비물 → 신청서 → 시작하기 순.
+     ⚠️ 마지막 줄이 340+340=680ms 에 멎는다. 그 뒤로는 **다음 전환까지 정지**해
+        읽을 시간을 준다(4.5초 중 3.8초가 정지 상태다). */
+  /* ⛔ `#ready` 를 반드시 쓴다. 위쪽에 `#ready > *{animation:m-ready-in …}` 이 이미 있고
+        **ID 선택자라 class 만으로는 이기지 못한다** — 2026.08.30 에 실제로 졌다
+        (규칙은 멀쩡한데 stagger 가 통째로 무시됐다). */
+  /* ⚠️ 지연을 `--rise-delay` 로 넘긴다. 아래 CTA 규칙이 `animation` 을 통째로 다시
+     적어야 하는데, 그때도 **제 차례의 지연**을 그대로 쓰게 하려는 것이다.
+     ⚠️ 준비물이 없는 서식(증명서·부동산)은 자식이 넷이라 [작성 시작하기]가 세 번째다 —
+        번호를 박아 두면 그때 순서가 어긋난다. */
+  html.demo #ready.pv-enter > *{--rise-delay:40ms;
+    animation:idleRise 340ms var(--ease-out) var(--rise-delay) both;}
+  html.demo #ready.pv-enter > *:nth-child(2){--rise-delay:120ms;}
+  html.demo #ready.pv-enter > *:nth-child(3){--rise-delay:200ms;}
+  html.demo #ready.pv-enter > *:nth-child(4){--rise-delay:280ms;}
+  html.demo #ready.pv-enter > *:nth-child(5){--rise-delay:340ms;}
+  @keyframes idleRise{ from{opacity:0;transform:translateY(9px);} to{opacity:1;transform:translateY(0);} }
+
+  /* ⑤ [작성 시작하기]는 내용이 다 나온 뒤 **한 번만** 짧게 밝힌다(620~1220ms).
+        「이 화면은 직접 쓰셔도 됩니다」라는 신호다. ⛔ 계속 뛰지 않는다.
+     ⚠️ 이 줄에 위의 `idleRise` 도 함께 적는다 — 뒤에 오는 규칙이 그것을 덮기 때문이다.
+     ⚠️ 색을 박아 넣지 않는다. 기관 대표색이 바뀌면 이 강조도 따라 바뀌어야 한다
+        (`--m-a18` → `transparent`). */
+  html.demo #ready.pv-enter .ready-go{
+    animation:idleRise 340ms var(--ease-out) var(--rise-delay) both,
+              idleCta 600ms var(--ease-out) 620ms both;}
+  @keyframes idleCta{
+    0%{box-shadow:0 0 0 0 var(--m-a18);transform:scale(1);}
+    45%{box-shadow:0 0 0 8px transparent;transform:scale(1.02);}
+    100%{box-shadow:0 0 0 0 transparent;transform:scale(1);}
+  }
+
+  /* ⑥ 소개 — **자동 시연에 들어갈 때 한 번만** 1.4초. 이후 순환마다 되풀이하지 않는다.
+     ⛔ 별도 대기화면이 아니다. CENTER 위에만 잠깐 덮이고 LEFT·RIGHT 는 그대로 보인다.
+     ⚠️ 기본이 `display:none` 이다 — 사람이 쓰는 화면에는 **없는 것과 같다.** */
+  .idle-intro{display:none;}
+  html.demo .idle-intro.show{display:flex;position:absolute;inset:0;z-index:5;
+    align-items:center;justify-content:center;padding:40px 32px;
+    background:var(--m-bg);pointer-events:none;
+    animation:idleIntro 1400ms var(--ease-move) both;}
+  @keyframes idleIntro{ 0%{opacity:0;} 15%,74%{opacity:1;} 100%{opacity:0;} }
+  .idle-intro-box{text-align:center;max-width:var(--m-center-max);}
+  .idle-intro-kicker{font-size:var(--m-fs-badge);font-weight:600;color:var(--blue);
+    margin-bottom:11px;}
+  .idle-intro-title{font-size:var(--m-fs-title);font-weight:var(--fw-heavy);
+    color:var(--m-ink);letter-spacing:-.03em;line-height:1.25;word-break:keep-all;}
+  .idle-intro-sub{margin-top:11px;font-size:var(--m-fs-lead);color:var(--m-ink-read);
+    line-height:1.5;word-break:keep-all;}
 </style>
 <!--GUNPO-LOGO-->
 <style>
@@ -902,6 +1005,18 @@ html.big{
           **지어내지 않는다.** 다음 단계에서 설정으로 붙인다. -->
   <section class="ready-col" aria-live="polite">
     <div class="ready" id="ready"></div>
+    <!-- Idle 소개 — 자동 시연에 **들어갈 때 한 번만** 1.4초 덮인다(2026.08.30).
+         ⛔ 대기화면이 아니다. 사라진 뒤에는 이 Main 이 스스로 민원을 짚어 나간다.
+         ⛔ 순환마다 되풀이하지 않는다.
+         ⚠️ `aria-hidden` — 읽어 주는 장치에는 이 덮개가 없는 것과 같다.
+            (실제 안내는 옆 기둥과 CENTER 가 이미 말하고 있다.) -->
+    <div class="idle-intro" id="idleIntro" aria-hidden="true">
+      <div class="idle-intro-box">
+        <div class="idle-intro-kicker" id="idleIntroKicker"></div>
+        <div class="idle-intro-title">복잡한 민원서식,<br>질문에 답하면 자동으로 작성해 드립니다.</div>
+        <div class="idle-intro-sub">준비물 확인부터 신청서 작성, 인쇄까지 한 곳에서 차근차근 안내합니다.</div>
+      </div>
+    </div>
   </section>
 
   <!-- RIGHT — 조용한 공통 안내. 어떤 상태에서도 유지된다 -->
@@ -1465,8 +1580,33 @@ function cardHtml(f){
 }
 
 function renderCards(){
-  el("cards").innerHTML = visibleForms().map(cardHtml).join("");
+  /* ⚠️ 이동 블록도 여기서 함께 만든다. `innerHTML` 을 갈아 끼우므로 밖에 두면 지워진다.
+     ⚠️ `aria-hidden` — `role="list"` 안의 항목이 아니라 **칠해진 자국**일 뿐이다. */
+  el("cards").innerHTML = visibleForms().map(cardHtml).join("")
+    + '<div class="card-selector" id="cardSelector" aria-hidden="true"></div>';
   syncScrollHint();
+  placeSelector(true);
+}
+
+/* 이동 블록을 고른 카드에 맞춘다. ⚠️ 카드 높이는 글자 길이·「크게 보기」에 따라 달라지므로
+   **잴 때마다 다시 읽는다.** ⛔ 값을 박아 두지 마라. */
+function syncSelector(){
+  var box=el("cards"), sel=el("cardSelector");
+  if(!box || !sel) return;
+  var on=box.querySelector('.card[aria-pressed="true"]');
+  if(!on){ sel.style.opacity="0"; return; }
+  var wrap=on.parentNode || on;          // `.card-wrap` — 목록의 실제 한 칸
+  sel.style.opacity="1";
+  sel.style.setProperty("--sel-y", wrap.offsetTop+"px");
+  sel.style.setProperty("--sel-h", wrap.offsetHeight+"px");
+}
+/* `immediate` 면 **미끄러지지 않고 그 자리에** 놓는다 — 시연이 시작되는 순간이나 목록을
+   다시 만든 직후에 블록이 화면을 가로질러 날아오지 않게 한다. */
+function placeSelector(immediate){
+  var sel=el("cardSelector"); if(!sel) return;
+  if(immediate) sel.style.transition="none";
+  syncSelector();
+  if(immediate){ void sel.offsetWidth; sel.style.transition=""; }
 }
 
 /* 목록이 구를 때만 바닥 단추 위에 실선을 긋는다.
@@ -1490,12 +1630,16 @@ function renderReady(){
   var f=formByKey(selected);
   if(!f){ box.innerHTML=""; return; }
   var items=(f.ready||[]);
+  /* 한 줄 설명. ⚠️ **Idle 에서만** 「이 민원에서 무엇을 해 드리는가」로 바뀐다
+     (2026.08.30 · 자동 시연은 멀리서도 무엇 하는 곳인지 알려야 한다).
+     ⛔ 사람이 만지는 순간 `html.demo` 가 떨어져 **종전 문구로 돌아온다.**
+     ⛔ 새 행정정보·준비물·업무요건을 만들지 않는다 — `IDLE_TAGLINE` 참조. */
+  var lead = items.length ? "작성 전에 필요한 것을 준비해 주세요." : (f.desc||"");
+  if(demoing() && IDLE_TAGLINE[f.key]) lead = IDLE_TAGLINE[f.key];
   var h='<div class="ready-head">'
       + '<span class="form-badge">'+esc(f.formal)+'</span>'
       + '<h2 class="ready-title">'+esc(f.citizen)+'</h2>'
-      + '<p class="ready-lead">'
-      +   (items.length ? "작성 전에 필요한 것을 준비해 주세요." : esc(f.desc||""))
-      + '</p></div>';
+      + '<p class="ready-lead">'+esc(lead)+'</p></div>';
 
   if(items.length){
     /* 3장이면 3열, 4장이면 4열. ⛔ 칸을 채우려고 없는 준비물을 만들지 않는다. */
@@ -1534,11 +1678,33 @@ function renderReady(){
   box.innerHTML=h;
 }
 
-/* 고른 민원을 바꾼다. ⚠️ 목록과 가운데가 **같은 값 하나**를 본다. */
+/* 고른 카드의 **표시만** 바꾼다 — ⛔ 목록 DOM 을 다시 만들지 않는다.
+   ⚠️ 종전에는 고를 때마다 `renderCards()` 가 목록을 통째로 다시 그렸다. 사람이 한 번
+      누를 때는 표가 나지 않지만, Idle 이 4.5초마다 도는 지금은 **새로 만든 카드에
+      전환이 걸리지 않아** 선택이 옮겨 가지 않고 점멸한다(게다가 4.5초마다 카드
+      여덟 벌을 버린다). class 만 바꾸면 CSS 전환이 그대로 흐른다.
+   ⚠️ 목록 자체가 바뀌는 일(취급 서식 설정)은 실행 중에 없다. 그래서 여기서
+      다시 그릴 필요가 없고, 카드가 아직 없을 때만 `false` 를 돌려준다. */
+function markSelected(){
+  var box=el("cards"); if(!box) return false;
+  var list=box.querySelectorAll(".card");
+  if(!list.length) return false;
+  for(var i=0;i<list.length;i++){
+    list[i].setAttribute("aria-pressed",
+      list[i].getAttribute("data-key")===selected ? "true" : "false");
+  }
+  syncSelector();                        // 이동 블록이 새 자리로 미끄러진다
+  return true;
+}
+
+/* 고른 민원을 바꾼다. ⚠️ 목록과 가운데가 **같은 값 하나**를 본다.
+   ⛔ 여기에는 모션이 없다. **사람이 누르는 길**이라 조용해야 한다(모션 원칙 §12).
+      Idle 의 전환 리듬은 `demoSelect()` 가 따로 맡는다. */
 function selectForm(key){
   selected=key;
-  renderCards();
+  if(!markSelected()) renderCards();   // 처음 한 번은 만들어야 한다
   renderReady();
+  demoShownKey=selected;               // CENTER 에 그려진 것이 무엇인지 항상 참이게
 }
 
 /* ══ RIGHT — 조용한 공통 안내 ═════════════════════════════════════════════
@@ -1600,10 +1766,16 @@ function renderRail(){
       나머지는 그 자리를 비워 둔 채로 순회한다(지어내지 않는다).
    ══════════════════════════════════════════════════════════════════════════ */
 var DEMO_ENABLED = true;
-/* 한 민원에 머무는 시간. ⚠️ 2.8초 → **8초**(2026.08.28). 종전에는 종이에 줄이 그어지는
-   것만 보면 됐지만, 지금은 준비물 넉 장과 신청서 한 장을 **읽어야** 한다.
-   8종이면 한 바퀴 64초 — 지나가던 사람이 한 민원은 끝까지 보게 하는 것이 목적이다. */
-var DEMO_STEP_MS = 8000;
+/* 한 민원에 머무는 시간. ⚠️ 8초 → **4.5초**(2026.08.30 · Idle Motion v2).
+   8초는 「멈춰 있는 화면」으로 보였다. 4.5초면 8종 한 바퀴가 **36초**라, 지나가던
+   사람이 한 자리에 서서 전체를 볼 수 있다.
+   ⚠️ 등장 연출이 0.68초에 멎으므로 나머지 **3.8초는 정지 상태**다 — 읽을 시간이 있다.
+   ⛔ 4.0~5.0초 밖으로 나가지 마라. 더 빠르면 광고 배너가 되고, 더 느리면 다시 멈춘
+      화면이 된다. */
+var DEMO_STEP_MS = 4500;
+/* 자동 시연에 **들어갈 때 한 번만** 보여 주는 소개의 길이(CSS `idleIntro` 와 같은 값).
+   ⛔ 순환마다 되풀이하지 않는다. */
+var DEMO_INTRO_MS = 1400;
 /* 시연이 한 걸음 옮긴 직후, 커서 아래 요소가 바뀌어 브라우저가 **합성 mousemove** 를
    던진다. 그것에 즉시 꺼지지 않도록 걸음마다 이 시간만 움직임을 무시한다.
    ⛔ 누름·키·터치는 가드 없이 **언제나** 즉시 멈춘다. */
@@ -1617,6 +1789,28 @@ var DEMO_BACK_MS = (function(){
   return (typeof c.idleMs==="number" && c.idleMs>0) ? c.idleMs : 3*60*1000;
 })();
 var demoTimer=null, backTimer=null, demoAt=0, lastArm=0;
+/* 전환 도중(퇴장 → 등장 사이)과 소개를 재는 시계. ⛔ 중첩되지 않게 **언제나 하나씩**만
+   살아 있고, `stopDemo()` 가 둘 다 지운다.
+   `demoShownKey` 는 **지금 CENTER 에 실제로 그려져 있는** 민원이다. 전환 한가운데에서
+   멈출 때 LEFT 를 이것에 도로 맞춰, 목록과 가운데가 서로 다른 민원을 가리키지 않게 한다. */
+var demoSwap=null, introTimer=null, demoShownKey=null;
+
+/* Idle 에서만 쓰는 한 줄 설명 — 「이 민원에서 무엇을 해 드리는가」.
+   ⛔ **새 행정정보·준비물·업무요건을 만들지 않는다.** 전부 카탈로그의 `desc`·`ready` 가
+      이미 말하고 있는 것을 홍보 문장으로 다시 쓴 것뿐이다. 접수 요건·서류 기준을
+      여기서 정하지 마라 — 그 원본은 담당자 확인본이다.
+   ⛔ 여기 없는 서식은 종전 문구(`desc`)가 그대로 쓰인다. 다른 기관이 서식을 더해도
+      화면이 비지 않는다. */
+var IDLE_TAGLINE = {
+  passport:  "사진과 신분증을 준비하시면, 질문에 따라 신청서를 함께 작성합니다.",
+  birth:     "부모와 출생 정보를 차근차근 여쭤보고 신고서를 채워 드립니다.",
+  marriage:  "혼인당사자와 증인 정보를 순서대로 확인하며 신고서를 작성합니다.",
+  death:     "필요한 항목을 빠뜨리지 않도록 질문에 따라 신고서를 작성합니다.",
+  naming:    "개명 전·후 이름과 법원 허가 사항을 순서대로 여쭤봅니다.",
+  divorce:   "협의·재판 여부에 따라 해당하는 항목만 골라 안내합니다.",
+  cert:      "필요한 증명서와 통수를 고르시면 발급 신청서를 작성합니다.",
+  realestate:"복잡한 거래신고 항목을 하나씩 확인하며 순서대로 작성합니다."
+};
 
 /* ⚠️ CSS 의 `prefers-reduced-motion` 규칙은 transition/animation 만 끈다.
       **JS 로 도는 시연은 여기서 직접 갈라야 한다.** */
@@ -1626,6 +1820,33 @@ function calmMotion(){
 }
 function demoing(){ return document.documentElement.classList.contains("demo"); }
 
+/* ══ 한 걸음 — **LEFT 가 먼저 옮겨 가고 CENTER 가 뒤따른다** (Idle Motion v2)
+   ① LEFT 선택 이동(240ms) → ② 기존 CENTER 퇴장(200ms) →
+   ③ **110ms 에 겹쳐** 새 CENTER 등장(390ms) → ④ 내부 stagger → ⑤ CTA 한 번.
+   ⛔ 사람이 누르는 `selectForm()` 과 갈라 둔다 — 그쪽은 모션 없이 즉시다.
+   ⚠️ 실제로 바뀌는 값은 `selected` 하나이고, 그리는 함수도 종전과 **같은 것**을 쓴다.
+      시연 전용 렌더러를 따로 두지 않는다 — 그래야 시연 화면이 실제 화면과 같다. */
+function demoSelect(key){
+  selected=key;
+  markSelected();                       // ① LEFT 가 **먼저** 움직인다
+  var box=el("ready");
+  if(!box) return;
+  /* 줄여 달라고 한 사용자에게는 겹침 없이 바로 갈아 끼운다(여기까지 올 일은 없다) */
+  if(calmMotion()){ renderReady(); demoShownKey=selected; return; }
+
+  box.classList.remove("pv-enter");
+  box.classList.add("pv-leave");        // ② 기존 CENTER 가 물러난다
+  clearTimeout(demoSwap);
+  demoSwap=setTimeout(function(){       // ③ 다 사라지기를 **기다리지 않는다**
+    demoSwap=null;
+    renderReady();
+    demoShownKey=selected;
+    box.classList.remove("pv-leave");
+    void box.offsetWidth;               // ⚠️ 리플로우 — 없으면 등장이 다시 타지 않는다
+    box.classList.add("pv-enter");
+  }, 110);
+}
+
 function startDemo(){
   if(!DEMO_ENABLED) return;
   clearTimeout(backTimer); backTimer=null;
@@ -1633,24 +1854,67 @@ function startDemo(){
   /* 줄여 달라고 한 사용자에게는 **아예 돌리지 않는다**(자동 시연 없음) */
   if(calmMotion()) return;
   /* ⚠️ 그 기관이 취급하는 것만 돈다(`formOn`). 한 가지뿐이면 순회가 뜻이 없으므로
-     돌리지 않는다 — 같은 화면이 8초마다 다시 그려질 뿐이다. */
+     돌리지 않는다 — 같은 화면이 4.5초마다 다시 그려질 뿐이다. */
   var forms=visibleForms();
   if(forms.length<2) return;
   document.documentElement.classList.add("demo");
   /* 지금 골라진 것 **다음**부터 시작한다 — 같은 화면을 한 번 더 보여 주지 않는다 */
   var at=0;
   for(var i=0;i<forms.length;i++) if(forms[i].key===selected) at=i+1;
-  (function step(){
-    selectForm(forms[at % forms.length].key);   // ⚠️ 누를 때와 같은 경로
+
+  function step(){
+    demoSelect(forms[at % forms.length].key);
     at++;
     demoAt=+new Date();
     demoTimer=setTimeout(step, DEMO_STEP_MS);
-  })();
+  }
+
+  /* 소개를 **한 번만** 띄우고 그 뒤에 순회를 시작한다.
+     ⚠️ 덮개는 CENTER 만 가린다 — LEFT·RIGHT 는 그대로 보인다. */
+  var intro=el("idleIntro"), kick=el("idleIntroKicker");
+  if(intro){
+    /* 기관이 바뀌면 이름도 바뀐다 — BAR 의 그 글자를 그대로 가져다 쓴다(지어내지 않는다) */
+    if(kick && !kick.textContent){
+      var h1=document.querySelector(".brand-tx h1");
+      kick.textContent = h1 ? h1.textContent : "";
+    }
+    intro.classList.remove("show");
+    void intro.offsetWidth;
+    intro.classList.add("show");
+    clearTimeout(introTimer);
+    introTimer=setTimeout(function(){
+      introTimer=null;
+      intro.classList.remove("show");
+      step();                            // 소개가 걷힌 뒤부터 순회
+    }, DEMO_INTRO_MS);
+    return;
+  }
+  step();
 }
 
-/* 시연을 멈춘다. ⛔ 화면을 되돌리지 않는다 — 보이는 그대로 바로 조작할 수 있어야 한다. */
+/* 시연을 멈춘다. ⛔ 화면을 되돌리지 않는다 — 보이는 그대로 바로 조작할 수 있어야 한다.
+   ⚠️ **전환 한가운데에서 멈출 수 있다.** 남은 시계와 animation class 를 전부 걷어내지
+      않으면 가운데가 반쯤 사라진 채 굳거나 소개 덮개가 남는다.
+
+   ⛔ **여기서 `renderReady()` 를 부르지 마라 — 사용자의 첫 누름이 삼켜진다.**
+      이 함수는 `pointerdown` 에 실려 돌아간다. 그 순간 CENTER 를 다시 그리면 눌린
+      단추가 DOM 에서 사라지고, 브라우저는 mousedown 과 mouseup 의 **공통 조상**에
+      `click` 을 던진다 — 위임 처리기의 `closest("[data-go]")` 가 빈손이 되어
+      [작성 시작하기] 한 번이 없던 일이 된다.
+   ✅ 대신 아직 그려지지 않은 전환은 **LEFT 를 되돌려** 맞춘다. `markSelected()` 는
+      class 만 바꾸므로 눌린 요소가 살아 있다. */
 function stopDemo(){
   clearTimeout(demoTimer); demoTimer=null;
+  clearTimeout(introTimer); introTimer=null;
+  if(demoSwap){
+    clearTimeout(demoSwap); demoSwap=null;
+    /* CENTER 는 아직 앞 민원이다 — 목록을 그쪽으로 도로 맞춘다(둘이 갈리지 않게) */
+    if(demoShownKey){ selected=demoShownKey; markSelected(); }
+  }
+  var box=el("ready");
+  if(box) box.classList.remove("pv-leave","pv-enter");
+  var intro=el("idleIntro");
+  if(intro) intro.classList.remove("show");
   document.documentElement.classList.remove("demo");
 }
 function armDemo(){ clearTimeout(backTimer); backTimer=setTimeout(startDemo, DEMO_BACK_MS); }
@@ -1718,10 +1982,11 @@ function bindEvents(){
     this.setAttribute("aria-pressed", on?"true":"false");
     el("btnBigLabel").textContent = on ? "일반 보기로" : "크게 보기";
     syncScrollHint();          // 글자가 커지면 목록이 구를 수 있다
+    placeSelector(true);       // 카드 높이가 달라졌다 — 블록을 그 자리에서 다시 맞춘다
   });
 
   /* 화면 크기가 바뀌어도 다시 잰다(다른 기관의 다른 해상도·회전) */
-  window.addEventListener("resize", syncScrollHint);
+  window.addEventListener("resize", function(){ syncScrollHint(); placeSelector(true); });
 }
 
 function init(){
@@ -1731,6 +1996,7 @@ function init(){
   selected = forms.length ? forms[0].key : null;
   renderCards();
   renderReady();
+  demoShownKey = selected;
   renderRail();
   bindEvents();
   armDemo();
