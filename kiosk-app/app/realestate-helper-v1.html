@@ -3457,14 +3457,24 @@ init();
     numEl=box.querySelector("#idleNum");
     box.querySelector("#idleStay").addEventListener("click", function(e){ e.stopPropagation(); reset(); });
   }
-  function goHome(){ try{ location.href=HOME; }catch(e){ location.reload(); } }
+  /* 처음 화면(허브)으로 되돌린다.
+     ⚠️ `fromIdle` 이면 `?from=idle` 을 붙인다 — 허브가 그것을 보고 **기다리지 않고 바로**
+        시연을 시작한다. 여기까지 온 사람은 3분 무입력에 30초 경고까지 지나쳤으니 떠난 것이
+        확실한데, 허브에서 1분을 더 정지해 있으면 키오스크가 도합 4분을 멈춰 있게 된다.
+     ⛔ **인쇄 후 복귀에는 붙이지 않는다.** 그 사람은 아직 종이를 집으며 화면 앞에 서 있다.
+     ⛔ 사람이 직접 누르는 [메인으로](`href="index.html"`)에도 붙지 않는다 — 방금 누른
+        화면이 갑자기 움직이면 안 된다. */
+  function goHome(fromIdle){
+    var url = HOME + (fromIdle ? "?from=idle" : "");
+    try{ location.href=url; }catch(e){ location.reload(); }
+  }
   function showWarn(){
     if(!ov) build();
     remain=WARN_SEC; if(numEl) numEl.textContent=remain;
     ov.style.display="flex";
     tickTimer=setInterval(function(){
       remain--; if(numEl) numEl.textContent=remain;
-      if(remain<=0){ clearInterval(tickTimer); tickTimer=null; goHome(); }
+      if(remain<=0){ clearInterval(tickTimer); tickTimer=null; goHome(true); }
     },1000);
   }
   function clearAll(){ if(warnTimer){clearTimeout(warnTimer);warnTimer=null;} if(tickTimer){clearInterval(tickTimer);tickTimer=null;} }
@@ -3494,7 +3504,7 @@ init();
       '<div style="font-size:17px;color:#333;line-height:1.6;">개인정보 보호를 위해 <b>화면을 처음으로 되돌립니다.</b><br>인쇄가 제대로 되지 않았으면 창구 직원에게 말씀해 주세요.</div>'+
       '</div>';
     document.body.appendChild(pg);
-    setTimeout(goHome, PRINTED_MS);
+    setTimeout(function(){ goHome(false); }, PRINTED_MS);   /* ⛔ 인쇄 후에는 표시를 붙이지 않는다 */
   }
   window.addEventListener("afterprint", showPrinted);
   /* 인쇄 직전 안내 — 네이티브 alert 은 크기·색을 바꿀 수 없어(하단이 잘림)
