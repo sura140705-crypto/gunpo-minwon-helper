@@ -230,7 +230,9 @@ var FORM={
         return m; },
       body:function(A){ var h='';
         h+=A.inputHtml({k:"t_name", label:"대상자 성명(한글)", req:true, half:true, ph:"장당정"});
-        h+=A.inputHtml({k:"t_nameHan", label:"성명(한자)", half:true, ph:"張堂井"});
+        /* ⚠️ 대상자는 한글도 **성명 한 칸**이라 성/이름 경계가 없다 — 묶음이 하나뿐이고,
+           그래서 **성씨 우선을 쓰지 않는다**(어디까지가 성인지 추론하지 않는다). */
+        h+=A.hanjaGridHtml("tName", [["t_name","t_nameHan"]], "성명 한자 찾기");
         h+=A.inputHtml({k:"t_regBase", label:"등록기준지", ph:"경기도 군포시 …",
           help:"가족관계등록부의 기준이 되는 주소. 우편으로 신청할 때는 반드시 필요합니다."});
         h+=A.inputHtml({k:"t_jumin", label:"주민등록번호", type:"jumin", ph:"900101-0000000",

@@ -845,6 +845,91 @@ html.big{
   .field{margin-bottom:21px;max-width:var(--question-max);}
   .field-label{display:block;font-size:var(--fs-label);font-weight:var(--fw-heavy);margin-bottom:9px;}
   .q-help{font-size:14px;color:var(--muted);margin:-2px 0 10px;line-height:1.5;}
+  /* ══ 한자 격자 (2026.09.01) ══════════════════════════════════════════════
+     3행 — 한글 음절 / [고르기] / 고른 한자. 칸 수는 이름 길이대로 늘어난다
+     (복성 2 + 이름 5 = **최대 7칸**). ⛔ 칸 수를 고정하지 마라.
+     ⚠️ **세로다 — 한 줄이 한 글자**(2026.09.01 · 사용자 지시). 「김 [金] │ 후보…」가
+        한 줄이고 다음 글자가 그 아래로 온다. ⛔ 가로로 되돌리지 마라 — 후보가
+        「그 글자 오른쪽」에 있어야 무엇을 고르는 중인지 분명하다.
+     ⚠️ **한글 글자 자체가 단추다.** [고르기] 단추를 따로 두면 눈이 한 번 더 간다. */
+  .hj-rows{display:flex;flex-direction:column;gap:7px;}
+  /* 묶음 이름(성 / 이름) — 종이는 칸이 나뉘어 있어서 시민이 「어디까지가 성인지」를
+     눈으로 잡을 수 있어야 한다. ⛔ 프로그램이 성의 길이를 추론하지 않는다는 뜻이기도 하다. */
+  .hj-part{font-size:13px;font-weight:var(--fw-heavy);color:var(--muted);margin:5px 0 1px;}
+  .hj-part:first-child{margin-top:0;}
+  .hj-line{display:flex;align-items:center;gap:9px;}
+  .hj-mark{width:14px;text-align:center;font-size:14px;color:var(--muted);}
+  .hj-on .hj-mark{color:var(--blue);}
+  .hj-done .hj-mark{color:var(--blue);}
+  .hj-kor{flex:0 0 auto;width:50px;text-align:center;font-family:inherit;
+    font-size:19px;font-weight:var(--fw-heavy);line-height:1.1;padding:9px 0;cursor:pointer;
+    border:1.5px solid var(--m-border-mid);background:var(--m-bg);color:var(--m-ink);
+    border-radius:var(--r-sm);transition:border-color var(--dur-quick) var(--ease-out),
+    background var(--dur-quick) var(--ease-out);}
+  .hj-kor:hover,.hj-kor:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  .hj-on .hj-kor{border-color:var(--blue);background:var(--m-a10);color:var(--blue);}
+  /* ⚠️ 펼친 줄에서는 `input`(직접 입력·[한자] 키), 접힌 줄에서는 `button`(눌러서 다시 고르기).
+        둘이 **같은 크기·같은 모양**이어야 줄이 열리고 닫힐 때 흔들리지 않는다.
+     📌 고른 한자보다 **후보(.hj-t)가 더 크다** — 이 기능에서 가장 중요한 정보는 후보다
+        (2026.09.01 사용자 지시 §3). ⛔ 전체 글자 크기를 키워 맞추지 마라. */
+  .hj-cell{flex:0 0 auto;width:48px;box-sizing:border-box;text-align:center;font-size:22px;
+    line-height:1.15;font-family:inherit;padding:7px 2px;border:1.5px solid var(--m-border-mid);
+    background:var(--m-control);color:var(--m-ink);border-radius:var(--r-sm);}
+  .hj-wait{font-size:13.5px;color:var(--muted);}
+  /* 고른 한자의 뜻 — 「긴 장」. ⚠️ 터치 자리에는 마우스 올림 안내가 닿지 않으므로
+     **글자 옆에 적는다.** 훈음 자료가 없는 글자는 이 자리가 빈다. */
+  .hj-mean{flex:1 1 auto;min-width:0;font-size:13.5px;color:var(--muted);line-height:1.4;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hj-cell:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--m-a10);}
+  .hj-slot{cursor:pointer;min-height:44px;transition:border-color var(--dur-quick) var(--ease-out),
+    background var(--dur-quick) var(--ease-out);}
+  .hj-slot:hover,.hj-slot:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  .hj-say{font-size:14px;color:var(--blue);font-weight:var(--fw-heavy);}
+  .hj-alt{font-family:inherit;font-size:13px;padding:6px 12px;cursor:pointer;
+    border:1px solid var(--m-border-mid);background:var(--m-control);color:var(--muted);
+    border-radius:var(--r-sm);}
+  .hj-alt:hover,.hj-alt:focus-visible{border-color:var(--m-a35);color:var(--m-ink);}
+  /* 후보 — 지금 고르는 글자 **아래**에 전체 폭으로. 오른쪽에 두면 단추가 작아진다. */
+  .hj-cands{margin:8px 0 4px 23px;border:1px solid var(--m-border-mid);
+    border-radius:var(--m-r-card);background:var(--m-bg);padding:11px 12px;}
+  .hj-none{font-size:14px;color:var(--muted);line-height:1.5;}
+  /* ⛔ 한 쪽에 `HJ_PER`(12) 개만. 수십 개를 한꺼번에 내밀면 고를 수가 없다 —
+     굴리는 목록이 아니라 **쪽을 넘기는** 방식이다.
+     ⚠️ **후보가 이 화면에서 가장 커야 한다**(2026.09.01 사용자 지시 §3) —
+        시민이 눈으로 훑어 자기 한자를 찾아내는 곳이 여기다. 56×56 · 글자 26px. */
+  .hj-tiles{display:flex;flex-wrap:wrap;gap:9px;}
+  .hj-t{font-family:inherit;font-size:26px;line-height:1;width:56px;height:56px;cursor:pointer;
+    border:1.5px solid var(--m-border-mid);background:var(--m-control);color:var(--m-ink);
+    border-radius:var(--r-sm);transition:border-color var(--dur-quick) var(--ease-out),
+    background var(--dur-quick) var(--ease-out);}
+  .hj-t:hover,.hj-t:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  .hj-t.sel{border-color:var(--blue);background:var(--m-a10);color:var(--blue);}
+  .hj-nav{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:11px;}
+  .hj-pg{font-size:12.5px;color:var(--muted);}
+  /* 지금까지 고른 이름 — 한글 위, 한자 아래 */
+  .hj-sum{margin-top:12px;padding:10px 12px;background:var(--m-bg);
+    border-radius:var(--m-r-card);display:flex;flex-direction:column;gap:3px;}
+  .hj-sum-k{font-size:15px;color:var(--muted);letter-spacing:.06em;}
+  .hj-sum-h{font-size:21px;font-weight:var(--fw-heavy);letter-spacing:.06em;}
+  .hj-sum-h.hj-dim{color:var(--muted);font-weight:400;}
+  .hj-start{font-family:inherit;font-size:15px;font-weight:var(--fw-heavy);
+    margin-top:10px;padding:11px 18px;cursor:pointer;
+    border:1.5px solid var(--blue);background:var(--m-a06);color:var(--blue);
+    border-radius:var(--r-sm);}
+  .hj-again{margin-top:10px;}
+  .hj-sum.hj-ok{background:var(--m-a06);}
+  .hj-nofind{margin-left:auto;}
+  /* 「찾는 한자가 없어요」 뒤의 안내 — ⛔ 임의로 추측해 채우지 않는다는 뜻이다 */
+  .hj-note{margin-top:9px;font-size:14px;line-height:1.55;color:var(--m-ink);
+    background:var(--warn-face);border:1px solid var(--warn-line);
+    border-radius:var(--r-sm);padding:9px 11px;}
+  html.big .hj-kor{width:60px;font-size:23px;}
+  html.big .hj-cell{width:56px;font-size:26px;}
+  html.big .hj-t{font-size:30px;width:64px;height:64px;}
+  html.big .hj-sum-h{font-size:25px;}
+  /* ⛔ 한자 격자는 **종이에 나가지 않는다** — 값은 이미 서식 위에 얹혀 있다. */
+  @media print{ .hj-rows{display:none;} }
+
   /* 작은 선택지(renderGroup) — 두 줄 목록. 지금 여권 화면은 큰 카드를 쓰지만,
      엔진 서식과 공유하는 구조라 스타일은 남겨 둔다. */
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -1843,6 +1928,7 @@ document.querySelectorAll(".bg").forEach(function(i){ i.src=FORM_IMG; });
 </script>
 <script>
 "use strict";
+
 /* =====================================================================
    부동산거래계약 신고서 (부동산 거래신고 등에 관한 법률 시행규칙 별지 제1호서식,
    개정 2026. 2. 6.) — FORM 설정
@@ -2948,13 +3034,17 @@ function inputHtml(f){
     +(f.type==="jumin"||f.type==="phone"||f.type==="money"?'inputmode="numeric" ':'')+'autocomplete="off"></div>';
   return h;
 }
+/* ⚠️ `aria-pressed` 는 **눌린 상태를 색 말고도 알리는 유일한 길**이다(2026.09.01).
+   `.sel` 은 CSS 로만 보이므로 화면낭독기에는 「선택됨」이 전혀 전달되지 않았다.
+   ⛔ 지우지 마라 — 화면은 한 픽셀도 바뀌지 않지만 지우면 접근성이 조용히 되돌아간다.
+      `.sel` 을 붙이거나 떼는 자리마다 이 속성도 같이 가야 한다. */
 function choiceHtml(field, opts, help){
   var h='';
   if(help) h+='<div class="q-help">'+esc(help)+'</div>';
   h+='<div class="opts row">';
   for(var i=0;i<opts.length;i++){
     var sel=state[field]===opts[i]?" sel":"";
-    h+='<button type="button" class="opt'+sel+'" data-set="'+field+'" data-val="'+esc(opts[i])+'">'+esc(opts[i])+'</button>';
+    h+='<button type="button" class="opt'+sel+'" aria-pressed="'+(sel?"true":"false")+'" data-set="'+field+'" data-val="'+esc(opts[i])+'">'+esc(opts[i])+'</button>';
   }
   h+='</div>';
   return h;
@@ -2965,9 +3055,271 @@ function choiceHtml(field, opts, help){
       껍데기에 이미 있던 것이고, 그것을 쓰지 않으면 `.opt` 가 세로 쌓기라 아이콘이 줄을 바꾼다. */
 function toggleHtml(field, label){
   var on=state[field]?" sel":"";
-  return '<button type="button" class="opt'+on+'" data-toggle="'+field+'">'+
+  return '<button type="button" class="opt'+on+'" aria-pressed="'+(on?"true":"false")+'" data-toggle="'+field+'">'+
          '<span class="opt-main">'+svgIcon(state[field]?"boxOn":"box","ic-sm")+
          '<span>'+esc(label)+'</span></span></button>';
+}
+/* ══ 한자 격자 (2026.09.01) ═══════════════════════════════════════════════════
+   한글 성·이름은 **지금처럼 따로** 받는다. 한자는 그 음절을 가로로 늘어놓고 하나씩 고른다.
+   3행 — 맨 위 한글 음절 · 가운데 [고르기] · 맨 아래 고른 한자(그 칸은 직접 입력도 된다).
+
+   ⛔ **인명용 한자로 후보를 거르지 않는다**(2026.09.01 결정). 이름에 쓸 수 있는 한자를
+      정하는 것은 담당자 판단이고, 이 격자는 「아는 한자를 편하게 넣게」 까지만 관여한다.
+   ⚠️ 성/이름 경계는 **화면에 이름표로 드러내지 않되 내부로는 지킨다.** 고른 값을
+      `_surHan`/`_givenHan` 으로 다시 나눠 넣어야 종이의 성칸·이름칸이 맞는다.
+      경계에는 옅은 세로선만 둔다 — 종이는 칸이 나뉘어 있어서 시민이 눈으로 잡을 수 있어야 한다.
+   ⚠️ **한글을 고치면 그 자리의 한자를 지운다**(`__hjkor_` 에 고를 때의 한글을 적어 둔다).
+      안 지우면 「최군포 → 崔軍浦」 뒤에 한글만 「최군표」로 바꿔도 浦 가 남는다 —
+      AGENTS.md 가 「조건 변경 뒤 잔상」을 실제 구현 결함으로 못박아 둔 것이 이것이다.
+   📌 한 칸은 한 글자이고 **비워 두어도 된다** — 순우리말 이름은 한자가 아예 없다.
+   📌 칸 수는 고정이 아니다. 복성(제갈·남궁) + 이름 5자면 **7칸**이 된다. */
+var HJ_OPEN=null;          // 지금 후보를 펼친 칸 "gid:번호". 개인정보가 아니다(자리 번호뿐)
+/* 그린 격자의 구성(gid → {parts,label}). 누를 때 「어느 한자키의 몇 번째 칸인지」를 되찾고,
+   한글을 치는 동안 격자만 다시 그리는 데 쓴다.
+   ⚠️ 값이 아니라 **키 이름**만 담는다 — 개인정보가 아니다. */
+var HJ_PARTS={};
+/* ⚠️ **한글을 치는 즉시 격자가 따라와야 한다**(2026.09.01 시험에서 나온 결함).
+   `onInput` 은 보통 입력칸에 대해 `renderForm()`(종이)만 부르므로, 단계 본문 안의 격자는
+   단계를 떠났다 돌아와야 바뀌었다 — 이름을 다 적어도 칸이 안 생겼다.
+   ⛔ `renderStep()` 으로 통째로 다시 그리면 **치는 중에 커서가 날아간다.**
+      그래서 격자 블록만 제자리에서 갈아 끼운다. */
+function renderHanjaGrids(changed){
+  var nodes=document.querySelectorAll("[data-hj-gid]"), i, j;
+  for(i=0;i<nodes.length;i++){
+    var gid=nodes[i].getAttribute("data-hj-gid"), cfg=HJ_PARTS[gid];
+    if(!cfg) continue;
+    /* 바뀐 칸이 이 격자의 **한글 칸**일 때만 갈아 끼운다 — 한 단계에 입력칸이 여럿인
+       서식(출생 등)에서 엉뚱한 타이핑마다 격자를 헐지 않게. */
+    if(changed){
+      var mine=false;
+      for(j=0;j<cfg.parts.length;j++) if(cfg.parts[j][0]===changed) mine=true;
+      if(!mine) continue;
+    }
+    nodes[i].outerHTML=hanjaGridHtml(gid, cfg.parts, cfg.label);
+  }
+}
+function hjSyll(s){ return String(s==null?"":s).replace(/\s/g,"").split(""); }
+/* ⚠️ 고르는 중인 값은 **초안**(`__hjpick_`)에 두고, 서식 값(`_surHan`/`_givenHan`)에는
+   **묶음을 다 고른 뒤에만** 넣는다(2026.09.01 사용자 지시 §7).
+   ⛔ 반쯤 고른 문자열을 서식 값으로 확정하지 마라 — 종전에는 `珉` 하나만 골라도 그것이
+      그대로 종이에 올랐다. 「선택 진행 상태」와 「확정된 값」은 다른 것이다.
+   📌 빈 자리는 초안에서 **공백으로 자리를 지킨다** — 가운데를 건너뛰어도 어긋나지 않게. */
+function hjChars(hanKey,n){
+  var v=String(state["__hjpick_"+hanKey]||""), a=[], i;
+  for(i=0;i<n;i++){ var c=v.charAt(i); a.push(c===" "?"":c); }
+  return a;
+}
+function hjWrite(hanKey,a){
+  var i, full=(a.length>0);
+  for(i=0;i<a.length;i++) if(!a[i]) full=false;
+  state["__hjpick_"+hanKey]=a.map(function(c){ return c||" "; }).join("");
+  state[hanKey]= full ? a.join("") : "";
+}
+/* 한글이 바뀌면 **그 묶음의 한자를 통째로 지운다**(사용자 지시 §8) —
+   성 한글을 고치면 성 한자만, 이름 한글을 고치면 이름 한자만.
+   ⛔ 글자 단위로 살려 두지 마라. 한글과 한자가 어긋난 채 남는 것이 더 위험하다. */
+function hjSync(korKey,hanKey){
+  var kor=hjSyll(state[korKey]).join(""), memo="__hjkor_"+hanKey, was=state[memo];
+  if(was===kor) return;
+  if(was==null){
+    /* 처음 그릴 때 — 이미 들어 있는 한자(작성예시·직접 적어 둔 값)를 초안으로 삼는다.
+       ⛔ 여기서 지우면 작성예시가 화면에서 사라진다. */
+    state[memo]=kor;
+    if(state["__hjpick_"+hanKey]==null) state["__hjpick_"+hanKey]=String(state[hanKey]||"");
+    return;
+  }
+  state["__hjpick_"+hanKey]=""; state[hanKey]=""; state[memo]=kor;
+}
+var HJ_PAGE=0;              // 펼친 글자의 후보 쪽 번호. 다른 글자로 옮기면 0 으로 돌아간다
+/* 한 쪽에 보여 줄 후보 수. ⚠️ 고르는 창의 글자는 **작게**, 고른 한자는 **크게**
+   (2026.09.01 사용자 지시). 작게 하니 한 쪽에 더 들어가고, 깊이 묻히는 글자도 줄었다
+   (「수」의 `洙` 가 3쪽 → 2쪽). ⛔ 다시 키우려면 쪽수가 늘어난다는 것을 알고 키워라. */
+var HJ_PER=12;
+var HJ_NOTE=null;           // 「찾는 한자가 없어요」를 누른 자리 — 안내를 한 번 띄운다
+/* 마우스를 올리면 무슨 한자인지 — 「長 긴 장」. 훈음 자료가 없으면 한자만 낸다.
+   📌 자료는 `tools/build-hanja-table.py` 가 `hanja-meaning.txt` 에서 읽어 `HANJA_MEAN` 으로 낸다. */
+function hjMean(ch){
+  return (ch && typeof HANJA_MEAN!=="undefined" && HANJA_MEAN[ch]) || "";
+}
+function hjTip(ch){
+  if(!ch) return "";
+  var m=hjMean(ch);
+  return m ? ch+" "+m : ch;
+}
+/* 글자 목록을 만든다. parts: [[한글키, 한자키, 묶음이름?], …]
+   분리형은 둘(성·이름), 통합형은 하나(성명·본관). */
+function hjCols(parts){
+  var cols=[], i, j;
+  for(i=0;i<parts.length;i++){
+    hjSync(parts[i][0],parts[i][1]);
+    var syl=hjSyll(state[parts[i][0]]), cur=hjChars(parts[i][1],syl.length);
+    /* ⚠️ **성 자리인가.** 분리형일 때 첫 묶음만 성이다. 통합형(성명 한 칸)은 어디까지가
+       성인지 알 수 없으므로 **성씨 우선을 쓰지 않는다** — 복성이면 두 글자인데 글자 수로는
+       갈리지 않는다(여권 복성 사고와 같은 이유). ⛔ 프로그램이 성의 길이를 추론하지 않는다. */
+    for(j=0;j<syl.length;j++)
+      cols.push({p:i, i:j, kor:syl[j], han:cur[j],
+                 isSur:(parts.length>1 && i===0),
+                 head:(j===0 ? (parts[i][2]||"") : "")});
+  }
+  return cols;
+}
+/* 다음으로 고를 글자 — **뒤쪽**에서 아직 한자가 없는 첫 글자. 없으면 -1.
+   ⛔ 앞으로 되돌아 감싸지 마라 — 건너뛴 글자로 다시 끌려가 제자리를 돈다. */
+function hjNext(cols,from){
+  var i;
+  for(i=from+1;i<cols.length;i++) if(!cols[i].han) return i;
+  return -1;
+}
+/* 처음 시작할 자리 — 아직 안 고른 첫 글자(없으면 -1) */
+function hjFirst(cols){ return hjNext(cols,-1); }
+function hanjaGridHtml(gid,parts,label){
+  HJ_PARTS[gid]={parts:parts, label:label};
+  var cols=hjCols(parts), i, p, openIdx=-1;
+  for(i=0;i<cols.length;i++) if(HJ_OPEN===gid+":"+i) openIdx=i;
+
+  /* ⛔ 제목에 [선택] 배지를 달지 마라(사용자 지시 §5) — 아래 안내가 이미 그 말을 한다. */
+  var h='<div class="field hj" data-hj-gid="'+esc(gid)+'">'
+      +'<label class="field-label">'+esc(label||"한자 찾기")+'</label>';
+  if(!cols.length)
+    return h+'<div class="q-help">위 칸에 <b>한글</b>을 먼저 적어 주세요. 그러면 여기에서 '
+      +'한 글자씩 한자를 고를 수 있습니다. <b>비워 두셔도 됩니다</b> — 접수 시 확인해 드립니다.</div></div>';
+  h+='<div class="q-help">한글 이름을 보면서 한 글자씩 한자를 골라주세요.</div>';
+
+  /* 세로 아코디언 — **고른 글자는 한 줄로 접고, 지금 고를 글자만 펼친다**(2026.09.01 · 사용자 설계).
+     ⛔ 가로로 되돌리지 마라. 아래로만 자라야 이름이 길어져도 화면을 침범하지 않는다.
+     ⛔ 후보를 전부 펼치지 마라 — 「유」는 후보가 111자다. */
+  h+='<div class="hj-rows" role="group">';
+  for(i=0;i<cols.length;i++){
+    p=cols[i];
+    var key=gid+":"+i, open=(openIdx===i), done=!!p.han;
+    if(p.head) h+='<div class="hj-part">'+esc(p.head)+'</div>';
+    /* 줄의 모습은 셋뿐이다(사용자 지시 §2·§5).
+         고른 글자     ✓ 장  張  [바꾸기]
+         고르는 글자   ● 장  [칸]  한자를 골라 주세요   + 아래에 후보
+         아직인 글자   · 국  아직 선택하지 않음
+       ⛔ 아직인 글자에 [고르기] 를 달지 마라 — 고르면 **저절로** 다음 글자가 열린다.
+       📌 펼친 줄에서만 한자 칸이 `input` 이다 — 직접 적고 [한자] 키로 바꾸는 길을 막지 않는다. */
+    h+='<div class="hj-row'+(open?" hj-on":"")+(done?" hj-done":"")+'">'
+      +'<div class="hj-line">'
+      +'<span class="hj-mark" aria-hidden="true">'+(open?"●":(done?"✓":"·"))+'</span>'
+      +'<button type="button" class="hj-kor" aria-expanded="'+(open?"true":"false")+'" '
+      +'data-hj-open="'+esc(key)+'" aria-label="'+esc(p.kor)+' — 한자 고르기">'+esc(p.kor)+'</button>';
+    if(open)
+      h+='<input class="hj-cell" maxlength="1" autocomplete="off" aria-label="'+esc(p.kor)+' 자리의 한자" '
+        +'data-hj-cell="'+esc(key)+'" value="'+esc(p.han)+'">'
+        +'<span class="hj-say">한자를 골라 주세요</span>';
+    else if(done)
+      /* ⚠️ 뜻을 **글자 옆에 그대로 적는다.** 마우스 올림 안내만으로는 안 된다 —
+         이 자리는 터치 키오스크라 올릴 마우스가 없는 자리도 있다.
+         📌 훈음 자료가 없는 글자는 이 자리가 그냥 빈다(2026.09.01). */
+      h+='<button type="button" class="hj-cell hj-slot" data-hj-open="'+esc(key)+'" '
+        +'title="'+esc(hjTip(p.han))+'" aria-label="'+esc(p.kor)+' 자리의 한자 '+esc(hjTip(p.han))+'">'
+        +esc(p.han)+'</button>'
+        +'<span class="hj-mean">'+esc(hjMean(p.han))+'</span>'
+        +'<button type="button" class="hj-alt" data-hj-open="'+esc(key)+'">바꾸기</button>';
+    else
+      h+='<span class="hj-wait">아직 선택하지 않음</span>';
+    h+='</div>';
+    if(open) h+=hjCandsHtml(gid,i,p);
+    h+='</div>';
+  }
+  h+='</div>';
+
+  /* 지금까지 고른 이름 — 한글과 한자를 나란히. 아직 안 고른 자리는 `_` 로 비워 둔다. */
+  var kor="", han="", anyHan=false;
+  for(i=0;i<cols.length;i++){
+    if(i>0 && cols[i].p!==cols[i-1].p){ kor+=" "; han+=" "; }
+    kor+=cols[i].kor; han+=cols[i].han||"_";
+    if(cols[i].han) anyHan=true;
+  }
+  var doneAll=(hjFirst(cols)<0);
+  h+='<div class="hj-sum'+(doneAll?" hj-ok":"")+'"><span class="hj-sum-k">'+esc(kor)+'</span>'
+    +'<span class="hj-sum-h'+(anyHan?"":" hj-dim")+'">'+esc(han)+'</span></div>';
+  /* 다 골랐으면 **최종 확인** 자리다 — 통째로 다시 고르는 길을 준다(사용자 지시 §7).
+     줄마다 있는 [바꾸기] 는 한 글자만 고칠 때 쓴다. */
+  if(doneAll)
+    h+='<button type="button" class="hj-alt hj-again" data-hj-reset="'+esc(gid)+'">한자 다시 선택</button>';
+  else if(openIdx<0)
+    h+='<button type="button" class="hj-start" data-hj-open="'+esc(gid+":"+hjFirst(cols))+'">'
+      +esc(label||"한자 찾기")+'</button>';
+  /* ⛔ 임의로 추측해 채우지 않는다. 못 찾으면 비워 두는 것이 정답이다(사용자 지시 §6). */
+  if(HJ_NOTE===gid)
+    h+='<div class="hj-note">찾는 한자가 없으면 <b>한자는 비워두셔도 됩니다.</b> 접수 시 확인해 주세요.</div>';
+  return h+'</div>';
+}
+/* 한 글자의 후보. 성 칸이면 **성씨 한자를 맨 앞으로** 당긴다.
+   ⚠️ 성/이름 경계를 아는 이 화면만 할 수 있는 일이다 — 이름 칸에는 하지 않는다.
+      교육용 기초한자에 성씨 글자가 대부분 빠져 있어서, 이것이 없으면 「최」의 첫 후보가
+      `催`, 「강」이 `剛` 이 된다(성씨 `崔`·`姜` 는 한참 뒤).
+   ⛔ **순서일 뿐 거르지 않는다.** 그리고 순서에 「자주 쓰는」·「인명용」 같은 **이름표를
+      붙이지 않는다**(2026.09.01 사용자 지시) — 무엇을 근거로 앞에 둔 것인지 단정할 수 없다. */
+/* ⚠️ **글꼴이 그리지 못하는 글자는 후보에서 뺀다**(2026.09.01 · 실측에서 나온 결함).
+   Unihan 의 `kHangul` 에는 확장 한자(U+3400~ CJK Ext A, U+20000~ Ext B…)가 섞여 있는데,
+   윈도우 기본 글꼴이 그리지 못해 화면에 **빈 네모(◆)** 로 나온다. 그것을 누르면
+   ⛔ **종이에도 안 찍힐 수 있는 글자가 서식에 실린다.** 눌러지는 빈 네모를 남겨 두지 마라.
+   📌 남기는 범위는 **한중일 통합 한자(U+4E00~9FFF)와 호환 한자(U+F900~FAFF)** 다.
+      실제 인명·본관에 쓰는 한자는 전부 이 안에 있다.
+   ⛔ 표(`hanja-table.js`)는 건드리지 않았다 — 거르는 것은 화면의 몫으로 두었다. */
+function hjDrawable(s){
+  var out="", i, c;
+  for(i=0;i<s.length;i++){
+    c=s.charCodeAt(i);
+    if((c>=0x4E00 && c<=0x9FFF) || (c>=0xF900 && c<=0xFAFF)) out+=s.charAt(i);
+  }
+  return out;
+}
+function hjCandsHtml(gid,idx,p){
+  var list=hjDrawable((typeof HANJA_MAP!=="undefined" && HANJA_MAP[p.kor])||""), j, k;
+  if(p.isSur && typeof HANJA_SURNAME!=="undefined" && HANJA_SURNAME[p.kor]){
+    var sur=HANJA_SURNAME[p.kor], rest="";
+    for(k=0;k<list.length;k++) if(sur.indexOf(list.charAt(k))<0) rest+=list.charAt(k);
+    list=sur+rest;
+  }
+  var h='<div class="hj-cands">';
+  if(!list) return h+'<div class="hj-none">「'+esc(p.kor)+'」 음으로 쓰는 한자를 찾지 못했습니다. '
+    +'왼쪽 칸에 직접 적어 주세요.</div></div>';
+  /* 쪽 나누기 — 한 번에 12개만. 수십 개를 한꺼번에 내밀면 고를 수가 없다. */
+  var pages=Math.ceil(list.length/HJ_PER), pg=Math.min(Math.max(HJ_PAGE,0),pages-1);
+  var from=pg*HJ_PER, part=list.slice(from,from+HJ_PER);
+  h+='<div class="hj-tiles">';
+  for(j=0;j<part.length;j++){
+    var c=part.charAt(j), tip=hjTip(c);
+    h+='<button type="button" class="hj-t'+(c===p.han?" sel":"")+'" '
+      +'aria-pressed="'+(c===p.han?"true":"false")+'" title="'+esc(tip)+'" aria-label="'+esc(tip)+'" '
+      +'data-hj-put="'+esc(gid+":"+idx+":"+c)+'">'+esc(c)+'</button>';
+  }
+  h+='</div><div class="hj-nav">';
+  if(pages>1){
+    if(pg>0) h+='<button type="button" class="hj-alt" data-hj-page="'+(pg-1)+'">← 이전 한자</button>';
+    if(pg<pages-1) h+='<button type="button" class="hj-alt" data-hj-page="'+(pg+1)+'">다른 한자 보기 →</button>';
+    h+='<span class="hj-pg">'+(pg+1)+' / '+pages+'</span>';
+  }
+  /* ⛔ 「건너뛰기」가 아니라 「찾는 한자가 없어요」다(사용자 지시 §6) —
+     시민이 잘못한 것처럼 읽히면 안 된다. 누르면 비우고 안내를 낸다. */
+  h+='<button type="button" class="hj-alt hj-nofind" data-hj-none="'+esc(gid+":"+idx)+'">'
+    +'찾는 한자가 없어요</button>';
+  return h+'</div></div>';
+}
+/* 입력칸 목록을 한 번에 그린다. 항목이 `{hanja:{gid,parts,label}}` 이면 한자 찾기를 낸다.
+   ⚠️ 혼인·이혼처럼 `personFields(p).map(A.inputHtml)` 로 그리던 서식이 **순서 그대로**
+      한자 찾기를 끼울 수 있게 하려고 둔다. ⛔ 목록 밖에서 따로 그리지 마라 —
+      한자 칸은 한글 칸 **바로 아래**에 있어야 한다. */
+function fieldsHtml(list){
+  var h="", i, f;
+  for(i=0;i<list.length;i++){
+    f=list[i];
+    h += f.hanja ? hanjaGridHtml(f.hanja.gid, f.hanja.parts, f.hanja.label) : inputHtml(f);
+  }
+  return h;
+}
+/* 한 글자에 값을 넣는다. `parts` 를 다시 받아야 어느 한자키의 몇 번째인지 알 수 있다. */
+function hjPut(parts,col,ch){
+  var i, n=0;
+  for(i=0;i<parts.length;i++){
+    var len=hjSyll(state[parts[i][0]]).length;
+    if(col<n+len){ var a=hjChars(parts[i][1],len); a[col-n]=ch; hjWrite(parts[i][1],a); return; }
+    n+=len;
+  }
 }
 function sumRow(k,val,step){
   var empty=!val;
@@ -2989,7 +3341,8 @@ function sumRowIf(k,val,step){
 
 // 서식 config의 단계 body(API)에 넘길 헬퍼 묶음
 var API={ get state(){return state;}, esc:esc, inputHtml:inputHtml, choiceHtml:choiceHtml,
-  toggleHtml:toggleHtml, sumRow:sumRow, sumRowIf:sumRowIf, num:num,
+  toggleHtml:toggleHtml, hanjaGridHtml:hanjaGridHtml, fieldsHtml:fieldsHtml,
+  sumRow:sumRow, sumRowIf:sumRowIf, num:num,
   formatJumin:formatJumin, formatPhone:formatPhone, formatMoney:formatMoney, digits:digits };
 
 function renderStepBody(step){
@@ -3233,7 +3586,16 @@ function scrollTop(){ el.wizBody.scrollTop=0; window.scrollTo(0,0); }
 
 /* 7) 이벤트 */
 function onInput(e){
-  var t=e.target, f=t.getAttribute("data-f"); if(!f) return;
+  var t=e.target;
+  /* 한자 격자의 칸 — 직접 적거나 한자 키로 바꾼 경우. ⚠️ `renderForm()` 만 부른다.
+     `renderAll()` 은 화면을 다시 그려서 **치는 중에 커서가 날아간다.** */
+  var hc=t.getAttribute("data-hj-cell");
+  if(hc){
+    var q=hc.split(":");
+    hjPut(HJ_PARTS[q[0]].parts, +q[1], String(t.value||"").slice(0,1));
+    renderForm(); return;
+  }
+  var f=t.getAttribute("data-f"); if(!f) return;
   var typ=t.getAttribute("data-t"), val=t.value;
   if(typ==="jumin"){ val=t.value.replace(/\D/g,"").slice(0,13); state[f]=val; t.value=formatJumin(val);
     if(FORM.onJuminChange) FORM.onJuminChange(f, val, state);
@@ -3242,14 +3604,44 @@ function onInput(e){
   else if(typ==="money"){ val=t.value.replace(/\D/g,"").slice(0,15); state[f]=val; t.value=formatMoney(val); }
   else { state[f]=val; }
   renderForm();
+  renderHanjaGrids(f);  // ⚠️ 한글 이름을 치는 즉시 격자가 따라온다. 커서는 그대로 남는다
 }
 function onBlurDate(e){
   var t=e.target; if(t.getAttribute("data-t")!=="date") return;
   var f=t.getAttribute("data-f"); state[f]=formatDateFlexible(state[f]); t.value=state[f]; renderForm();
 }
 function onClick(e){
-  var t=e.target.closest("[data-set],[data-toggle],[data-next],[data-goto],[data-childinc],[data-inc]");
+  var t=e.target.closest("[data-set],[data-toggle],[data-next],[data-goto],[data-childinc],[data-inc],"
+                        +"[data-hj-open],[data-hj-put],[data-hj-page],[data-hj-none],[data-hj-reset]");
   if(!t) return;
+  /* 한자 찾기 — 펼치기/닫기 · 쪽 넘기기 · 고르기 · 「찾는 한자가 없어요」 · 다시 선택 */
+  if(t.hasAttribute("data-hj-open")){
+    var key=t.getAttribute("data-hj-open");
+    HJ_OPEN=(!key||HJ_OPEN===key)?null:key;
+    HJ_PAGE=0; HJ_NOTE=null;      // 다른 글자로 옮기면 후보는 첫 쪽부터
+    renderAll(); return;
+  }
+  if(t.hasAttribute("data-hj-page")){ HJ_PAGE=+t.getAttribute("data-hj-page"); renderAll(); return; }
+  if(t.hasAttribute("data-hj-reset")){
+    /* 다 고른 뒤 [한자 다시 선택] — 그 화면의 한자를 비우고 첫 글자부터 다시 */
+    var rg=t.getAttribute("data-hj-reset"), rp=HJ_PARTS[rg].parts, ri;
+    for(ri=0;ri<rp.length;ri++){ state["__hjpick_"+rp[ri][1]]=""; state[rp[ri][1]]=""; }
+    HJ_OPEN=rg+":"+hjFirst(hjCols(rp)); HJ_PAGE=0; HJ_NOTE=null;
+    renderAll(); return;
+  }
+  if(t.hasAttribute("data-hj-put") || t.hasAttribute("data-hj-none")){
+    var none=t.hasAttribute("data-hj-none");
+    var q=(none?t.getAttribute("data-hj-none"):t.getAttribute("data-hj-put")).split(":");
+    var gid=q[0], col=+q[1];
+    hjPut(HJ_PARTS[gid].parts, col, none?"":(q[2]||""));
+    /* ⚠️ **고르면 다음 글자로 저절로 넘어간다**(사용자 설계 §2).
+       [다음] 을 따로 누르게 하지 않는다 — 시민이 할 일은 「보고 누르기」뿐이어야 한다.
+       ⛔ 앞으로 감싸지 않는다. 남은 글자가 없으면 닫는다. */
+    var nx=hjNext(hjCols(HJ_PARTS[gid].parts), col);
+    HJ_OPEN = nx<0 ? null : gid+":"+nx;
+    HJ_PAGE=0; HJ_NOTE = none ? gid : null;
+    renderAll(); return;
+  }
   if(t.hasAttribute("data-set")){
     var k=t.getAttribute("data-set"), val=t.getAttribute("data-val");
     state[k]=(state[k]===val)?"":val;   // 같은 항목 다시 누르면 해제(토글)
@@ -3429,13 +3821,15 @@ function askConfirm(message, onYes){
 }
 
 /* 초기화 / 예시 */
+/* ⚠️ `HJ_OPEN` 도 함께 지운다 — 남겨 두면 초기화 뒤에도 후보가 펼쳐진 채로 시작한다.
+   개인정보는 아니지만(자리 번호뿐) 「처음부터」가 처음처럼 보이지 않는다. */
 function resetAll(){
   askConfirm("입력한 모든 내용을 지우고 처음부터 다시 시작할까요?", function(){
-    state=createEmptyState(); renderAll(); scrollTop();
+    state=createEmptyState(); HJ_OPEN=null; HJ_PAGE=0; HJ_NOTE=null; renderAll(); scrollTop();
   });
 }
 function fillSample(kind){
-  state=createEmptyState();
+  state=createEmptyState(); HJ_OPEN=null; HJ_PAGE=0; HJ_NOTE=null;
   if(FORM.applySample) FORM.applySample(state, kind);
   renderAll(); scrollTop();
 }

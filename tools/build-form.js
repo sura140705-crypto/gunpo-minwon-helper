@@ -35,13 +35,20 @@ const base   = read(useProduct ? 'engine/base-product.html' : 'engine/base.html'
 const engine = read('engine/engine.js');
 const config = config0;
 const bg     = read('engine/assets/' + name + '.b64').trim();
+/* 한자 후보 표 — `tools/build-hanja-table.py` 가 만든다(약 250KB · 뜻 포함).
+   ⚠️ **쓰는 서식에만 싣는다.** 부동산에는 한자 칸이 아예 없어서, 넣으면 250KB 를
+      아무도 안 쓰는 자리에 지고 간다. config 가 한자 찾기를 부르는지로 가른다.
+   ⚠️ 옛 껍데기(`engine/base.html`)에는 이 자리가 없다. */
+const usesHanja = /hanjaGridHtml|\bhanja\s*:/.test(config0);
+const hanja  = (useProduct && usesHanja) ? read('engine/hanja-table.js') : '';
 
 let html = base
+  .replace('/*{{HANJA}}*/', safe(hanja))
   .replace('/*{{CONFIG}}*/', safe(config))
   .replace('/*{{ENGINE}}*/', safe(engine))
   .replace('__BGDATA__', bg);
 
-if (html.indexOf('/*{{CONFIG}}*/') >= 0 || html.indexOf('/*{{ENGINE}}*/') >= 0 || html.indexOf('__BGDATA__') >= 0) {
+if (html.indexOf('/*{{HANJA}}*/') >= 0 || html.indexOf('/*{{CONFIG}}*/') >= 0 || html.indexOf('/*{{ENGINE}}*/') >= 0 || html.indexOf('__BGDATA__') >= 0) {
   console.error('경고: 치환되지 않은 플레이스홀더가 남아 있습니다.'); process.exit(1);
 }
 

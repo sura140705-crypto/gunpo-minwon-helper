@@ -63,7 +63,10 @@ var FORM={
   stateKeys:[].concat(
     ["bef_surKor","bef_givenKor","bef_surHan","bef_givenHan",
      "aft_surKor","aft_givenKor","aft_surHan","aft_givenHan",
-     "bon","n_jumin","n_regBase","n_addr"],
+     /* ⚠️ `bon_kor` 는 **화면에만 사는 칸**이다(2026.09.01) — 본관을 한글로 받아
+        아래 격자에서 한자를 고르게 한다. ⛔ `CO` 에 좌표를 만들지 마라.
+        종이의 본란에는 **한자(`bon`)만** 들어간다. */
+     "bon","bon_kor","n_jumin","n_regBase","n_addr"],
     ["permDate","court"],
     ["etc"],
     ["r_name","r_jumin","r_qual","r_qualEtc","r_addr","r_phone","r_email",
@@ -169,8 +172,11 @@ var FORM={
         var h='';
         h+=A.inputHtml({k:"bef_surKor", label:"성(한글)", req:true, half:true, ph:"최"});
         h+=A.inputHtml({k:"bef_givenKor", label:"이름(한글)", req:true, half:true, ph:"당정"});
-        h+=A.inputHtml({k:"bef_surHan", label:"성(한자)", half:true, ph:"崔", optHint:true});
-        h+=A.inputHtml({k:"bef_givenHan", label:"이름(한자)", half:true, ph:"堂井", optHint:true});
+        /* 한자는 **격자**로 받는다(2026.09.01). 종전에는 성·이름 두 칸에 직접 적게 했는데,
+           그러려면 같은 이름을 한 번 더 쳐야 했다. ⛔ 두 칸으로 되돌리지 마라. */
+        h+=A.hanjaGridHtml("befHan", [["bef_surKor","bef_surHan","성"],
+                                      ["bef_givenKor","bef_givenHan","이름"]],
+                           "내 이름 한자 찾기");
         return h;
       }},
 
@@ -185,8 +191,9 @@ var FORM={
         var h='';
         h+=A.inputHtml({k:"aft_surKor", label:"성(한글)", req:true, half:true, ph:"최"});
         h+=A.inputHtml({k:"aft_givenKor", label:"이름(한글)", req:true, half:true, ph:"산본"});
-        h+=A.inputHtml({k:"aft_surHan", label:"성(한자)", half:true, ph:"崔", optHint:true});
-        h+=A.inputHtml({k:"aft_givenHan", label:"이름(한자)", half:true, ph:"山本", optHint:true});
+        h+=A.hanjaGridHtml("aftHan", [["aft_surKor","aft_surHan","성"],
+                                      ["aft_givenKor","aft_givenHan","이름"]],
+                           "새 이름 한자 찾기");
         return h;
       }},
 
@@ -198,8 +205,11 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"bon", label:"본(한자)", ph:"慶州",
-          help:"성씨의 본관을 한자로.", optHint:true});
+        /* 본관도 한자 격자로 받는다(2026.09.01). 한글로 적으면 아래에서 한자를 고른다.
+           ⛔ 한글(`bon_kor`)은 **종이에 나가지 않는다** — 본란은 한자만 받는 칸이다. */
+        h+=A.inputHtml({k:"bon_kor", label:"본(한글)", ph:"경주",
+          help:"성씨의 본관입니다. 한글로 적으면 아래에서 한자를 고를 수 있습니다.", optHint:true});
+        h+=A.hanjaGridHtml("bonHan", [["bon_kor","bon"]], "본 한자 찾기");
         h+=A.inputHtml({k:"n_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"900101-0000000"});
         h+=A.inputHtml({k:"n_regBase", label:"등록기준지", ph:"경기도 군포시 …",
           help:"가족관계등록부의 기준이 되는 주소입니다.", optHint:true});
@@ -285,7 +295,9 @@ var FORM={
       step:2,
       bef_surKor:"최", bef_givenKor:"당정", bef_surHan:"崔", bef_givenHan:"堂井",
       aft_surKor:"최", aft_givenKor:"산본", aft_surHan:"崔", aft_givenHan:"山本",
-      bon:"慶州", n_jumin:"9001011000000",
+      /* ⚠️ `bon_kor` 도 함께 채운다 — 안 채우면 종이에는 慶州 가 찍히는데
+         화면 격자는 「한글을 먼저 적어 주세요」만 내밀어 어긋나 보인다. */
+      bon_kor:"경주", bon:"慶州", n_jumin:"9001011000000",
       n_regBase:"경기도 군포시 산본로 000",
       n_addr:"경기도 군포시 산본로 000, 201동 503호",
       permDate:"2026.06.15", court:"수원가정법원",

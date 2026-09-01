@@ -46,6 +46,22 @@ kiosk-app/dist/
 운영문서/붙임4_키오스크_운영점검표.md
 운영문서/운영점검표.pdf
 
+# 한자 표의 **원본 자료** — 리포에는 뽑아낸 표만 둔다(2026.09.01 결정).
+# 배포에 실리는 것은 `engine/hanja-table.js` 하나이고, 아래 파일들은 그것을 **다시 만들 때만**
+# 필요하다. 다시 만들려면 셋을 제자리에 두고 `python tools/build-hanja-table.py` 를 돌린다.
+#
+#   Unihan.zip   unicode.org — 음(kHangul)·교육용·인명용·획수      (약 8MB)
+#   hanja.txt    libhangul   — 훈음(「긴 장」)                      (약 6.5MB)
+#   hanja.pdf    대법원 인명용 한자표 — 근거 문서(글자가 이미지라 기계로는 못 읽는다 · 23MB)
+#
+# ⚠️ `hanja.txt` 는 BSD 3-Clause 다. 원본을 안 담더라도 **저작권 표시·조건·면책은
+#    함께 배포해야 하고**, 그것은 `engine/hanja-table.js` 머리 주석이 지고 있다.
+#    ⛔ 그 주석을 지우지 마라 — 지우면 라이선스 위반이 된다.
+Unihan.zip
+Unihan_*.txt
+hanja.txt
+hanja.pdf
+
 # OS / 에디터
 Thumbs.db
 Desktop.ini

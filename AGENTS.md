@@ -40,6 +40,8 @@
 | 인쇄 조판(용지·여백·배율) | **`kiosk-app/print-options.js`** | 수정 → `verify-print.py --electron` |
 | 기관별 설정 적용(SITE-CONFIG 블록) | **`engine/base.html`** 의 `<!--SITE-CONFIG v1-->` | 수정 → 7종 재빌드 → `python tools/check-site-block.py --fix` |
 | 디자인 값 — 색·반경·간격·글자 크기 | **`engine/base.html`** 의 `<!--DESIGN-TOKENS v1-->` | 수정 → 7종 재빌드 → `python tools/check-design-tokens.py --fix` |
+| 한자 후보·훈음 표 | **`tools/build-hanja-table.py`** (원본 `Unihan.zip`·`hanja.txt` 는 `.gitignore`) | 도구 수정 → `python tools/build-hanja-table.py` → 6종 재빌드 |
+| 한자 찾기 화면 | **`engine/engine.js`** 의 `hanjaGridHtml`·`hjCandsHtml` + `base-product.html` CSS | 수정 → 6종 재빌드 |
 | 선 아이콘(엔진 7종) | **`engine/engine.js`** 의 `/*ICON-SET v1*/` 블록 | 수정 → 7종 재빌드 → `python tools/check-icons.py` |
 | 선 아이콘(여권·허브) | 그 파일의 `ICONS` 표 | 직접 수정 → **겹치는 이름은 엔진과 같은 값** → `check-icons.py` |
 | 환경설정 창의 항목 | **`kiosk-app/admin/settings.html`** + `main.js` 의 `ORG_KEYS`·`POLICY_KEYS`·`FORM_KEYS` | 양쪽 이름이 같아야 한다 |

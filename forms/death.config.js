@@ -196,8 +196,11 @@ var FORM={
         var h='';
         h+=A.inputHtml({k:"d_surKor", label:"성(한글)", req:true, half:true, ph:"조"});
         h+=A.inputHtml({k:"d_givenKor", label:"이름(한글)", req:true, half:true, ph:"속달"});
-        h+=A.inputHtml({k:"d_surHan", label:"성(한자)", half:true, ph:"趙", optHint:true});
-        h+=A.inputHtml({k:"d_givenHan", label:"이름(한자)", half:true, ph:"束達", optHint:true});
+        /* 한자는 **한자 찾기**로 받는다(2026.09.01) — 8종 공통 component.
+           ⛔ 「성(한자)·이름(한자)」 두 칸으로 되돌리지 마라. */
+        h+=A.hanjaGridHtml("dName", [["d_surKor","d_surHan","성"],
+                                     ["d_givenKor","d_givenHan","이름"]],
+                           "이름 한자 찾기");
         h+='<div class="field"><label class="field-label">성별 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("d_sex",SEX_OPTS)+'</div>';
         h+=A.inputHtml({k:"d_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"400101-0000000",

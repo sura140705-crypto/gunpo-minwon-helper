@@ -845,6 +845,91 @@ html.big{
   .field{margin-bottom:21px;max-width:var(--question-max);}
   .field-label{display:block;font-size:var(--fs-label);font-weight:var(--fw-heavy);margin-bottom:9px;}
   .q-help{font-size:14px;color:var(--muted);margin:-2px 0 10px;line-height:1.5;}
+  /* ══ 한자 격자 (2026.09.01) ══════════════════════════════════════════════
+     3행 — 한글 음절 / [고르기] / 고른 한자. 칸 수는 이름 길이대로 늘어난다
+     (복성 2 + 이름 5 = **최대 7칸**). ⛔ 칸 수를 고정하지 마라.
+     ⚠️ **세로다 — 한 줄이 한 글자**(2026.09.01 · 사용자 지시). 「김 [金] │ 후보…」가
+        한 줄이고 다음 글자가 그 아래로 온다. ⛔ 가로로 되돌리지 마라 — 후보가
+        「그 글자 오른쪽」에 있어야 무엇을 고르는 중인지 분명하다.
+     ⚠️ **한글 글자 자체가 단추다.** [고르기] 단추를 따로 두면 눈이 한 번 더 간다. */
+  .hj-rows{display:flex;flex-direction:column;gap:7px;}
+  /* 묶음 이름(성 / 이름) — 종이는 칸이 나뉘어 있어서 시민이 「어디까지가 성인지」를
+     눈으로 잡을 수 있어야 한다. ⛔ 프로그램이 성의 길이를 추론하지 않는다는 뜻이기도 하다. */
+  .hj-part{font-size:13px;font-weight:var(--fw-heavy);color:var(--muted);margin:5px 0 1px;}
+  .hj-part:first-child{margin-top:0;}
+  .hj-line{display:flex;align-items:center;gap:9px;}
+  .hj-mark{width:14px;text-align:center;font-size:14px;color:var(--muted);}
+  .hj-on .hj-mark{color:var(--blue);}
+  .hj-done .hj-mark{color:var(--blue);}
+  .hj-kor{flex:0 0 auto;width:50px;text-align:center;font-family:inherit;
+    font-size:19px;font-weight:var(--fw-heavy);line-height:1.1;padding:9px 0;cursor:pointer;
+    border:1.5px solid var(--m-border-mid);background:var(--m-bg);color:var(--m-ink);
+    border-radius:var(--r-sm);transition:border-color var(--dur-quick) var(--ease-out),
+    background var(--dur-quick) var(--ease-out);}
+  .hj-kor:hover,.hj-kor:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  .hj-on .hj-kor{border-color:var(--blue);background:var(--m-a10);color:var(--blue);}
+  /* ⚠️ 펼친 줄에서는 `input`(직접 입력·[한자] 키), 접힌 줄에서는 `button`(눌러서 다시 고르기).
+        둘이 **같은 크기·같은 모양**이어야 줄이 열리고 닫힐 때 흔들리지 않는다.
+     📌 고른 한자보다 **후보(.hj-t)가 더 크다** — 이 기능에서 가장 중요한 정보는 후보다
+        (2026.09.01 사용자 지시 §3). ⛔ 전체 글자 크기를 키워 맞추지 마라. */
+  .hj-cell{flex:0 0 auto;width:48px;box-sizing:border-box;text-align:center;font-size:22px;
+    line-height:1.15;font-family:inherit;padding:7px 2px;border:1.5px solid var(--m-border-mid);
+    background:var(--m-control);color:var(--m-ink);border-radius:var(--r-sm);}
+  .hj-wait{font-size:13.5px;color:var(--muted);}
+  /* 고른 한자의 뜻 — 「긴 장」. ⚠️ 터치 자리에는 마우스 올림 안내가 닿지 않으므로
+     **글자 옆에 적는다.** 훈음 자료가 없는 글자는 이 자리가 빈다. */
+  .hj-mean{flex:1 1 auto;min-width:0;font-size:13.5px;color:var(--muted);line-height:1.4;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .hj-cell:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--m-a10);}
+  .hj-slot{cursor:pointer;min-height:44px;transition:border-color var(--dur-quick) var(--ease-out),
+    background var(--dur-quick) var(--ease-out);}
+  .hj-slot:hover,.hj-slot:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  .hj-say{font-size:14px;color:var(--blue);font-weight:var(--fw-heavy);}
+  .hj-alt{font-family:inherit;font-size:13px;padding:6px 12px;cursor:pointer;
+    border:1px solid var(--m-border-mid);background:var(--m-control);color:var(--muted);
+    border-radius:var(--r-sm);}
+  .hj-alt:hover,.hj-alt:focus-visible{border-color:var(--m-a35);color:var(--m-ink);}
+  /* 후보 — 지금 고르는 글자 **아래**에 전체 폭으로. 오른쪽에 두면 단추가 작아진다. */
+  .hj-cands{margin:8px 0 4px 23px;border:1px solid var(--m-border-mid);
+    border-radius:var(--m-r-card);background:var(--m-bg);padding:11px 12px;}
+  .hj-none{font-size:14px;color:var(--muted);line-height:1.5;}
+  /* ⛔ 한 쪽에 `HJ_PER`(12) 개만. 수십 개를 한꺼번에 내밀면 고를 수가 없다 —
+     굴리는 목록이 아니라 **쪽을 넘기는** 방식이다.
+     ⚠️ **후보가 이 화면에서 가장 커야 한다**(2026.09.01 사용자 지시 §3) —
+        시민이 눈으로 훑어 자기 한자를 찾아내는 곳이 여기다. 56×56 · 글자 26px. */
+  .hj-tiles{display:flex;flex-wrap:wrap;gap:9px;}
+  .hj-t{font-family:inherit;font-size:26px;line-height:1;width:56px;height:56px;cursor:pointer;
+    border:1.5px solid var(--m-border-mid);background:var(--m-control);color:var(--m-ink);
+    border-radius:var(--r-sm);transition:border-color var(--dur-quick) var(--ease-out),
+    background var(--dur-quick) var(--ease-out);}
+  .hj-t:hover,.hj-t:focus-visible{border-color:var(--m-a35);background:var(--m-a06);}
+  .hj-t.sel{border-color:var(--blue);background:var(--m-a10);color:var(--blue);}
+  .hj-nav{display:flex;align-items:center;flex-wrap:wrap;gap:8px;margin-top:11px;}
+  .hj-pg{font-size:12.5px;color:var(--muted);}
+  /* 지금까지 고른 이름 — 한글 위, 한자 아래 */
+  .hj-sum{margin-top:12px;padding:10px 12px;background:var(--m-bg);
+    border-radius:var(--m-r-card);display:flex;flex-direction:column;gap:3px;}
+  .hj-sum-k{font-size:15px;color:var(--muted);letter-spacing:.06em;}
+  .hj-sum-h{font-size:21px;font-weight:var(--fw-heavy);letter-spacing:.06em;}
+  .hj-sum-h.hj-dim{color:var(--muted);font-weight:400;}
+  .hj-start{font-family:inherit;font-size:15px;font-weight:var(--fw-heavy);
+    margin-top:10px;padding:11px 18px;cursor:pointer;
+    border:1.5px solid var(--blue);background:var(--m-a06);color:var(--blue);
+    border-radius:var(--r-sm);}
+  .hj-again{margin-top:10px;}
+  .hj-sum.hj-ok{background:var(--m-a06);}
+  .hj-nofind{margin-left:auto;}
+  /* 「찾는 한자가 없어요」 뒤의 안내 — ⛔ 임의로 추측해 채우지 않는다는 뜻이다 */
+  .hj-note{margin-top:9px;font-size:14px;line-height:1.55;color:var(--m-ink);
+    background:var(--warn-face);border:1px solid var(--warn-line);
+    border-radius:var(--r-sm);padding:9px 11px;}
+  html.big .hj-kor{width:60px;font-size:23px;}
+  html.big .hj-cell{width:56px;font-size:26px;}
+  html.big .hj-t{font-size:30px;width:64px;height:64px;}
+  html.big .hj-sum-h{font-size:25px;}
+  /* ⛔ 한자 격자는 **종이에 나가지 않는다** — 값은 이미 서식 위에 얹혀 있다. */
+  @media print{ .hj-rows{display:none;} }
+
   /* 작은 선택지(renderGroup) — 두 줄 목록. 지금 여권 화면은 큰 카드를 쓰지만,
      엔진 서식과 공유하는 구조라 스타일은 남겨 둔다. */
   .opts{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
@@ -1843,6 +1928,7 @@ document.querySelectorAll(".bg").forEach(function(i){ i.src=FORM_IMG; });
 </script>
 <script>
 "use strict";
+/*{{HANJA}}*/
 /*{{CONFIG}}*/
 /*{{ENGINE}}*/
 </script>

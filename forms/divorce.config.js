@@ -35,9 +35,13 @@ function personFields(p){
   return [
     {k:p+"_surKor", label:"성(한글)", ph:p==="w"?"임":"강", req:true, half:true},
     {k:p+"_givenKor", label:"이름(한글)", ph:p==="w"?"둔대":"당동", req:true, half:true},
-    {k:p+"_surHan", label:"성(한자)", ph:p==="w"?"林":"姜", half:true, optHint:true},
-    {k:p+"_givenHan", label:"이름(한자)", ph:p==="w"?"屯垈":"堂洞", half:true, optHint:true},
-    {k:p+"_bon", label:"본(한자)", ph:(p==="w"?"羅州":"晋州")+" (본관)", help:"성씨의 본관을 한자로.", optHint:true},
+    /* 한자는 **한자 찾기**로 받는다(2026.09.01) — 혼인·개명과 같은 component 다. */
+    {hanja:{gid:p+"Name", label:"이름 한자 찾기",
+            parts:[[p+"_surKor",p+"_surHan","성"],[p+"_givenKor",p+"_givenHan","이름"]]}},
+    /* ⛔ `_bon_kor` 는 화면에만 사는 칸이다. 종이에는 한자(`_bon`)만 들어간다. */
+    {k:p+"_bon_kor", label:"본(한글)", ph:p==="w"?"나주":"진주",
+      help:"성씨의 본관입니다. 한글로 적으면 아래에서 한자를 고를 수 있습니다.", optHint:true},
+    {hanja:{gid:p+"Bon", label:"본 한자 찾기", parts:[[p+"_bon_kor",p+"_bon"]]}},
     {k:p+"_phone", label:"전화번호", type:"phone", req:true, ph:"010-0000-0000"},
     {k:p+"_jumin", label:"주민등록번호", type:"jumin", ph:"900101-0000000", req:true,
       help:"외국인은 외국인등록번호를 적습니다."},
@@ -58,7 +62,9 @@ function parentFields(p){
   ];
 }
 function personKeys(p){
-  return [p+"_surKor",p+"_givenKor",p+"_surHan",p+"_givenHan",p+"_bon",p+"_phone",
+  /* ⚠️ `_bon_kor` 는 **화면에만 사는 칸**이다(본관을 한글로 받아 한자를 고르게 한다).
+     ⛔ `CO` 에 좌표를 만들지 마라 — 종이의 본란에는 한자(`_bon`)만 들어간다. */
+  return [p+"_surKor",p+"_givenKor",p+"_surHan",p+"_givenHan",p+"_bon",p+"_bon_kor",p+"_phone",
           p+"_birth",p+"_jumin",p+"_regBase",p+"_addr",
           p+"_fName",p+"_fJumin",p+"_mName",p+"_mJumin",
           p+"_edu",p+"_job"];
@@ -342,12 +348,12 @@ var FORM={
     {n:2, short:"남편(부)", title:"① 남편(부) 인적사항",
       q:"남편(부)의 정보를 입력하세요.",
       required:function(s){ return reqPerson(s,"h","남편"); },
-      body:function(A){ return personFields("h").map(A.inputHtml).join(""); }},
+      body:function(A){ return A.fieldsHtml(personFields("h")); }},
 
     {n:3, short:"아내(처)", title:"① 아내(처) 인적사항",
       q:"아내(처)의 정보를 입력하세요.",
       required:function(s){ return reqPerson(s,"w","아내"); },
-      body:function(A){ return personFields("w").map(A.inputHtml).join(""); }},
+      body:function(A){ return A.fieldsHtml(personFields("w")); }},
 
     {n:4, short:"남편 부모", title:"② 남편(부)의 부모",
       q:"남편(부)의 부모(양부모) 정보를 입력하세요.",
@@ -514,13 +520,13 @@ var FORM={
   applySample:function(state, kind){
     Object.assign(state,{
       step:2,
-      h_surKor:"강", h_givenKor:"당동", h_surHan:"姜", h_givenHan:"堂洞", h_bon:"晋州",
+      h_surKor:"강", h_givenKor:"당동", h_surHan:"姜", h_givenHan:"堂洞", h_bon:"晋州", h_bon_kor:"진주",
       h_phone:"01012345678", h_birth:"1988.03.15", h_jumin:"8803151000000",
       h_regBase:"경기도 군포시 산본로 000", h_addr:"경기도 군포시 산본로 000, 305동 1102호",
       h_fName:"강속달", h_fJumin:"6001011000000",
       h_mName:"윤광정", h_mJumin:"6305012000000",
       h_edu:"대학(교)", h_job:"사무직",
-      w_surKor:"임", w_givenKor:"둔대", w_surHan:"林", w_givenHan:"屯垈", w_bon:"羅州",
+      w_surKor:"임", w_givenKor:"둔대", w_surHan:"林", w_givenHan:"屯垈", w_bon:"羅州", w_bon_kor:"나주",
       w_phone:"01098765432", w_birth:"1990.07.22", w_jumin:"9007222000000",
       w_regBase:"경기도 군포시 산본로 000", w_addr:"경기도 군포시 산본로 000, 305동 1102호",
       w_fName:"임도마", w_fJumin:"6208011000000",

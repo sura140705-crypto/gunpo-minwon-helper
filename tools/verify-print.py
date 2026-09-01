@@ -40,7 +40,8 @@ BASE = os.path.join(ROOT, "tests", "baseline")
 
 # 서식 → 작성예시 키 2종. 엔진 서식은 config 의 sampleKinds, 손작성 3종은 fillSample 인자.
 FORMS = [
-    ("passport",   ["adult", "minor"]),
+    # proxy = 성인 대리 신청. 2쪽 「위임장」은 이 예시가 아니면 어느 도구도 보지 못한다.
+    ("passport",   ["adult", "minor", "proxy"]),
     ("marriage",   ["adult", "minor"]),
     ("divorce",    ["consensual", "judicial"]),
     ("birth",      ["wed", "unwed"]),

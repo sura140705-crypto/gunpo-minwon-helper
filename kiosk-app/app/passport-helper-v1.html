@@ -3179,7 +3179,9 @@ function renderGroup(g){
   g.options.forEach(function(raw){
     const o=(typeof raw==="string")?{v:raw}:raw;
     const on=cur===o.v?" selected":"";
-    h+='<button type="button" class="opt'+on+'" data-act="opt" data-field="'+esc(g.field)+'" data-val="'+esc(o.v)+'">'+
+    /* ⚠️ `aria-pressed` — 눌린 상태를 색 말고도 알리는 유일한 길이다(2026.09.01 · 엔진과 같은 규칙).
+       ⛔ 지우지 마라. `.selected` 를 붙이거나 떼는 자리마다 이 속성도 같이 간다. */
+    h+='<button type="button" class="opt'+on+'" aria-pressed="'+(on?"true":"false")+'" data-act="opt" data-field="'+esc(g.field)+'" data-val="'+esc(o.v)+'">'+
       '<span class="opt-main"><span class="opt-check" aria-hidden="true">✓</span>'+
       '<span class="opt-label">'+esc(o.label||o.v)+"</span>"+
       (o.rec?'<span class="opt-rec">많이 선택</span>':"")+"</span>"+
@@ -3456,7 +3458,7 @@ function renderCards(def){
     /* 이름·설명은 함수일 수 있다 — 앞에서 적은 값을 카드 문구에 그대로 담는 화면이 있다
        (공동친권자의 「네 — ○○○ 님을 적겠습니다」). */
     var lab=resolveField(c.label), dsc=resolveField(c.desc);
-    h+='<button type="button" class="card'+on+'" data-act="card" data-i="'+i+'">'+
+    h+='<button type="button" class="card'+on+'" aria-pressed="'+(on?"true":"false")+'" data-act="card" data-i="'+i+'">'+
        '<span class="card-ic" aria-hidden="true">'+svgIcon(c.icon)+"</span>"+
        '<span class="card-tx"><span class="card-label">'+esc(lab)+
        (c.rec?'<span class="card-rec">많이 선택</span>':"")+"</span>"+
@@ -4087,7 +4089,13 @@ function bindGlobalEvents(){
     e.preventDefault(); gotoStep(d);
   });
 }
-/* 테스트용 작성예시 — kind: "adult"(성인 본인) | "minor"(미성년자, 법정대리인 대리 → 동의서) */
+/* 테스트용 작성예시 — kind: "adult"(성인 본인) | "minor"(미성년자, 법정대리인 대리 → 동의서)
+                        | "proxy"(성인을 다른 성인이 대신 → 위임장)
+   ⚠️ `proxy` 는 **화면에 단추가 없다.** `verify-print.py` 가 위임장 2쪽을 지키려고 쓰는
+      검증 전용 예시다. 담당자용 [작성예시] 단추는 성인·미성년 둘 그대로다.
+   📌 대리 경로는 `POLICY.allowProxy` 를 켠 기관에서만 시민이 도달한다(군포 기본값은 꺼짐).
+      그래도 기준선에 넣는 것은 **확산 기관에서 위임장 좌표가 틀어지는 것을 막기 위해서**다 —
+      이 예시가 없으면 위임장이 통째로 깨져도 인쇄 검증이 아무 말을 하지 않는다. */
 function fillSample(kind){
   state.addr={};
   var base={
@@ -4114,6 +4122,20 @@ function fillSample(kind){
       applicantAddr:"경기도 군포시 산본로 000, 101동 202호",
       guardian2Name:"강수리", guardian2Rel:"모"
     });
+  } else if(kind==="proxy"){
+    /* 성인(최군포)의 여권을 조카(윤재궁)가 대신 신청 → 「위임장」 자동 출력.
+       ⚠️ 미성년이 아니어야 위임장이 붙는다(`needsProxy` = 대리인 신청 && 동의서 아님).
+          주민등록번호를 성인 것으로 두는 이유가 그것이다. */
+    state.data=Object.assign(base,{
+      pages:"58면", period:"10년",
+      nameKorSur:"최", nameKorGiven:"군포", jumin:"9001011234567", phone:"01012345678",
+      emgName:"최당동", emgRel:"부", emgPhone:"01098765432",
+      romanSur:"CHOI", romanGiven:"GUNPO",
+      applyBy:"대리인", agentName:"윤재궁", guardianRel:"조카",
+      agentBirth:"19850302", agentPhone:"01055556666",
+      agentAddr:"경기도 군포시 산본로 000, 101동 202호",
+      applicantAddr:"경기도 군포시 산본로 000, 303동 404호"
+    });
   } else {
     // 성인 본인 신청
     state.data=Object.assign(base,{
@@ -4126,7 +4148,8 @@ function fillSample(kind){
   }
   /* 작성예시는 **담당자 점검용**이다. 새 구조에서는 경로와 화면 위치까지 맞춰 두어야
      누르자마자 최종 확인 화면이 나온다(종전에는 값만 채우고 1단계에 머물렀다). */
-  state.ui={ path:(kind==="minor")?"minor":"adult", counter:null, status:{}, warn:null, warnAt:null };
+  state.ui={ path:(kind==="minor")?"minor":(kind==="proxy")?"proxy":"adult",
+             counter:null, status:{}, warn:null, warnAt:null };
   state.step=flow().length;
 }
 function scrollPanelTop(){

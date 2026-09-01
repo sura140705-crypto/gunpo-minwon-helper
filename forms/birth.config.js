@@ -35,8 +35,14 @@ function parentFields(p){
   var isM=(p==="m");
   return [
     {k:p+"_name", label:"성명(한글)", req:true, ph:isM?"윤부곡":"정군포"},
-    {k:p+"_nameHan", label:"성명(한자)", ph:isM?"尹富谷":"鄭軍浦", optHint:true},
-    {k:p+"_bon", label:"본(한자)", ph:isM?"坡平":"東萊", help:"성씨의 본관을 한자로.", optHint:true},
+    /* ⚠️ 부·모는 한글도 **성명 한 칸**이라 성/이름 경계가 없다 — 묶음이 하나뿐이다.
+       ⛔ 그래서 여기서는 **성씨 우선을 쓰지 않는다.** 복성이면 두 글자인데 어디까지가
+          성인지 알 길이 없다(글자 수로 추론하지 않는다 — 여권 복성 사고와 같은 이유). */
+    {hanja:{gid:p+"Name", label:"성명 한자 찾기", parts:[[p+"_name",p+"_nameHan"]]}},
+    /* ⛔ `_bon_kor` 는 화면에만 사는 칸이다 — 종이에는 한자(`_bon`)만 들어간다. */
+    {k:p+"_bon_kor", label:"본(한글)", ph:isM?"파평":"동래",
+      help:"성씨의 본관입니다. 한글로 적으면 아래에서 한자를 고를 수 있습니다.", optHint:true},
+    {hanja:{gid:p+"Bon", label:"본 한자 찾기", parts:[[p+"_bon_kor",p+"_bon"]]}},
     {k:p+"_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"800101-0000000",
       help:"외국인은 외국인등록번호를 적습니다."},
     {k:p+"_regBase", label:"등록기준지", ph:"경기도 군포시 …",
@@ -111,12 +117,14 @@ var FORM={
     +"출생증명서(병원 발급) 등 첨부서류는 담당 직원이 안내합니다.",
 
   stateKeys:[].concat(
-    ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon",
+    /* ⚠️ `*_bon_kor` 는 **화면에만 사는 칸**이다(본관을 한글로 받아 한자를 고르게 한다).
+        ⛔ `CO` 에 좌표를 만들지 마라 — 종이의 본란에는 한자만 들어간다. */
+    ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon","child_bon_kor",
      "child_sex","child_marital","child_birthDate","child_birthHour","child_birthMin",
      "child_birthPlace","child_birthPlaceAddr","child_birthPlaceEtc","child_regBase","child_addr",
      "child_headName","child_headRel","child_dualNat"],
-    ["f_name","f_nameHan","f_bon","f_jumin","f_regBase","f_edu"],
-    ["m_name","m_nameHan","m_bon","m_jumin","m_regBase","m_edu"],
+    ["f_name","f_nameHan","f_bon","f_bon_kor","f_jumin","f_regBase","f_edu"],
+    ["m_name","m_nameHan","m_bon","m_bon_kor","m_jumin","m_regBase","m_edu"],
     ["sonbon_consent"],
     ["closed_name","closed_jumin","closed_regBase","etc"],
     ["reporter_name","reporter_jumin","reporter_qual","reporter_qualEtc",
@@ -179,7 +187,9 @@ var FORM={
 
   buildVals:function(state){
     var d=state, v={};
-    ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon",
+    /* ⚠️ `*_bon_kor` 는 **화면에만 사는 칸**이다(본관을 한글로 받아 한자를 고르게 한다).
+        ⛔ `CO` 에 좌표를 만들지 마라 — 종이의 본란에는 한자만 들어간다. */
+    ["child_surKor","child_givenKor","child_surHan","child_givenHan","child_bon","child_bon_kor",
      "child_regBase","child_addr","child_headName","child_headRel","child_dualNat",
      "f_name","f_nameHan","f_bon","f_regBase","m_name","m_nameHan","m_bon","m_regBase",
      "closed_name","closed_regBase","etc","reporter_name","reporter_qualEtc","reporter_email","sub_name"
@@ -236,9 +246,15 @@ var FORM={
         var h='';
         h+=A.inputHtml({k:"child_surKor", label:"성(한글)", req:true, half:true, ph:"정"});
         h+=A.inputHtml({k:"child_givenKor", label:"이름(한글)", req:true, half:true, ph:"산본"});
-        h+=A.inputHtml({k:"child_surHan", label:"성(한자)", half:true, ph:"鄭", optHint:true});
-        h+=A.inputHtml({k:"child_givenHan", label:"이름(한자)", half:true, ph:"山本", optHint:true});
-        h+=A.inputHtml({k:"child_bon", label:"본(한자)", ph:"東萊 (본관)", help:"성씨의 본관을 한자로.", optHint:true});
+        /* 한자는 **한자 찾기**로 받는다(2026.09.01) — 8종 공통 component.
+           ⛔ 「성(한자)·이름(한자)」 두 칸으로 되돌리지 마라. */
+        h+=A.hanjaGridHtml("childName", [["child_surKor","child_surHan","성"],
+                                         ["child_givenKor","child_givenHan","이름"]],
+                           "아이 이름 한자 찾기");
+        /* ⛔ `child_bon_kor` 는 화면에만 사는 칸이다 — 종이에는 한자(`child_bon`)만 들어간다. */
+        h+=A.inputHtml({k:"child_bon_kor", label:"본(한글)", ph:"동래",
+          help:"성씨의 본관입니다. 한글로 적으면 아래에서 한자를 고를 수 있습니다.", optHint:true});
+        h+=A.hanjaGridHtml("childBon", [["child_bon_kor","child_bon"]], "본 한자 찾기");
         /* ⚠️ 배지와 검증은 **한 쌍**이다. 화면이 「필수」라 하고 넘어가지게 두거나,
            막으면서 아무 말도 하지 않으면 시민은 왜 막혔는지 모른다(2026.08.29 에 그랬다). */
         h+='<div class="field"><label class="field-label">성별 <span class="fb fb-req">필수</span></label>'
@@ -324,7 +340,7 @@ var FORM={
         if(!String(s.f_name||"").trim()) m.push("아버지 성명(한글)");
         /* ⛔ 주민등록번호는 **선택**이다(2026.08.30 담당자) — 필수 목록에 다시 넣지 마라. */
         return m; },
-      body:function(A){ var h='', ff=parentFields("f"); for(var i=0;i<ff.length;i++) h+=A.inputHtml(ff[i]); return h; }},
+      body:function(A){ return A.fieldsHtml(parentFields("f")); }},
     {n:5, short:"모(母)", title:"② 어머니(모) 정보",
       q:"어머니(모)의 정보를 입력하세요.", kind:"mother",
       required:function(s){ var m=[];
@@ -334,8 +350,7 @@ var FORM={
         if(s.child_marital!==UNWED && !s.sonbon_consent) m.push("성·본 협의서 제출 여부");
         return m; },
       body:function(A){
-        var h='', mf=parentFields("m");
-        for(var j=0;j<mf.length;j++) h+=A.inputHtml(mf[j]);
+        var h=A.fieldsHtml(parentFields("m"));
         /* ⚠️ 서식 문구가 「**혼인신고 시** …」라 혼인 중에만 뜻이 있다. 혼인 외에는 묻지 않는다
            (2026.08.29 담당자 확인). ⛔ 항상 묻도록 되돌리지 마라. */
         if(A.state.child_marital!==UNWED)
@@ -419,7 +434,7 @@ var FORM={
     Object.assign(state,{
       step:2,
       child_surKor:"정", child_givenKor:"산본", child_surHan:"鄭", child_givenHan:"山本",
-      child_bon:"東萊", child_sex:"여", child_marital:"혼인 중",
+      child_bon:"東萊", child_bon_kor:"동래", child_sex:"여", child_marital:"혼인 중",
       child_birthDate:"2026.07.20", child_birthHour:"14", child_birthMin:"30",
       child_birthPlace:"병원",
       /* ⛔ 작성예시에 **병원명을 넣지 마라**(2026.08.30 담당자 2차). 예시가 곧 본보기다 —
@@ -428,9 +443,9 @@ var FORM={
       child_regBase:"경기도 군포시 산본로 000",
       child_addr:"경기도 군포시 산본로 000, 101동 1001호",
       child_headName:"정군포", child_headRel:"자녀(녀)",
-      f_name:"정군포", f_nameHan:"鄭軍浦", f_bon:"東萊", f_jumin:"8803151000000",
+      f_name:"정군포", f_nameHan:"鄭軍浦", f_bon:"東萊", f_bon_kor:"동래", f_jumin:"8803151000000",
       f_regBase:"경기도 군포시 산본로 000", f_edu:"대학(교)",
-      m_name:"윤부곡", m_nameHan:"尹富谷", m_bon:"坡平", m_jumin:"9007222000000",
+      m_name:"윤부곡", m_nameHan:"尹富谷", m_bon:"坡平", m_bon_kor:"파평", m_jumin:"9007222000000",
       m_regBase:"경기도 군포시 산본로 000", m_edu:"대학(교)",
       sonbon_consent:"아니요",
       reporter_name:"정군포", reporter_jumin:"8803151000000", reporter_qual:"부",
