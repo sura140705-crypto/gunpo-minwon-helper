@@ -33,11 +33,11 @@ function isJudicial(s){ return (s&&s.divType)==="재판상 이혼"; }
    ⛔ 본·한자·등록기준지는 필수로 만들지 마라 — 창구가 채운다(`optHint`). */
 function personFields(p){
   return [
-    {k:p+"_surKor", label:"성(한글)", ph:"김", req:true, half:true},
-    {k:p+"_givenKor", label:"이름(한글)", ph:"영수", req:true, half:true},
-    {k:p+"_surHan", label:"성(한자)", ph:"金", half:true, optHint:true},
-    {k:p+"_givenHan", label:"이름(한자)", ph:"英洙", half:true, optHint:true},
-    {k:p+"_bon", label:"본(한자)", ph:"金海 (본관)", help:"성씨의 본관을 한자로.", optHint:true},
+    {k:p+"_surKor", label:"성(한글)", ph:p==="w"?"임":"강", req:true, half:true},
+    {k:p+"_givenKor", label:"이름(한글)", ph:p==="w"?"둔대":"당동", req:true, half:true},
+    {k:p+"_surHan", label:"성(한자)", ph:p==="w"?"林":"姜", half:true, optHint:true},
+    {k:p+"_givenHan", label:"이름(한자)", ph:p==="w"?"屯垈":"堂洞", half:true, optHint:true},
+    {k:p+"_bon", label:"본(한자)", ph:(p==="w"?"羅州":"晋州")+" (본관)", help:"성씨의 본관을 한자로.", optHint:true},
     {k:p+"_phone", label:"전화번호", type:"phone", req:true, ph:"010-0000-0000"},
     {k:p+"_jumin", label:"주민등록번호", type:"jumin", ph:"900101-0000000", req:true,
       help:"외국인은 외국인등록번호를 적습니다."},
@@ -51,9 +51,9 @@ function personFields(p){
 /* ⚠️ 이혼신고서 ② 는 **성명·주민등록번호 넉 줄뿐**이다(혼인신고서와 달리 등록기준지 칸이 없다). */
 function parentFields(p){
   return [
-    {k:p+"_fName", label:"아버지(양부) 성명", req:true, ph:"김철수"},
+    {k:p+"_fName", label:"아버지(양부) 성명", req:true, ph:p==="w"?"임도마":"강속달"},
     {k:p+"_fJumin", label:"아버지 주민등록번호", type:"jumin", req:true, ph:"600101-0000000"},
-    {k:p+"_mName", label:"어머니(양모) 성명", req:true, ph:"이순자"},
+    {k:p+"_mName", label:"어머니(양모) 성명", req:true, ph:p==="w"?"정궁내":"윤광정"},
     {k:p+"_mJumin", label:"어머니 주민등록번호", type:"jumin", req:true, ph:"630101-0000000"}
   ];
 }
@@ -431,7 +431,7 @@ var FORM={
         for(var i=1;i<=n;i++){
           var c="c"+i;
           h+='<div class="sum-sec"><h4>미성년 자녀 '+i+'</h4>';
-          h+=A.inputHtml({k:c+"_name", label:"자녀 성명", req:true, half:true, ph:"김하나"});
+          h+=A.inputHtml({k:c+"_name", label:"자녀 성명", req:true, half:true, ph:"강대야"});
           h+=A.inputHtml({k:c+"_jumin", label:"자녀 주민등록번호", type:"jumin", req:true, half:true});
           h+='<div class="field"><label class="field-label">친권자 <span class="fb fb-req">필수</span></label>'
             +A.choiceHtml(c+"_cust",CUST_OPTS,"누가 친권을 갖는지 고르세요.")+'</div>';
@@ -516,13 +516,13 @@ var FORM={
       step:2,
       h_surKor:"강", h_givenKor:"당동", h_surHan:"姜", h_givenHan:"堂洞", h_bon:"晋州",
       h_phone:"01012345678", h_birth:"1988.03.15", h_jumin:"8803151000000",
-      h_regBase:"경기도 군포시 산본동 000-0", h_addr:"경기도 군포시 산본동 000-0, 305동 1102호",
+      h_regBase:"경기도 군포시 산본로 000", h_addr:"경기도 군포시 산본로 000, 305동 1102호",
       h_fName:"강속달", h_fJumin:"6001011000000",
       h_mName:"윤광정", h_mJumin:"6305012000000",
       h_edu:"대학(교)", h_job:"사무직",
       w_surKor:"임", w_givenKor:"둔대", w_surHan:"林", w_givenHan:"屯垈", w_bon:"羅州",
       w_phone:"01098765432", w_birth:"1990.07.22", w_jumin:"9007222000000",
-      w_regBase:"경기도 군포시 둔대동 000-0", w_addr:"경기도 군포시 산본동 000-0, 305동 1102호",
+      w_regBase:"경기도 군포시 산본로 000", w_addr:"경기도 군포시 산본로 000, 305동 1102호",
       w_fName:"임도마", w_fJumin:"6208011000000",
       w_mName:"정궁내", w_mJumin:"6511012000000",
       w_edu:"대학(교)", w_job:"전문직",

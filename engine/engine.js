@@ -172,31 +172,62 @@ function renderExtras(){
 /* ══ 선 아이콘 (Product UI v1 · 24 격자 · 굵기 1.7 · 둥근 끝 · currentColor) ══
    ⛔ 이모지를 화면에 그리지 않는다 — OS·글꼴마다 모양이 달라지고 색이 여럿이다.
    ⛔ 아이콘 폰트·외부 세트를 받아 오지 않는다(오프라인). 인라인으로 둔다.
-   ⚠️ 여권(`passport-helper-v1.html`)과 **같은 문법**이다. 그림만 이 서식에 필요한 것을 둔다.
-   📌 표에 없는 이름을 부르면 `document`(서류 한 장)로 물러난다. */
+   📌 표에 없는 이름을 부르면 `document`(서류 한 장)로 물러난다.
+
+   ⛔ **여기 그림을 이 파일에서 새로 그리지 마라.**
+      `docs/PRODUCT_SKIN_v1.md` §4 의 아이콘 표가 원본이고, 여권
+      (`passport-helper-v1.html`)·허브(`index.html`)가 **같은 이름이면 같은 path** 를 갖는다.
+      `python tools/check-icons.py` 가 세 파일을 대조해 어긋나면 exit 1 한다.
+   ⚠️ 2026.08.31 이전에는 이름만 같고 **그림이 전부 달랐다**(check·checklist·document·
+      idcard·lock·pay·photo 7개 모두). 같은 키오스크에서 여권과 나머지 7종이
+      「준비하셨나요」·「안심하고 작성하세요」·「신분증」을 서로 다른 그림으로 보여 주고 있었다. */
 var ICON_ATTR='viewBox="0 0 24 24" fill="none" stroke="currentColor" '+
               'stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"';
+/*ICON-SET v1*/
 var ICONS={
-  check:'<path d="M4.5 12.5l5 5 10-10.5"/>',
-  lock:'<rect x="4.6" y="10.4" width="14.8" height="9.4" rx="2.2"/>'+
-       '<path d="M8.2 10.4V7.6a3.8 3.8 0 0 1 7.6 0v2.8"/>',
-  checklist:'<path d="M4.6 7.2l1.8 1.8 3-3.2"/><path d="M4.6 15.4l1.8 1.8 3-3.2"/>'+
-            '<path d="M12.4 7.4h7"/><path d="M12.4 15.6h7"/>',
-  document:'<path d="M6.4 3.4h7l4.2 4.2v13H6.4z"/><path d="M13.4 3.4v4.2h4.2"/>'+
-           '<path d="M9.2 12.6h5.6"/><path d="M9.2 16.2h5.6"/>',
-  idcard:'<rect x="3.2" y="5.6" width="17.6" height="12.8" rx="2.2"/>'+
-         '<circle cx="8.8" cy="11.2" r="2"/><path d="M5.6 16.2c.5-1.6 1.7-2.4 3.2-2.4s2.7.8 3.2 2.4"/>'+
-         '<path d="M14.6 10.4h4"/><path d="M14.6 13.8h4"/>',
-  cert:'<path d="M6.4 3.4h7l4.2 4.2v9.2H6.4z"/><path d="M13.4 3.4v4.2h4.2"/>'+
-       '<circle cx="12" cy="18.4" r="2.4"/><path d="M9.2 10.6h5.6"/>',
-  photo:'<rect x="3.4" y="5.4" width="17.2" height="13.2" rx="2.2"/>'+
-        '<circle cx="9.4" cy="10.6" r="2"/><path d="M4.4 17.4l4.8-4.2 3.4 3 2.8-2.4 4.2 3.6"/>',
-  pay:'<rect x="3.2" y="6.2" width="17.6" height="11.6" rx="2.2"/><path d="M3.2 10.2h17.6"/>'+
-      '<path d="M6.8 14.4h3.2"/>',
+  check:'<path d="M4.6 12.6l4.7 4.7L19.4 7.2"/>',
+  next:'<path d="M4 12h15"/><path d="M13.4 6l6 6-6 6"/>',
+  /* 전구 — 왜 묻는지 */
+  bulb:'<path d="M9.2 17.4a6 6 0 1 1 5.6 0"/><path d="M9.6 19.8h4.8"/><path d="M10.4 21.8h3.2"/>'+
+       '<path d="M9.2 17.4h5.6"/>',
+  printer:'<path d="M7 8.4V3.6h10v4.8"/>'+
+          '<rect x="3.4" y="8.4" width="17.2" height="7.6" rx="2"/>'+
+          '<path d="M7 13.6h10v6.8H7z"/><path d="M17.4 11.4h.01"/>',
+  /* 네모칸 — 켜고 끄는 선택(`toggleHtml`). ⚠️ 활자 ☑/☐ 였다: 글꼴에 따라 이모지로
+     렌더돼 크기·색이 제멋대로였다(2026.08.31). 같은 24 격자·1.7 로 다시 그렸다. */
+  box:'<rect x="3.8" y="3.8" width="16.4" height="16.4" rx="3"/>',
+  boxOn:'<rect x="3.8" y="3.8" width="16.4" height="16.4" rx="3"/>'+
+        '<path d="M7.8 12.2l2.9 2.9 5.5-6"/>',
+  /* ── 준비물(RAIL compact) ──
+     ⛔ 허브 Main CENTER 의 큰 미니 그래픽(120px 사물 그림)을 축소해 옮기지 않는다.
+        작게 읽히도록 다시 그린 것을 쓴다(여권과 같은 그림). */
+  idcard:'<rect x="2.6" y="5.4" width="18.8" height="13.2" rx="2"/>'+
+         '<circle cx="8.4" cy="10.6" r="2.1"/>'+
+         '<path d="M5 15.6c0-1.7 1.5-3 3.4-3s3.4 1.3 3.4 3"/>'+
+         '<path d="M14.6 9.8h4M14.6 13.4h3"/>',
+  photo:'<rect x="4.4" y="2.6" width="15.2" height="18.8" rx="2"/>'+
+        '<circle cx="12" cy="9.6" r="3"/>'+
+        '<path d="M7 17.6c0-2.6 2.2-4.6 5-4.6s5 2 5 4.6"/>',
+  pay:'<rect x="2.6" y="5.6" width="18.8" height="12.8" rx="2"/>'+
+      '<path d="M2.6 10h18.8"/><path d="M6.4 14.6h3.6"/>',
+  document:'<path d="M6.5 3h7.2L18 7.3V21H6.5z"/><path d="M13.7 3v4.3H18"/>'+
+           '<path d="M9.3 12.4h5.4M9.3 15.6h3.6"/>',
+  /* 증명서 — `document` 와 **같은 종이 골격** + 관인. 준비물에서 둘이 나란히 서므로
+     골격이 어긋나면 한 벌로 보이지 않는다(종전에는 종이 크기부터 달랐다). */
+  cert:'<path d="M6.5 3h7.2L18 7.3V21H6.5z"/><path d="M13.7 3v4.3H18"/>'+
+       '<path d="M9.3 11.6h5.4M9.3 14.4h3.4"/><circle cx="14.9" cy="17.4" r="2.2"/>',
+  /* 자물쇠 — 안심하고 작성하세요 */
+  lock:'<rect x="4.4" y="10.4" width="15.2" height="10.2" rx="2"/>'+
+       '<path d="M8 10.4V7.6a4 4 0 0 1 8 0v2.8"/><path d="M12 14.6v2.2"/>',
+  /* 목록 — 준비하셨나요 */
+  checklist:'<rect x="4.4" y="3.4" width="15.2" height="17.2" rx="2"/>'+
+            '<path d="M8.2 8.6l1.4 1.4 2.4-2.4"/><path d="M13.8 9h3"/>'+
+            '<path d="M8.2 14.6l1.4 1.4 2.4-2.4"/><path d="M13.8 15h3"/>',
   /* 도장 — 손잡이 + 인면. ⚠️ 붉은 인주를 그리지 않는다(색은 「골라짐」에만 쓴다). */
   stamp:'<path d="M9.6 3.6h4.8v3.2c0 1.5 1 2.2 2 3 1.2 1 2 2 2 3.6v1.2H5.6v-1.2'+
         'c0-1.6.8-2.6 2-3.6 1-.8 2-1.5 2-3z"/><rect x="4.2" y="17.4" width="15.6" height="3" rx="1.2"/>'
 };
+/*/ICON-SET*/
 function svgIcon(key, cls){
   var d=ICONS[key]||ICONS.document;
   return '<svg class="ic-svg'+(cls?" "+cls:"")+'" '+ICON_ATTR+' aria-hidden="true">'+d+'</svg>';
@@ -255,9 +286,15 @@ function choiceHtml(field, opts, help){
   h+='</div>';
   return h;
 }
+/* 켜고 끄는 선택. ⚠️ 네모칸은 **선 아이콘**이다 — 종전에는 활자 `☑`/`☐` 였는데
+   글꼴에 따라 이모지로 렌더돼 크기·색이 제멋대로였다(2026.08.31 · 공통 마감 ④).
+   ⛔ 새 조형을 만들지 않았다. `.opt-main`(가로 한 줄 · `.opts.row` 에서는 가운데)은
+      껍데기에 이미 있던 것이고, 그것을 쓰지 않으면 `.opt` 가 세로 쌓기라 아이콘이 줄을 바꾼다. */
 function toggleHtml(field, label){
   var on=state[field]?" sel":"";
-  return '<button type="button" class="opt'+on+'" data-toggle="'+field+'">'+(state[field]?"☑ ":"☐ ")+esc(label)+'</button>';
+  return '<button type="button" class="opt'+on+'" data-toggle="'+field+'">'+
+         '<span class="opt-main">'+svgIcon(state[field]?"boxOn":"box","ic-sm")+
+         '<span>'+esc(label)+'</span></span></button>';
 }
 function sumRow(k,val,step){
   var empty=!val;
@@ -288,9 +325,9 @@ function renderStepBody(step){
   /* ⚠️ Review(마지막 확인)에는 **어디를 보면 전체가 있는지** 한 줄로 알려 준다.
      ⛔ 서식마다 다른 말을 짓지 마라 — 여권과 같은 뜻의 한 문장이다. */
   if(def.kind==="summary")
-    h+='<div class="why-box"><span class="ic">💡</span><span>적으신 값 전체는 <b>옆의 신청서</b>에 '
+    h+='<div class="why-box"><span class="ic">'+svgIcon("bulb")+'</span><span>적으신 값 전체는 <b>옆의 신청서</b>에 '
       +'그대로 보입니다. 여기서는 <b>고르신 것</b>만 확인해 주세요.</span></div>';
-  if(def.why) h+='<div class="why-box"><span class="ic">💡</span><span>'+esc(def.why)+'</span></div>';
+  if(def.why) h+='<div class="why-box"><span class="ic">'+svgIcon("bulb")+'</span><span>'+esc(def.why)+'</span></div>';
   if(def.body) h+=def.body(API);
   return h;
 }
@@ -417,14 +454,16 @@ function renderStep(){
   el.stepWarn.textContent="";
   el.btnPrev.disabled = !prevActive(state.step);
   /* ⛔ 새 껍데기에서는 이모지·화살표 활자를 쓰지 않는다 — 선 아이콘이 껍데기 안에 있다.
-     ⚠️ 마지막 단계의 [신청서 인쇄]는 여권 Product Flow 와 같은 자리다. */
+     ⚠️ 마지막 단계의 [신청서 인쇄]는 여권 Product Flow 와 **같은 자리·같은 그림**이다 —
+        프린터 아이콘이 앞에 서고, 진행 화살표는 사라진다.
+        종전에는 화살표를 `display:none` 으로 **숨기기만** 해서, 여권은 프린터가 보이는데
+        엔진 7종은 아이콘 없는 글자 단추가 됐다(2026.08.31 · 공통 마감 ④). */
   if(isRailShell()){
-    var lastLbl = isLastStep() ? "신청서 인쇄" : "다음";
-    var sp=el.btnNext.querySelector("span"); if(sp) sp.textContent=lastLbl;
-    var ic=el.btnNext.querySelector(".btn-ic");
-    if(ic) ic.style.display = isLastStep() ? "none" : "";
+    el.btnNext.innerHTML = isLastStep()
+      ? svgIcon("printer","btn-ic")+"<span>신청서 인쇄</span>"
+      : '<span>다음</span>'+svgIcon("next","btn-ic");
   } else {
-    el.btnNext.textContent = isLastStep() ? "인쇄하기 🖨️" : "다음 →";
+    el.btnNext.textContent = isLastStep() ? "인쇄하기" : "다음";
   }
   var skipWrap = el.btnSkip.closest ? el.btnSkip.closest(".ask-skip") : null;
   var hideSkip = (def.kind==="intro"||def.kind==="summary");

@@ -34,9 +34,9 @@ var QUAL_OPTS=["부","모","동거친족","기타"];
 function parentFields(p){
   var isM=(p==="m");
   return [
-    {k:p+"_name", label:"성명(한글)", req:true, ph:isM?"이순자":"김철수"},
-    {k:p+"_nameHan", label:"성명(한자)", ph:isM?"李順子":"金哲洙", optHint:true},
-    {k:p+"_bon", label:"본(한자)", ph:isM?"全州":"金海", help:"성씨의 본관을 한자로.", optHint:true},
+    {k:p+"_name", label:"성명(한글)", req:true, ph:isM?"윤부곡":"정군포"},
+    {k:p+"_nameHan", label:"성명(한자)", ph:isM?"尹富谷":"鄭軍浦", optHint:true},
+    {k:p+"_bon", label:"본(한자)", ph:isM?"坡平":"東萊", help:"성씨의 본관을 한자로.", optHint:true},
     {k:p+"_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"800101-0000000",
       help:"외국인은 외국인등록번호를 적습니다."},
     {k:p+"_regBase", label:"등록기준지", ph:"경기도 군포시 …",
@@ -47,7 +47,7 @@ function parentFields(p){
    자리라 성명·주민등록번호·주소·전화가 다 있어야 한다. */
 function reporterFields(){
   return [
-    {k:"reporter_name", label:"신고인 성명", req:true, ph:"김철수"},
+    {k:"reporter_name", label:"신고인 성명", req:true, ph:"정군포"},
     {k:"reporter_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"800101-0000000"},
     {k:"reporter_addr", label:"주소", req:true, ph:"경기도 군포시 …"},
     {k:"reporter_phone", label:"전화번호", type:"phone", req:true, ph:"010-0000-0000"},
@@ -234,11 +234,11 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"child_surKor", label:"성(한글)", req:true, half:true, ph:"김"});
-        h+=A.inputHtml({k:"child_givenKor", label:"이름(한글)", req:true, half:true, ph:"하늘"});
-        h+=A.inputHtml({k:"child_surHan", label:"성(한자)", half:true, ph:"金", optHint:true});
-        h+=A.inputHtml({k:"child_givenHan", label:"이름(한자)", half:true, ph:"하늘(한자)", optHint:true});
-        h+=A.inputHtml({k:"child_bon", label:"본(한자)", ph:"金海 (본관)", help:"성씨의 본관을 한자로.", optHint:true});
+        h+=A.inputHtml({k:"child_surKor", label:"성(한글)", req:true, half:true, ph:"정"});
+        h+=A.inputHtml({k:"child_givenKor", label:"이름(한글)", req:true, half:true, ph:"산본"});
+        h+=A.inputHtml({k:"child_surHan", label:"성(한자)", half:true, ph:"鄭", optHint:true});
+        h+=A.inputHtml({k:"child_givenHan", label:"이름(한자)", half:true, ph:"山本", optHint:true});
+        h+=A.inputHtml({k:"child_bon", label:"본(한자)", ph:"東萊 (본관)", help:"성씨의 본관을 한자로.", optHint:true});
         /* ⚠️ 배지와 검증은 **한 쌍**이다. 화면이 「필수」라 하고 넘어가지게 두거나,
            막으면서 아무 말도 하지 않으면 시민은 왜 막혔는지 모른다(2026.08.29 에 그랬다). */
         h+='<div class="field"><label class="field-label">성별 <span class="fb fb-req">필수</span></label>'
@@ -294,7 +294,7 @@ var FORM={
            좋습니다」라고 안내하고 예시에도 병원명을 넣어 두었다. 담당자 확인: 병원명은 적지 않는다.
            ⛔ 시설명을 적도록 유도하지 마라(예시·도움말 둘 다). */
         h+=A.inputHtml({k:"child_birthPlaceAddr", label:"출생 장소 주소", req:true,
-          ph:"예: 경기도 군포시 산본동 000-0",
+          ph:"예: 경기도 군포시 산본로 000",
           help:"출생한 곳의 주소까지만 적어 주세요. 병원명은 적지 않습니다."});
         if(A.state.child_birthPlace==="기타")
           h+=A.inputHtml({k:"child_birthPlaceEtc", label:"출생 장소(기타) 상세", req:true,
@@ -304,7 +304,7 @@ var FORM={
           help:"아이의 가족관계등록부 기준이 되는 주소.", optHint:true});
         h+=A.inputHtml({k:"child_addr", label:"주소", req:true, ph:"경기도 군포시 …",
           help:"아이가 실제로 살(주민등록) 주소."});
-        h+=A.inputHtml({k:"child_headName", label:"세대주 성명", req:true, half:true, ph:"김철수",
+        h+=A.inputHtml({k:"child_headName", label:"세대주 성명", req:true, half:true, ph:"정군포",
           help:"아이가 속할 세대의 세대주."});
         h+=A.inputHtml({k:"child_headRel", label:"세대주와의 관계", req:true, half:true, ph:"자녀(자·녀)"});
         h+=A.inputHtml({k:"child_dualNat", label:"복수국적 시 취득한 외국 국적", ph:"예: 미국",
@@ -424,17 +424,17 @@ var FORM={
       child_birthPlace:"병원",
       /* ⛔ 작성예시에 **병원명을 넣지 마라**(2026.08.30 담당자 2차). 예시가 곧 본보기다 —
          여기에 시설명이 있으면 안내문으로 아무리 막아도 그대로 따라 적는다. */
-      child_birthPlaceAddr:"경기도 군포시 산본동 000-0",
-      child_regBase:"경기도 군포시 당동 000-0",
-      child_addr:"경기도 군포시 당동 000-0, 101동 1001호",
+      child_birthPlaceAddr:"경기도 군포시 산본로 000",
+      child_regBase:"경기도 군포시 산본로 000",
+      child_addr:"경기도 군포시 산본로 000, 101동 1001호",
       child_headName:"정군포", child_headRel:"자녀(녀)",
       f_name:"정군포", f_nameHan:"鄭軍浦", f_bon:"東萊", f_jumin:"8803151000000",
-      f_regBase:"경기도 군포시 당동 000-0", f_edu:"대학(교)",
+      f_regBase:"경기도 군포시 산본로 000", f_edu:"대학(교)",
       m_name:"윤부곡", m_nameHan:"尹富谷", m_bon:"坡平", m_jumin:"9007222000000",
-      m_regBase:"경기도 군포시 부곡동 000-0", m_edu:"대학(교)",
+      m_regBase:"경기도 군포시 산본로 000", m_edu:"대학(교)",
       sonbon_consent:"아니요",
       reporter_name:"정군포", reporter_jumin:"8803151000000", reporter_qual:"부",
-      reporter_addr:"경기도 군포시 당동 000-0, 101동 1001호", reporter_phone:"01012345678",
+      reporter_addr:"경기도 군포시 산본로 000, 101동 1001호", reporter_phone:"01012345678",
       reporter_email:"gunpo@example.com"
     });
     if(kind==="unwed"){

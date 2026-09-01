@@ -167,10 +167,10 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"bef_surKor", label:"성(한글)", req:true, half:true, ph:"김"});
-        h+=A.inputHtml({k:"bef_givenKor", label:"이름(한글)", req:true, half:true, ph:"철수"});
-        h+=A.inputHtml({k:"bef_surHan", label:"성(한자)", half:true, ph:"金", optHint:true});
-        h+=A.inputHtml({k:"bef_givenHan", label:"이름(한자)", half:true, ph:"哲洙", optHint:true});
+        h+=A.inputHtml({k:"bef_surKor", label:"성(한글)", req:true, half:true, ph:"최"});
+        h+=A.inputHtml({k:"bef_givenKor", label:"이름(한글)", req:true, half:true, ph:"당정"});
+        h+=A.inputHtml({k:"bef_surHan", label:"성(한자)", half:true, ph:"崔", optHint:true});
+        h+=A.inputHtml({k:"bef_givenHan", label:"이름(한자)", half:true, ph:"堂井", optHint:true});
         return h;
       }},
 
@@ -183,10 +183,10 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"aft_surKor", label:"성(한글)", req:true, half:true, ph:"김"});
-        h+=A.inputHtml({k:"aft_givenKor", label:"이름(한글)", req:true, half:true, ph:"도윤"});
-        h+=A.inputHtml({k:"aft_surHan", label:"성(한자)", half:true, ph:"金", optHint:true});
-        h+=A.inputHtml({k:"aft_givenHan", label:"이름(한자)", half:true, ph:"道潤", optHint:true});
+        h+=A.inputHtml({k:"aft_surKor", label:"성(한글)", req:true, half:true, ph:"최"});
+        h+=A.inputHtml({k:"aft_givenKor", label:"이름(한글)", req:true, half:true, ph:"산본"});
+        h+=A.inputHtml({k:"aft_surHan", label:"성(한자)", half:true, ph:"崔", optHint:true});
+        h+=A.inputHtml({k:"aft_givenHan", label:"이름(한자)", half:true, ph:"山本", optHint:true});
         return h;
       }},
 
@@ -198,7 +198,7 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"bon", label:"본(한자)", ph:"金海",
+        h+=A.inputHtml({k:"bon", label:"본(한자)", ph:"慶州",
           help:"성씨의 본관을 한자로.", optHint:true});
         h+=A.inputHtml({k:"n_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"900101-0000000"});
         h+=A.inputHtml({k:"n_regBase", label:"등록기준지", ph:"경기도 군포시 …",
@@ -247,7 +247,7 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"r_name", label:"신고인 성명", req:true, ph:"김도윤",
+        h+=A.inputHtml({k:"r_name", label:"신고인 성명", req:true, ph:"최산본",
           help:"본인이 신고하면 개명 후의 이름을 적습니다."});
         h+=A.inputHtml({k:"r_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"900101-0000000"});
         h+='<div class="field"><label class="field-label">신고인 자격 <span class="fb fb-req">필수</span></label>'
@@ -286,12 +286,12 @@ var FORM={
       bef_surKor:"최", bef_givenKor:"당정", bef_surHan:"崔", bef_givenHan:"堂井",
       aft_surKor:"최", aft_givenKor:"산본", aft_surHan:"崔", aft_givenHan:"山本",
       bon:"慶州", n_jumin:"9001011000000",
-      n_regBase:"경기도 군포시 도마교동 000-0",
-      n_addr:"경기도 군포시 도마교동 000-0, 201동 503호",
+      n_regBase:"경기도 군포시 산본로 000",
+      n_addr:"경기도 군포시 산본로 000, 201동 503호",
       permDate:"2026.06.15", court:"수원가정법원",
       etc:"",
       r_name:"최산본", r_jumin:"9001011000000", r_qual:"본인", r_qualEtc:"",
-      r_addr:"경기도 군포시 도마교동 000-0, 201동 503호", r_phone:"01012345678",
+      r_addr:"경기도 군포시 산본로 000, 201동 503호", r_phone:"01012345678",
       r_email:"sanbon@example.com",
       sub_name:"", sub_jumin:""
     });
@@ -301,7 +301,7 @@ var FORM={
         bef_surKor:"윤", bef_givenKor:"금정", bef_surHan:"尹", bef_givenHan:"衿井",
         aft_surKor:"윤", aft_givenKor:"군포", aft_surHan:"尹", aft_givenHan:"軍浦",
         bon:"坡平", n_jumin:"1503111000000",
-        n_regBase:"경기도 군포시 금정동 000-0",
+        n_regBase:"경기도 군포시 산본로 000",
         permDate:"2026.07.01", court:"수원가정법원",
         r_name:"윤둔대", r_jumin:"8203151000000", r_qual:"법정대리인", r_qualEtc:"",
         r_email:"dundae@example.com"

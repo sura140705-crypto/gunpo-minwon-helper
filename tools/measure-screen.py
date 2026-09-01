@@ -90,6 +90,17 @@ SCENARIOS = [
 
 # 재는 것 — **구조**와 **넘침**만. 색·글자는 눈으로 보는 편이 낫다(갈무리가 그 몫이다).
 PROBE = r'''
+/* 재기 직전에 **모션을 걷어낸다**(2026.08.31).
+   ⚠️ 헤드리스 크롬은 `--virtual-time-budget` 아래에서 애니메이션을 **첫 프레임에
+      세워 둔다.** 단계 전환(`.wiz-body.step-in` — `stepIn 160ms`, 시작이
+      `translateY(6px)` · `fill-mode:both`)이 그 상태로 멈춰 있으면
+      `getBoundingClientRect()` 가 **6px 아래**를 돌려준다. 그래서 코드를 한 줄도
+      안 고쳐도 여권 12화면의 「질문칸/y」가 208 대신 214 로 잡혔고, 2026.08.30
+      모션 작업 뒤로 기준선이 설명 없이 어긋난 채였다.
+   ⛔ 기다려서 해결되지 않는다(가상 시간이라 400ms 를 줘도 그대로다).
+      **class 를 지워** 자리 그대로의 값을 잰다 — 모션은 `design-shots.py` 가 본다. */
+[].forEach.call(document.querySelectorAll(".step-in"),
+  function(n){ n.classList.remove("step-in"); });
 function m(sel){
   var n=document.querySelector(sel); if(!n) return null;
   var r=n.getBoundingClientRect();
@@ -157,6 +168,7 @@ def measure(src, cfg, script, size):
         s = s.replace("<head>", "<head><script>window.__kioskCfg=%s;</script>"
                       % json.dumps(cfg, ensure_ascii=False), 1)
     # 상태를 만든 **뒤에** 잰다. 여는 순간 재면 시연·초기 렌더 중간값이 잡힌다.
+    #
     s = s.replace("</body>", '<script>setTimeout(function(){try{%s}catch(e){'
                              'document.title="ERR "+e;}\nsetTimeout(function(){%s},120);},250);'
                              '</script></body>' % (script, PROBE))

@@ -194,10 +194,10 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"d_surKor", label:"성(한글)", req:true, half:true, ph:"김"});
-        h+=A.inputHtml({k:"d_givenKor", label:"이름(한글)", req:true, half:true, ph:"판석"});
-        h+=A.inputHtml({k:"d_surHan", label:"성(한자)", half:true, ph:"金", optHint:true});
-        h+=A.inputHtml({k:"d_givenHan", label:"이름(한자)", half:true, ph:"判石", optHint:true});
+        h+=A.inputHtml({k:"d_surKor", label:"성(한글)", req:true, half:true, ph:"조"});
+        h+=A.inputHtml({k:"d_givenKor", label:"이름(한글)", req:true, half:true, ph:"속달"});
+        h+=A.inputHtml({k:"d_surHan", label:"성(한자)", half:true, ph:"趙", optHint:true});
+        h+=A.inputHtml({k:"d_givenHan", label:"이름(한자)", half:true, ph:"束達", optHint:true});
         h+='<div class="field"><label class="field-label">성별 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("d_sex",SEX_OPTS)+'</div>';
         h+=A.inputHtml({k:"d_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"400101-0000000",
@@ -206,7 +206,7 @@ var FORM={
           help:"가족관계등록부의 기준이 되는 주소입니다. 외국인은 국적을 적습니다.", optHint:true});
         h+=A.inputHtml({k:"d_addr", label:"주소", req:true, ph:"경기도 군포시 …",
           help:"사망자의 주민등록 주소."});
-        h+=A.inputHtml({k:"d_headName", label:"세대주 성명", req:true, half:true, ph:"김판석",
+        h+=A.inputHtml({k:"d_headName", label:"세대주 성명", req:true, half:true, ph:"조속달",
           help:"사망자가 속한 세대의 세대주."});
         h+=A.inputHtml({k:"d_headRel", label:"세대주와의 관계", req:true, half:true, ph:"본인"});
         return h;
@@ -243,7 +243,7 @@ var FORM={
            안내하고 예시로 병원명을 보여 줬다. 담당자 확인: 병원명·건물명은 적지 않는다.
            ⛔ 시설명·건물명을 적도록 유도하지 마라(예시·도움말 둘 다). */
         h+=A.inputHtml({k:"d_placeDetail", label:"사망 장소(상세)", req:true,
-          ph:"예: 경기도 군포시 산본동 000-0",
+          ph:"예: 경기도 군포시 산본로 000",
           help:"돌아가신 곳의 주소까지만 적어 주세요. 병원명이나 건물명은 적지 않습니다."});
         h+='<div class="field"><label class="field-label">사망 장소 구분 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("d_place",PLACE_OPTS,"해당하는 한 곳을 고르세요.")+'</div>';
@@ -274,7 +274,7 @@ var FORM={
         return m; },
       body:function(A){
         var h='';
-        h+=A.inputHtml({k:"r_name", label:"신고인 성명", req:true, ph:"김철수"});
+        h+=A.inputHtml({k:"r_name", label:"신고인 성명", req:true, ph:"조수리"});
         h+=A.inputHtml({k:"r_jumin", label:"주민등록번호", type:"jumin", req:true, ph:"800101-0000000"});
         h+='<div class="field"><label class="field-label">신고인 자격 <span class="fb fb-req">필수</span></label>'
           +A.choiceHtml("r_qual",QUAL_OPTS,"사망자와 함께 살았으면 ‘동거친족’, 따로 살았으면 ‘비동거친족’.")+'</div>';
@@ -326,22 +326,22 @@ var FORM={
     Object.assign(state,{
       step:2,
       d_surKor:"조", d_givenKor:"속달", d_surHan:"趙", d_givenHan:"束達", d_sex:"남",
-      d_jumin:"4001011000000", d_regBase:"경기도 군포시 속달동 000-0",
-      d_addr:"경기도 군포시 속달동 000-0",
+      d_jumin:"4001011000000", d_regBase:"경기도 군포시 산본로 000",
+      d_addr:"경기도 군포시 산본로 000",
       d_headName:"조속달", d_headRel:"본인",
       d_deathDate:"2026.07.10", d_deathHour:"9", d_deathMin:"20",
       /* ⛔ 작성예시에 **병원명·건물명을 넣지 마라**(2026.08.30 담당자 2차). 예시가 곧 본보기다 —
          여기에 시설명이 있으면 안내문으로 아무리 막아도 그대로 따라 적는다.
          ⚠️ 「의료기관」은 장소 **구분**(영표)이라 그대로 둔다 — 주소칸과 다른 것이다. */
-      d_placeDetail:"경기도 군포시 산본동 000-0", d_place:"의료기관", d_placeEtc:"",
+      d_placeDetail:"경기도 군포시 산본로 000", d_place:"의료기관", d_placeEtc:"",
       d_edu:"고등학교", d_marital:"사별",
       etc:"",
       r_name:"조수리", r_jumin:"7203151000000", r_qual:"동거친족", r_rel:"자(子)",
-      r_addr:"경기도 군포시 속달동 000-0", r_phone:"01012345678",
+      r_addr:"경기도 군포시 산본로 000", r_phone:"01012345678",
       r_email:"suri@example.com"
     });
     if(kind==="home"){
-      state.d_place="주택"; state.d_placeDetail="경기도 군포시 속달동 000-0";
+      state.d_place="주택"; state.d_placeDetail="경기도 군포시 산본로 000";
       state.d_marital="배우자 있음";
       state.r_name="정송부"; state.r_jumin="4503152000000"; state.r_qual="동거친족"; state.r_rel="배우자";
       state.r_email="songbu@example.com";

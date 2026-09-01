@@ -229,8 +229,8 @@ var FORM={
         if(!String(s.t_regBase||"").trim() && !String(s.t_jumin||"").trim()) m.push("등록기준지 또는 주민등록번호");
         return m; },
       body:function(A){ var h='';
-        h+=A.inputHtml({k:"t_name", label:"대상자 성명(한글)", req:true, half:true, ph:"홍길동"});
-        h+=A.inputHtml({k:"t_nameHan", label:"성명(한자)", half:true, ph:"洪吉童"});
+        h+=A.inputHtml({k:"t_name", label:"대상자 성명(한글)", req:true, half:true, ph:"장당정"});
+        h+=A.inputHtml({k:"t_nameHan", label:"성명(한자)", half:true, ph:"張堂井"});
         h+=A.inputHtml({k:"t_regBase", label:"등록기준지", ph:"경기도 군포시 …",
           help:"가족관계등록부의 기준이 되는 주소. 우편으로 신청할 때는 반드시 필요합니다."});
         h+=A.inputHtml({k:"t_jumin", label:"주민등록번호", type:"jumin", ph:"900101-0000000",
@@ -263,7 +263,7 @@ var FORM={
         h+='<div class="q-help">특정 증명서에 포함할 사람을 고르세요.</div>';
         h+='<div class="opts row">'+A.toggleHtml("famWhoFu","부")+A.toggleHtml("famWhoMo","모")
           +A.toggleHtml("famWhoSp","배우자")+A.toggleHtml("famWhoCh","자녀")+'</div>';
-        if(A.state.famWhoCh) h+=A.inputHtml({k:"fam_child_name", label:"자녀 성명", ph:"홍자녀"});
+        if(A.state.famWhoCh) h+=A.inputHtml({k:"fam_child_name", label:"자녀 성명", ph:"장금정"});
         // 기본 상세·특정
         h+='<div class="field-label" style="margin-top:8px">기본증명서 — 상세·특정</div>';
         h+=A.inputHtml({k:"c_bas_det", label:"상세 — 통수", half:true});
@@ -308,10 +308,10 @@ var FORM={
         if(!String(s.ap_name||"").trim()) m.push("신청인 성명");
         return m; },
       body:function(A){ var h='';
-        h+=A.inputHtml({k:"ap_name", label:"신청인 성명", req:true, ph:"홍길동"});
+        h+=A.inputHtml({k:"ap_name", label:"신청인 성명", req:true, ph:"장당정"});
         h+=A.inputHtml({k:"ap_jumin", label:"주민등록번호", type:"jumin", ph:"900101-0000000"});
         h+=A.inputHtml({k:"ap_qual", label:"신청인 자격", ph:"본인",
-          help:"대상자 본인이면 ‘본인’. 가족이면 ‘홍길동의 자녀’처럼 관계를 적습니다."});
+          help:"대상자 본인이면 ‘본인’. 가족이면 ‘장당정의 자녀’처럼 관계를 적습니다."});
         h+=A.inputHtml({k:"ap_addr", label:"주소", ph:"경기도 군포시 …"});
         h+=A.inputHtml({k:"ap_phone", label:"휴대전화번호", type:"phone", ph:"010-0000-0000"});
         h+='<div class="field"><label class="field-label">아포스티유 제출용 <span class="fb fb-opt">선택</span></label>'
@@ -352,17 +352,17 @@ var FORM={
       /* ⚠️ 대상자는 **1960년생**이다. 아래 `agent` 예시에서 **자녀가 대리 신청**하는데,
          종전에는 대상자가 1990년생이고 자녀가 1985년생이라 나이가 뒤집혀 있었다. */
       t_name:"장당정", t_nameHan:"張堂井",
-      t_regBase:"경기도 군포시 당정동 000-0", t_jumin:"6001011000000",
+      t_regBase:"경기도 군포시 산본로 000", t_jumin:"6001011000000",
       c_fam_gen:"1", c_bas_gen:"1", c_mar_gen:"",
       ap_name:"장당정", ap_jumin:"6001011000000", ap_qual:"본인",
-      ap_addr:"경기도 군포시 당정동 000-0, 105동 802호", ap_phone:"01012345678"
+      ap_addr:"경기도 군포시 산본로 000, 105동 802호", ap_phone:"01012345678"
     });
     if(kind==="agent"){
       // 대리 신청 — 자녀가 부(대상자)의 증명서를 대리 신청
       Object.assign(state,{
         c_fam_gen:"1", c_bas_gen:"", c_mar_gen:"1",
         ap_name:"장금정", ap_jumin:"9003152000000", ap_qual:"장당정의 자녀",
-        ap_addr:"경기도 군포시 금정동 000-0, 302동 1104호", ap_phone:"01098765432",
+        ap_addr:"경기도 군포시 산본로 000, 302동 1104호", ap_phone:"01098765432",
         del_name:"장당정", del_jumin:"6001011000000",
         claim_reason:"부동산 상속 관련 은행 제출용",
         disc_scope:"신청대상자 본인만 공개", disc_reason:"본인·가족"

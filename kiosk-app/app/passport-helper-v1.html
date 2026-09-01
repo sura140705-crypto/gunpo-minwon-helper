@@ -1323,6 +1323,16 @@ html.big{
   .roman-side.warn .roman-h{color:#a11c1c;}
   .roman-p{font-size:13.5px;line-height:1.55;color:var(--muted);margin:0 0 12px;}
   .roman-side .field{margin-bottom:6px;max-width:none;}
+  /* 성 묶음 · 이름 묶음(2026.08.31). 한 상자 안에서 한글 → 권장 → 적는 칸으로 내려간다.
+     ⚠️ 이 화면은 495px 기둥에 입력 두 칸 + 추천 두 줄이 들어가 **원래도 스크롤이 있었다**
+        (변경 전 실측 390px 넘침). 그래서 묶음 안에서는 겉치레를 줄인다 —
+        추천은 상자가 아니라 **한 줄**이고, 「참고용」 안내는 화면 아래 **한 번만** 나온다.
+     ⛔ 여기에 상자·여백을 보태지 마라. 보탤 값이 있으면 무엇을 뺄지 먼저 정해라. */
+  .roman-part{padding:13px 15px;}
+  .roman-part .rp-row{margin:0 0 10px;}
+  .roman-part .rp-kor{font-size:17px;letter-spacing:0;}
+  .roman-part .rp-done{font-size:13px;font-weight:700;color:#0a7a2f;}
+  .roman-foot{margin:0;}
   /* ⛔ 로마자 화면만 입력칸·라벨을 다르게 두지 않는다(2026.08.28). 두 칸이던 시절
      폭이 좁아 깎아 둔 값인데, 1열이 된 뒤로는 이유가 없어졌다. 값이 갈리면
      **같은 「이름 적는 칸」이 화면마다 달라 보인다** — 한 입력 체계로 되돌린다.
@@ -1808,8 +1818,14 @@ function createEmptyState(){
     data:{
       // 여권 선택란
       kind:"일반", travelType:"", pages:"58면", period:"10년",
-      // 필수 기재란 · 신청인
-      nameKor:"", jumin:"", phone:"",
+      /* 필수 기재란 · 신청인
+         ⚠️ **한글 성명은 성·이름을 따로 받는다**(2026.08.31). 한 칸으로 받으면
+            「제갈」·「남궁」·「선우」처럼 **두 글자 성**을 구분할 방법이 없어, 로마자 추천이
+            성을 첫 글자 하나로만 잘라 「제 → JE / 갈성용 → GALSEONGYONG」을 내놓았다.
+         📌 `nameKor` 는 **파생값**이다(`syncKorName()` 이 성+이름을 붙인다).
+            서식의 한글성명은 8칸 한 줄이라 종이에는 붙여서 인쇄된다.
+         ⛔ `nameKor` 를 입력칸으로 되돌리지 마라. 적는 곳은 아래 두 칸뿐이다. */
+      nameKorSur:"", nameKorGiven:"", nameKor:"", jumin:"", phone:"",
       // 필수 기재란 · 긴급연락처
       emgName:"", emgRel:"", emgPhone:"",
       // 추가 기재란
@@ -1870,7 +1886,18 @@ const PAGES_FIXED={ "긴급":"12면(긴급여권 고정)", "여행증명서":"�
       유효기간을 5년으로 덮어썼는데, **성인 경로에서 번호를 잘못 눌렀을 뿐인데 기본값
       10년이 소리 없이 5년으로 바뀌어** 있었다(현장 확인). 번호가 경로와 어긋나는 것은
       고쳐 줄 일이 아니라 알려 줄 일이다 — 그 몫은 `juminConflict` 가 맡는다. */
+/* 한글 성명 = 성 + 이름. **적는 곳은 두 칸이고, 쓰이는 곳은 한 값이다.**
+   서식의 한글성명은 8칸 한 줄이므로 종이에는 붙여서 인쇄된다. 동의서·위임장·서명란도
+   같은 값을 쓴다 — 그래서 파생값을 하나 두고 나머지 코드는 종전 그대로 둔다.
+   ⚠️ `applyAgeRules()` 첫머리에서 부른다. 이 함수는 **입력할 때마다**(input 처리기)와
+      **그릴 때마다**(`renderAll`) 둘 다 지나가므로, 파생값이 뒤처지는 순간이 없다.
+   ⛔ `state.data.nameKor` 에 직접 값을 넣지 마라 — 다음 입력에 덮인다. */
+function syncKorName(){
+  var d=state.data;
+  d.nameKor=((d.nameKorSur||"")+(d.nameKorGiven||"")).trim();
+}
 function applyAgeRules(){
+  syncKorName();
   /* 미성년 경로는 유효기간을 **5년으로 고정**한다(2026.08.18 담당자 결정).
      화면에 10년을 아예 보여주지 않으므로, 종전처럼 「고른 값을 뒤에서 5년으로 덮어쓰는」
      동작이 사라진다 — 시민 입장에서 내가 고른 게 바뀌어 있는 일이 없다. */
@@ -2112,11 +2139,23 @@ const SCREENS = {
     readyList:true,
     cards:[ { icon:"👉", label:"확인했습니다. 작성을 시작할게요", act:"next" } ] },
 
-  /* ④ 한글 성명 */
+  /* ④ 한글 성명 — **성과 이름을 따로 받는다**(2026.08.31).
+     ⚠️ 한 칸으로 받던 종전에는 「제갈」·「남궁」·「선우」 같은 **두 글자 성**을 구분할 수 없어,
+        로마자 추천이 성을 첫 글자로만 잘랐다(제갈성용 → 성 「제」 / 이름 「갈성용」).
+     ⛔ 두 칸을 한 칸으로 되돌리지 마라. 성이 몇 글자인지는 **시민만 안다** —
+        규칙으로 맞출 수 없다(복성은 목록이 열려 있고, 외자 이름도 있다).
+     📌 종이에는 붙여서 인쇄된다(서식의 한글성명은 8칸 한 줄). */
   name:{ title:"성명",
     question:function(){ return state.ui.path==="minor" ? "자녀의 한글 성명을 적어 주세요" : "신청인의 한글 성명을 적어 주세요"; },
-    why:"신분증에 적힌 대로 한 글자도 다르지 않게 적어 주세요.",
-    inputs:[ { field:"nameKor", label:"한글 성명", req:true, type:"text", ph:"예) 홍길동" } ] },
+    why:"신분증에 적힌 대로 한 글자도 다르지 않게 적어 주세요. 성과 이름을 나누어 적어 주세요.",
+    inputs:[
+      { field:"nameKorSur", label:"성", req:true, type:"text", ph:"예) 최",
+        hint:"제갈 · 남궁 · 선우처럼 성이 두 글자면 두 글자를 함께 적어 주세요." },
+      /* ⛔ 이 칸에 도움말을 달지 마라. 위 칸의 도움말이 성·이름을 함께 설명하고,
+         라벨 「이름」과 안내글 「예) 군포」로 뜻이 이미 선다. 한 줄을 더 두면
+         **크게 보기에서 질문 기둥이 넘친다**(실측 +6px, 2026.08.31). */
+      { field:"nameKorGiven", label:"이름", req:true, type:"text", ph:"예) 군포" }
+    ] },
 
   /* ⑤ 주민등록번호 — 키오스크에 넣기 싫은 시민에게 선택권을 준다(§7) */
   jumin:{ title:"주민등록번호",
@@ -2199,8 +2238,9 @@ const SCREENS = {
              d:"적으신 이름을 직원에게 보여 주시면 함께 확인해 드립니다.",
              b:"직원에게 여쭤볼게요" },
     inputs:[
-      { field:"romanSur", label:"영문 성 (Surname)", req:true, type:"text", ph:"예) HONG", upper:true },
-      { field:"romanGiven", label:"영문 이름 (Given name)", req:true, type:"text", ph:"예) GILDONG", upper:true }
+      /* ⚠️ 라벨에 (Surname)·(Given name) 을 되풀이하지 않는다 — 묶음 머리가 이미 말한다. */
+      { field:"romanSur", label:"여권에 인쇄될 영문 성", req:true, type:"text", ph:"예) CHOI", upper:true },
+      { field:"romanGiven", label:"여권에 인쇄될 영문 이름", req:true, type:"text", ph:"예) GUNPO", upper:true }
     ] },
 
   /* ⑩ 여권 종류 — 일반이 아니면 창구 */
@@ -2240,7 +2280,7 @@ const SCREENS = {
     question:"지금 신청하시는 법정대리인 정보를 적어 주세요",
     why:"신청서의 서명란과 「법정대리인 동의서」에 들어갑니다. 자녀 정보가 아니라 <b>지금 오신 분</b>의 정보입니다.",
     inputs:[
-      { field:"agentName", label:"법정대리인 성명", req:true, type:"text", ph:"예) 홍판서" },
+      { field:"agentName", label:"법정대리인 성명", req:true, type:"text", ph:"예) 임금정" },
       { field:"guardianRel", label:"자녀와의 관계", req:true, type:"text", ph:"예) 부, 모" },
       { field:"phone", label:"법정대리인 연락처", req:true, type:"tel", mask:"phone",
         inputmode:"numeric", maxlength:13, ph:"예) 01012345678",
@@ -2260,7 +2300,7 @@ const SCREENS = {
     question:"지금 신청하시는 분(대리인) 정보를 적어 주세요",
     why:"「위임장」에 들어갑니다. 여권을 받으실 분이 아니라 <b>지금 오신 분</b>의 정보입니다.",
     inputs:[
-      { field:"agentName", label:"대리인 성명", req:true, type:"text", ph:"예) 홍판서" },
+      { field:"agentName", label:"대리인 성명", req:true, type:"text", ph:"예) 최오금" },
       { field:"guardianRel", label:"신청인과의 관계", req:true, type:"text", ph:"예) 배우자, 자녀, 부모" },
       { field:"agentBirth", label:"대리인 생년월일", req:true, type:"text",
         inputmode:"numeric", maxlength:10, ph:"예) 19800101",
@@ -2278,7 +2318,7 @@ const SCREENS = {
     question:"해외에서 사고가 났을 때 연락할 분을 적어 주세요",
     why:"본인이 아닌 <b>다른 분</b>(가족·지인)의 연락처여야 합니다.",
     inputs:[
-      { field:"emgName", label:"성명", req:function(){ return POLICY.requireEmergency; }, type:"text", ph:"예) 홍판서" },
+      { field:"emgName", label:"성명", req:function(){ return POLICY.requireEmergency; }, type:"text", ph:"예) 최당동" },
       { field:"emgRel", label:"신청인과의 관계", req:function(){ return POLICY.requireEmergency; }, type:"text", ph:"예) 부, 모, 배우자" },
       { field:"emgPhone", label:"전화번호", req:function(){ return POLICY.requireEmergency; }, type:"tel", mask:"phone",
         inputmode:"numeric", maxlength:13, ph:"예) 01098765432" }
@@ -2328,7 +2368,7 @@ const SCREENS = {
         apply:function(d){ d.guardian2Name=""; d.guardian2Rel=""; d.guardian2Jumin=""; } }
     ],
     inputs:[
-      { field:"guardian2Name", label:"공동친권자 성명", req:true, type:"text", ph:"예) 이영희",
+      { field:"guardian2Name", label:"공동친권자 성명", req:true, type:"text", ph:"예) 강수리",
         cond:editingGuardian2 },
       { field:"guardian2Rel", label:"자녀와의 관계", req:true, type:"text", ph:"예) 부, 모",
         cond:editingGuardian2 },
@@ -2451,7 +2491,7 @@ function readyItems(){
       검증을 지나치게 된다(스텝퍼의 `gotoStep` 과 같은 규칙). 갈 곳이 없으면 버튼을 내지 않는다. */
 const FIELD_SCREEN = {
   kind:"kind", travelType:"kind", pages:"pages", period:"period",
-  nameKor:"name", jumin:"jumin",
+  nameKor:"name", nameKorSur:"name", nameKorGiven:"name", jumin:"jumin",
   phone:function(){ return state.ui.path==="minor" ? "guardian" : "phone"; },
   emgName:"emg", emgRel:"emg", emgPhone:"emg",
   hasPassport:"oldpass", romanSur:"roman", romanGiven:"roman",
@@ -2555,7 +2595,15 @@ const SURNAME_ROMAN={"김":"KIM","이":"LEE","박":"PARK","최":"CHOI","정":"JE
   "윤":"YOON","장":"JANG","임":"LIM","한":"HAN","오":"OH","서":"SEO","신":"SHIN","권":"KWON","황":"HWANG",
   "안":"AHN","송":"SONG","전":"JEON","홍":"HONG","유":"YOO","류":"RYU","고":"KO","문":"MOON","양":"YANG",
   "손":"SON","배":"BAE","백":"BAEK","허":"HEO","남":"NAM","심":"SIM","노":"NOH","하":"HA","곽":"KWAK",
-  "성":"SUNG","차":"CHA","주":"JOO","우":"WOO","구":"KOO","민":"MIN","지":"JI","엄":"EOM"};
+  "성":"SUNG","차":"CHA","주":"JOO","우":"WOO","구":"KOO","민":"MIN","지":"JI","엄":"EOM",
+  /* 두 글자 성(복성) — 2026.08.31.
+     ⚠️ 대부분은 음절 규칙만으로도 맞게 나온다(남궁 → NAMGUNG · 제갈 → JEGAL). 그래도
+        표에 **적어 둔다** — 담당자가 관내 실제 표기에 맞춰 고칠 자리가 여기 하나여야 한다.
+     📌 규칙과 실제로 갈리는 것은 「선우」다(규칙 SEONU · 관행 SUNWOO).
+     ⛔ 복성 목록은 **닫힌 목록이 아니다.** 여기 없는 복성은 음절 규칙으로 물러나고,
+        어차피 시민이 성 칸에 두 글자를 적었는지로 판단한다 — 이 표로 성을 가르지 않는다. */
+  "남궁":"NAMGUNG","황보":"HWANGBO","제갈":"JEGAL","사공":"SAGONG",
+  "서문":"SEOMUN","선우":"SUNWOO","독고":"DOKGO"};
 const CHO=["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
 const JUNG=["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
 const JONG=["","k","k","k","n","n","n","t","l","k","m","p","t","t","p","l","m","p","p","t","t","ng","t","t","k","t","p","t"];
@@ -2564,8 +2612,12 @@ function romanizeSyllable(ch){
   if(c<0||c>11171) return "";
   return CHO[Math.floor(c/588)]+JUNG[Math.floor((c%588)/28)]+JONG[c%28];
 }
-function suggestSurname(nm){ const f=(nm||"").trim().charAt(0); if(!f) return ""; return (SURNAME_ROMAN[f]||romanizeSyllable(f)).toUpperCase(); }
-function suggestGiven(nm){ let o=""; for(const ch of (nm||"").trim().slice(1)) o+=romanizeSyllable(ch); return o.toUpperCase(); }
+function romanizeWord(w){ let o=""; for(const ch of (w||"").trim()) o+=romanizeSyllable(ch); return o; }
+/* ⚠️ **적힌 성·이름을 그대로 받는다.** 종전에는 성명 한 덩이를 받아 `charAt(0)`/`slice(1)`
+      로 갈랐다 — 「제갈성용」이 성 「제」 · 이름 「갈성용」이 됐다(2026.08.31에 잡았다).
+   ⛔ 여기서 성이 몇 글자인지 다시 추측하지 마라. 시민이 성 칸에 적은 것이 성이다. */
+function suggestSurname(sur){ const s=(sur||"").trim(); if(!s) return ""; return (SURNAME_ROMAN[s]||romanizeWord(s)).toUpperCase(); }
+function suggestGiven(given){ return romanizeWord(given).toUpperCase(); }
 
 // 마스크 적용 (입력 핸들러 공용)
 function applyMask(mask, val){
@@ -2589,13 +2641,18 @@ const el={
   btnNext:document.getElementById("btnNext")
 };
 // 이 단계에서 다루는 필드(좌측 하이라이트용)
+/* 입력칸 이름 → 서식에서 강조할 칸 이름.
+   ⚠️ 성·이름을 **두 칸으로 나눠 받지만** 서식에는 한글성명 칸이 **하나**다. 옮겨 주지
+      않으면 그 단계에서 종이의 강조가 사라진다 — 「적는 자리를 보여 준다」가 깨진다. */
+const GRID_ALIAS = { nameKorSur:"nameKor", nameKorGiven:"nameKor" };
 function getStepFieldSet(step){
   const f=flow(), def=SCREENS[f[Math.min(step,f.length)-1]], set=new Set();
   if(!def) return set;
-  (def.groups||[]).forEach(function(g){ set.add(g.field); });
-  (def.inputs||[]).forEach(function(i){ set.add(i.field); });
-  if(def.addrInput) set.add(def.addrInput.field);
-  (def.cards||[]).forEach(function(c){ if(c.act==="set") set.add(c.field); });
+  const add=function(k){ set.add(GRID_ALIAS[k]||k); };
+  (def.groups||[]).forEach(function(g){ add(g.field); });
+  (def.inputs||[]).forEach(function(i){ add(i.field); });
+  if(def.addrInput) add(def.addrInput.field);
+  (def.cards||[]).forEach(function(c){ if(c.act==="set") add(c.field); });
   return set;
 }
 // 이 화면의 필수 필드(조건 충족 항목만). 카드 선택은 별도로 확인한다(cardPending).
@@ -3012,25 +3069,57 @@ let APP_TODAY=null; // init에서 설정 (Date는 init 시 1회)
 /* =========================================================
    8) 로마자 권장 예시 (참고용 · 자동 확정 안 함)
    ========================================================= */
-function buildRomanSuggestion(){
-  let h="";
-  if(state.data.hasPassport==="있음"){
-    h+='<div class="warn-strong">⚠ 기존 여권이 있으시면, 새 신청서의 로마자 성명을 <b>기존 여권과 똑같이</b> 적어야 합니다. '+
-       '철자가 한 글자라도 다르면 접수가 거절될 수 있어요. 아래 예시와 다를 수 있으니 <b>반드시 기존 여권을 보고</b> 입력하세요.</div>';
-  } else if(state.data.hasPassport==="모름"){
-    h+='<div class="note-box">기존 여권이 있는지 확실하지 않다면 먼저 확인해 주세요. 있으면 그 여권의 로마자 성명을 그대로 사용해야 합니다.</div>';
-  }
-  const nm=(state.data.nameKor||"").trim();
-  if(!nm){ h+='<div class="note-box">앞의 <b>‘신청인 정보’ 단계</b>에서 <b>한글 성명</b>을 입력하시면 권장 로마자 예시를 제안해 드립니다.</div>'; return h; }
-  const sur=suggestSurname(nm), given=suggestGiven(nm);
-  h+='<div class="sug-box"><div class="sug-title">‘'+esc(nm)+'’ 님 기준 권장 로마자 예시 (참고용)</div>';
-  if(sur) h+='<div class="sug-row"><span>성 '+esc(nm.charAt(0))+' →</span> <b>'+esc(sur)+'</b>'+
-    '<button type="button" class="sug-btn" data-act="suggest" data-field="romanSur" data-val="'+esc(sur)+'">이 예시 적용</button></div>';
-  if(nm.length>1&&given) h+='<div class="sug-row"><span>이름 '+esc(nm.slice(1))+' →</span> <b>'+esc(given)+'</b>'+
-    '<button type="button" class="sug-btn" data-act="suggest" data-field="romanGiven" data-val="'+esc(given)+'">이 예시 적용</button></div>';
-  h+='<div class="sug-note">권장 예시는 <b>참고용</b>이며 자동으로 확정되지 않습니다. [이 예시 적용] 후 직접 확인·수정하세요.</div></div>';
-  return h;
+/* 화면 맨 위의 상황 안내 — 기존 여권 보유 여부에 따라 한 번만 낸다.
+   ⛔ 성·이름 묶음마다 되풀이하지 마라. 같은 경고를 두 번 읽히면 두 번째는 안 읽힌다. */
+function buildRomanNotice(){
+  if(state.data.hasPassport==="있음")
+    return '<div class="warn-strong">⚠ 기존 여권이 있으시면, 새 신청서의 로마자 성명을 <b>기존 여권과 똑같이</b> 적어야 합니다. '+
+      '철자가 한 글자라도 다르면 접수가 거절될 수 있어요. <b>반드시 기존 여권을 보고</b> 입력하세요.</div>';
+  if(state.data.hasPassport==="모름")
+    return '<div class="note-box">기존 여권이 있는지 확실하지 않다면 먼저 확인해 주세요. 있으면 그 여권의 로마자 성명을 그대로 사용해야 합니다.</div>';
+  return "";
 }
+
+/* 한 묶음(성 또는 이름) — **한글 → 권장 로마자 → [이 예시 적용] → 적는 칸**이 한 상자에 있다.
+   ⚠️ 종전에는 왼쪽에 「참고(성·이름 추천 둘)」, 오른쪽에 「입력(성·이름 칸 둘)」이 있어,
+      성의 추천을 보고 성 칸을 찾으려면 눈이 좌우로 오갔다(2026.08.31 지적).
+      이제 성에 관한 것은 성 상자에만, 이름에 관한 것은 이름 상자에만 있다.
+   ⛔ 추천을 **자동으로 채우지 않는다.** 로마자는 한 번 정하면 바꾸기 매우 어렵고,
+      기존 여권이 있으면 그 철자가 정답이다 — 확정은 시민이 누르는 것으로만 한다. */
+function romanPart(cfg){
+  var d=state.data;
+  var kor=(d[cfg.korField]||"").trim();
+  var cur=(d[cfg.field]||"").trim();
+  var h='<section class="roman-side roman-part">';
+  h+='<div class="roman-h">'+esc(cfg.head)+'</div>';
+
+  if(!cfg.suggest){
+    /* 기존 여권 보유 — 추천을 내지 않는다. 예시를 보고 적으면 기존 여권과 달라진다. */
+    h+='<p class="roman-p">가지고 계신 여권을 펴서 <b>적힌 그대로</b> 옮겨 적어 주세요.</p>';
+  } else if(!kor){
+    h+='<p class="roman-p">앞의 <b>‘성명’ 단계</b>에서 한글 '+esc(cfg.korName)+
+       '을 적으시면 권장 로마자를 제안해 드립니다.</p>';
+  } else {
+    /* ⛔ 추천을 **상자 안의 상자**로 만들지 마라. 묶음 자체가 이미 테두리를 가졌고,
+       한 겹 더 두르면 495px 기둥에서 세로만 30px 먹는다. 한 줄로 눕힌다.
+       ⛔ 「참고용입니다」를 묶음마다 적지 마라 — 화면 아래 한 줄이 두 묶음을 함께 말한다. */
+    var sug=cfg.suggestFn(kor);
+    h+='<div class="sug-row rp-row">'+
+       '<span>한글 '+esc(cfg.korName)+' <b class="rp-kor">'+esc(kor)+'</b> →</span> '+
+       '<b>'+esc(sug)+'</b>';
+    if(sug && sug!==cur)
+      h+='<button type="button" class="sug-btn" data-act="suggest" data-field="'+esc(cfg.field)+
+         '" data-val="'+esc(sug)+'">이 예시 적용</button>';
+    else if(sug && sug===cur)
+      h+='<span class="rp-done">아래 칸에 적혀 있습니다</span>';
+    h+='</div>';
+  }
+
+  h+=renderInput(cfg.input);
+  h+='<div class="roman-state" id="rs_'+esc(cfg.field)+'"></div>';
+  return h+"</section>";
+}
+
 
 /* =========================================================
    9) 우측 단계 렌더링
@@ -3376,40 +3465,39 @@ function renderCards(def){
   return h+"</div>";
 }
 
-/* ── 로마자 화면 : 예시와 입력을 나란히 (2026.08.21 시안 반영) ──────────────
-   종전에는 「권장 예시 상자」 아래에 「입력칸」이 세로로 이어져 있었다. 예시를 보고
-   칸으로 눈을 옮기는 거리가 멀고, 「이 예시 적용」 버튼이 상자 안에서 작게 묻혔다.
-   이제 왼쪽이 참고, 오른쪽이 입력이다 — 비교하면서 적는 자리가 된다.
+/* ── 로마자 화면 : **성 묶음 · 이름 묶음** (2026.08.31 지적 반영) ─────────────
+   ⚠️ 종전에는 왼쪽이 「참고(성·이름 추천 둘)」, 오른쪽이 「입력(성·이름 칸 둘)」이었다.
+      성의 추천을 보고 성 칸을 찾으려면 눈이 좌우로 오갔고, 성·이름이 서로 섞여 보였다.
+      (그 앞 2026.08.21 에는 「추천 상자 전체 → 입력칸 전체」로 세로였고, 같은 문제였다.)
+   ✅ 이제 묶음의 기준이 **성이냐 이름이냐**다. 한 상자 안에서
+      「한글 성 → 권장 로마자 → [이 예시 적용] → 적는 칸 → 상태」가 한 줄기로 내려간다.
+   ⛔ 다시 「참고 | 입력」으로 가르지 마라. 시민이 맞춰야 하는 짝은 **성-성 · 이름-이름**이다.
 
    ⚠️ 기존 여권이 있어 이 화면에 온 경우(로마자 빈칸 접수를 받지 않는 기관)에는 **예시를
-      내지 않는다.** 추천 철자를 보고 적으면 기존 여권과 달라져 접수가 막힌다. 그때는
-      왼쪽 자리에 「여권을 보고 그대로 적으라」는 경고를 대신 놓는다 — 칸을 비워 두면
-      화면이 반쪽으로 보이고, 정작 그 경우가 가장 조심해야 하는 경우다. */
+      내지 않는다.** 추천 철자를 보고 적으면 기존 여권과 달라져 접수가 막힌다.
+      그때는 각 묶음이 「여권을 보고 그대로 적으라」고만 말한다. */
 function renderRomanCols(def){
   var sug=resolveField(def.suggestRoman);
-  var h='<div class="roman-cols">';
+  var byField={};
+  (def.inputs||[]).forEach(function(inp){ byField[inp.field]=inp; });
 
-  h+='<section class="roman-side'+(sug?"":" warn")+'">';
-  if(sug){
-    h+='<div class="roman-h">참고용 권장 로마자 예시</div>'+
-       '<p class="roman-p">아래 예시는 일반적으로 많이 쓰는 표기입니다.</p>'+
-       buildRomanSuggestion();
-  } else {
-    h+='<div class="roman-h">기존 여권을 보고 적어 주세요</div>'+
-       '<p class="roman-p">가지고 계신 여권을 펴서 <b>적힌 그대로</b> 옮겨 적으셔야 합니다. '+
-       '철자가 한 글자라도 다르면 접수가 거절될 수 있습니다.</p>'+
-       '<p class="roman-p">그래서 이 화면에서는 <b>권장 예시를 보여 드리지 않습니다</b> — '+
-       '예시를 보고 적으면 기존 여권과 달라집니다.</p>';
-  }
-  h+="</section>";
-
-  h+='<section class="roman-side"><div class="roman-h">직접 입력</div>';
-  (def.inputs||[]).forEach(function(inp){
+  var h=buildRomanNotice();
+  h+='<div class="roman-cols">';
+  [{ field:"romanSur",   korField:"nameKorSur",   korName:"성",   head:"성 (Surname)",
+     suggestFn:suggestSurname },
+   { field:"romanGiven", korField:"nameKorGiven", korName:"이름", head:"이름 (Given name)",
+     suggestFn:suggestGiven }
+  ].forEach(function(p){
+    var inp=byField[p.field]; if(!inp) return;
     if(inp.cond && !inp.cond(state.data)) return;
-    h+=renderInput(inp)+'<div class="roman-state" id="rs_'+esc(inp.field)+'"></div>';
+    h+=romanPart({ field:p.field, korField:p.korField, korName:p.korName, head:p.head,
+                   suggestFn:p.suggestFn, suggest:sug, input:inp });
   });
-  h+='<p class="roman-p">여권에 인쇄될 이름입니다. 띄어쓰기와 하이픈(-)까지 그대로 들어갑니다.</p>';
-  h+="</section></div>";
+  h+='</div>';
+  /* 두 묶음을 함께 말하는 한 줄. ⛔ 묶음 안으로 되풀이해 넣지 마라. */
+  h+='<p class="roman-p roman-foot">'+
+     (sug?'권장 표기는 <b>참고용</b>이며 적용한 뒤에도 고칠 수 있습니다. ':'')+
+     '여권에 인쇄될 이름이라 띄어쓰기와 하이픈(-)까지 그대로 들어갑니다.</p>';
   return h;
 }
 /* 적은 글자가 로마자로 읽히는지만 본다.
@@ -3502,10 +3590,10 @@ function renderStep(){
       h+='<div class="warn-strong">⚠ '+escBr(def.warn.msg)+"</div>";
     if(def.readyList) h+=renderReadyList();
     if(def.cards) h+=renderCards(def);
-    /* 로마자 화면은 「예시」와 「직접 입력」을 나란히 둔다(아래 renderRomanCols 주석) */
+    /* 로마자 화면은 **성 묶음 · 이름 묶음**으로 낸다(아래 renderRomanCols 주석) */
     if(def.romanCols) h+=renderRomanCols(def);
     else {
-      if(resolveField(def.suggestRoman)) h+=buildRomanSuggestion();
+      if(resolveField(def.suggestRoman)) h+=buildRomanNotice();
       (def.inputs||[]).forEach(function(inp){ if(!inp.cond||inp.cond(state.data)) h+=renderInput(inp); });
     }
     if(curScreenId()==="jumin" && state.ui.status.jumin!=="manual")
@@ -4004,7 +4092,7 @@ function fillSample(kind){
   state.addr={};
   var base={
     kind:"일반", travelType:"", pages:"58면", period:"10년",
-    nameKor:"", jumin:"", phone:"",
+    nameKorSur:"", nameKorGiven:"", nameKor:"", jumin:"", phone:"",
     emgName:"", emgRel:"", emgPhone:"",
     hasPassport:"없음", romanSur:"", romanGiven:"", regBase:"",
     spouseRoman:"", braille:"희망 안 함", mailService:"희망 안 함", mailAddr:"",
@@ -4019,18 +4107,18 @@ function fillSample(kind){
           꼴이 되는지 이 예시로는 확인할 수 없었다. 이제 부·모 두 분이 들어간다. */
     state.data=Object.assign(base,{
       pages:"26면", period:"5년",
-      nameKor:"임산본", jumin:"1203114234567", phone:"01023456789",
+      nameKorSur:"임", nameKorGiven:"산본", jumin:"1203114234567", phone:"01023456789",
       emgName:"강수리", emgRel:"모", emgPhone:"01087654321",
       romanSur:"LIM", romanGiven:"SANBON",
       applyBy:"대리인", agentName:"임금정", guardianRel:"부", guardianJumin:"7505051234567",
-      applicantAddr:"경기도 군포시 부곡동 000-0, 101동 202호",
+      applicantAddr:"경기도 군포시 산본로 000, 101동 202호",
       guardian2Name:"강수리", guardian2Rel:"모"
     });
   } else {
     // 성인 본인 신청
     state.data=Object.assign(base,{
       pages:"58면", period:"10년",
-      nameKor:"최군포", jumin:"9001011234567", phone:"01012345678",
+      nameKorSur:"최", nameKorGiven:"군포", jumin:"9001011234567", phone:"01012345678",
       emgName:"최당동", emgRel:"부", emgPhone:"01098765432",
       romanSur:"CHOI", romanGiven:"GUNPO",
       applyBy:"본인"
@@ -4080,6 +4168,20 @@ init();
                   ? KCFG.printedMs : 5000;      // 인쇄 후 처음 화면으로(기본 5초, 0=즉시)
   var HOME = "index.html";    // 되돌아갈 처음 화면(허브 메뉴). 이동 시 입력값(메모리) 전부 소멸
   var warnTimer=null, tickTimer=null, remain=0, ov=null, numEl=null, locked=false;
+
+  /* 프린터 — 인쇄 안내·인쇄 완료 두 모달의 제목에 선다.
+     ⚠️ 종전에는 활자 `🖨️` 였다. 이 두 모달은 **인쇄하는 사람이 반드시 지나는 화면**인데,
+        이모지는 OS·글꼴에 따라 색 있는 그림으로 렌더돼 화면에서 혼자 튀었다(2026.08.31).
+     ⛔ 그림을 여기서 바꾸지 마라 — `ICONS.printer` 와 **같은 path** 여야 한다
+        (`python tools/check-icons.py`). 이 모달은 인라인 스타일이라 `svgIcon()` 을
+        쓸 수 없어 같은 선을 손으로 적어 둔 것뿐이다. */
+  function PRINTER_SVG(px){
+    return '<svg width="'+px+'" height="'+px+'" viewBox="0 0 24 24" fill="none" '+
+      'stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" '+
+      'aria-hidden="true" style="vertical-align:-'+Math.round(px*0.18)+'px;margin-right:9px;">'+
+      '<path d="M7 8.4V3.6h10v4.8"/><rect x="3.4" y="8.4" width="17.2" height="7.6" rx="2"/>'+
+      '<path d="M7 13.6h10v6.8H7z"/><path d="M17.4 11.4h.01"/></svg>';
+  }
 
   function build(){
     ov=document.createElement("div");
@@ -4138,7 +4240,7 @@ init();
     pg.setAttribute("aria-live","assertive");
     pg.style.cssText="position:fixed;inset:0;z-index:2147483001;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,1);font-family:'Malgun Gothic','맑은 고딕',sans-serif;";
     pg.innerHTML='<div style="background:#fff;border-radius:18px;padding:34px 40px;max-width:560px;margin:20px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.35);">'+
-      '<div style="font-size:26px;font-weight:800;color:var(--blue);margin-bottom:14px;">🖨️ 인쇄를 보냈습니다</div>'+
+      '<div style="font-size:26px;font-weight:800;color:var(--blue);margin-bottom:14px;">'+PRINTER_SVG(27)+'인쇄를 보냈습니다</div>'+
       '<div style="font-size:20px;font-weight:800;color:#7a5600;line-height:1.6;margin-bottom:14px;">출력물을 꼭 챙겨 가세요.<br>출력물에는 개인정보가 들어 있습니다.</div>'+
       '<div style="font-size:17px;color:#333;line-height:1.6;">개인정보 보호를 위해 <b>화면을 처음으로 되돌립니다.</b><br>인쇄가 제대로 되지 않았으면 창구 직원에게 말씀해 주세요.</div>'+
       '</div>';
@@ -4167,7 +4269,7 @@ init();
     back.style.cssText="position:fixed;inset:0;z-index:2147483002;display:flex;align-items:center;justify-content:center;background:rgba(15,23,42,.72);font-family:'Malgun Gothic','맑은 고딕',sans-serif;padding:14px;";
     back.innerHTML=
       '<div style="background:#fff;border-radius:20px;max-width:820px;width:100%;max-height:96vh;overflow:auto;padding:'+PAD+';box-shadow:0 24px 70px rgba(0,0,0,.42);text-align:left;">'
-      + '<div style="font-size:'+TTL+'px;font-weight:800;color:var(--blue);margin:0 0 '+TTLM+'px;">🖨️ 인쇄하기 전에 확인해 주세요</div>'
+      + '<div style="font-size:'+TTL+'px;font-weight:800;color:var(--blue);margin:0 0 '+TTLM+'px;">'+PRINTER_SVG(TTL)+'인쇄하기 전에 확인해 주세요</div>'
       + '<div style="font-size:'+SEC+'px;font-weight:800;color:#123f7f;margin:0 0 8px;">1. 개인정보 안내</div>'
       + '<div style="margin:0 0 '+GAP+'px;padding:'+BOXP+';background:#fff8e6;border:2px solid #ffe19a;border-left:7px solid #7a5600;border-radius:12px;font-size:'+PRIV+'px;line-height:1.6;">'
       +   '<div style="margin-bottom:6px;"><b style="color:#7a5600;">출력물에는 개인정보가 들어 있습니다. 본인이 직접 수령·관리해 주세요.</b></div>'

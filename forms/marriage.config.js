@@ -25,11 +25,11 @@ var JOB=["관리직","전문직","사무직","서비스직","판매직","농림�
    ⛔ 본·한자·등록기준지는 필수로 만들지 마라 — 창구가 채운다(`optHint`). */
 function personFields(p){
   return [
-    {k:p+"_surKor", label:"성(한글)", ph:"김", req:true, half:true},
-    {k:p+"_givenKor", label:"이름(한글)", ph:"영수", req:true, half:true},
-    {k:p+"_surHan", label:"성(한자)", ph:"金", half:true, optHint:true},
-    {k:p+"_givenHan", label:"이름(한자)", ph:"英洙", half:true, optHint:true},
-    {k:p+"_bon", label:"본(한자)", ph:"金海 (본관)", help:"성씨의 본관을 한자로.", optHint:true},
+    {k:p+"_surKor", label:"성(한글)", ph:p==="w"?"최":"박", req:true, half:true},
+    {k:p+"_givenKor", label:"이름(한글)", ph:p==="w"?"금정":"산본", req:true, half:true},
+    {k:p+"_surHan", label:"성(한자)", ph:p==="w"?"崔":"朴", half:true, optHint:true},
+    {k:p+"_givenHan", label:"이름(한자)", ph:p==="w"?"衿井":"山本", half:true, optHint:true},
+    {k:p+"_bon", label:"본(한자)", ph:(p==="w"?"慶州":"密陽")+" (본관)", help:"성씨의 본관을 한자로.", optHint:true},
     {k:p+"_phone", label:"전화번호", type:"phone", req:true, ph:"010-0000-0000"},
     {k:p+"_jumin", label:"주민등록번호", type:"jumin", ph:"900101-0000000", req:true,
       help:"외국인은 외국인등록번호를 적습니다."},
@@ -42,19 +42,19 @@ function personFields(p){
 }
 function parentFields(p){
   return [
-    {k:p+"_fName", label:"아버지 성명", req:true, ph:"김철수"},
+    {k:p+"_fName", label:"아버지 성명", req:true, ph:p==="w"?"최대야":"박당동"},
     {k:p+"_fJumin", label:"아버지 주민등록번호", type:"jumin", req:true, ph:"600101-0000000"},
     {k:p+"_fRegBase", label:"아버지 등록기준지", ph:"경기도 …", optHint:true},
-    {k:p+"_mName", label:"어머니 성명", req:true, ph:"이순자"},
+    {k:p+"_mName", label:"어머니 성명", req:true, ph:p==="w"?"강재궁":"임수리"},
     {k:p+"_mJumin", label:"어머니 주민등록번호", type:"jumin", req:true, ph:"630101-0000000"},
     {k:p+"_mRegBase", label:"어머니 등록기준지", ph:"경기도 …", optHint:true}
   ];
 }
 var WIT_FIELDS=[
-  {k:"wit1_name", label:"증인 1 성명", req:true, ph:"홍길동"},
+  {k:"wit1_name", label:"증인 1 성명", req:true, ph:"조당정"},
   {k:"wit1_jumin", label:"증인 1 주민등록번호", type:"jumin", req:true},
   {k:"wit1_addr", label:"증인 1 주소", req:true, ph:"경기도 …"},
-  {k:"wit2_name", label:"증인 2 성명", req:true, ph:"성춘향"},
+  {k:"wit2_name", label:"증인 2 성명", req:true, ph:"장오금"},
   {k:"wit2_jumin", label:"증인 2 주민등록번호", type:"jumin", req:true},
   {k:"wit2_addr", label:"증인 2 주소", req:true, ph:"경기도 …"}
 ];
@@ -418,19 +418,19 @@ var FORM={
       step:2,
       h_surKor:"박", h_givenKor:"산본", h_surHan:"朴", h_givenHan:"山本", h_bon:"密陽",
       h_phone:"01012345678", h_birth:"1992.03.15", h_jumin:"9203151000000",
-      h_regBase:"경기도 군포시 부곡동 000-0", h_addr:"경기도 군포시 부곡동 000-0, 102동 704호",
-      h_fName:"박당동", h_fJumin:"6001011000000", h_fRegBase:"경기도 군포시 부곡동 000-0",
-      h_mName:"임수리", h_mJumin:"6305012000000", h_mRegBase:"경기도 군포시 부곡동 000-0",
+      h_regBase:"경기도 군포시 산본로 000", h_addr:"경기도 군포시 산본로 000, 102동 704호",
+      h_fName:"박당동", h_fJumin:"6001011000000", h_fRegBase:"경기도 군포시 산본로 000",
+      h_mName:"임수리", h_mJumin:"6305012000000", h_mRegBase:"경기도 군포시 산본로 000",
       h_marType:"초혼", h_edu:"대학(교)", h_job:"사무직",
       w_surKor:"최", w_givenKor:"금정", w_surHan:"崔", w_givenHan:"衿井", w_bon:"慶州",
       w_phone:"01098765432", w_birth:"1994.07.22", w_jumin:"9407222000000",
-      w_regBase:"경기도 군포시 금정동 000-0", w_addr:"경기도 군포시 부곡동 000-0, 102동 704호",
-      w_fName:"최대야", w_fJumin:"6208011000000", w_fRegBase:"경기도 군포시 금정동 000-0",
-      w_mName:"강재궁", w_mJumin:"6511012000000", w_mRegBase:"경기도 군포시 금정동 000-0",
+      w_regBase:"경기도 군포시 산본로 000", w_addr:"경기도 군포시 산본로 000, 102동 704호",
+      w_fName:"최대야", w_fJumin:"6208011000000", w_fRegBase:"경기도 군포시 산본로 000",
+      w_mName:"강재궁", w_mJumin:"6511012000000", w_mRegBase:"경기도 군포시 산본로 000",
       w_marType:"초혼", w_edu:"대학(교)", w_job:"전문직",
       kinship:"아니요", seongbon:"아니요",
-      wit1_name:"조당정", wit1_jumin:"8001011000000", wit1_addr:"경기도 군포시 당정동 000-0",
-      wit2_name:"장오금", wit2_jumin:"8203022000000", wit2_addr:"경기도 군포시 대야미동 000-0",
+      wit1_name:"조당정", wit1_jumin:"8001011000000", wit1_addr:"경기도 군포시 산본로 000",
+      wit2_name:"장오금", wit2_jumin:"8203022000000", wit2_addr:"경기도 군포시 산본로 000",
       attend_h:true, attend_w:true, cohabitDate:"2025.12.01"
     });
     if(kind==="minor"){

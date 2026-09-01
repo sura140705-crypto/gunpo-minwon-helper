@@ -471,7 +471,7 @@ var FORM={
           +'인터넷(<b>rtms.molit.go.kr</b>)으로도 신고할 수 있습니다.</div>';
         h+='<div class="q-help">거래계약서에 적힌 매도인과 같아야 합니다. '
           +'법인이면 법인명·법인등록번호·법인소재지를 적습니다.</div>';
-        h+=A.inputHtml({k:"s_name", label:"성명(법인명)", req:true, ph:"홍길동"});
+        h+=A.inputHtml({k:"s_name", label:"성명(법인명)", req:true, ph:"조산본"});
         h+=A.inputHtml({k:"s_jumin", label:"주민등록번호(법인·외국인등록번호)", type:"jumin", ph:"900101-0000000"});
         h+=A.inputHtml({k:"s_addr", label:"주소(법인소재지)", req:true, ph:"경기도 군포시 …"});
         h+=A.inputHtml({k:"s_natl", label:"국적", half:true, ph:"대한민국",
@@ -494,7 +494,7 @@ var FORM={
         if(!String(s.b_addr||"").trim()) m.push("매수인 주소");
         return m; },
       body:function(A){ var h='';
-        h+=A.inputHtml({k:"b_name", label:"성명(법인명)", req:true, ph:"김철수"});
+        h+=A.inputHtml({k:"b_name", label:"성명(법인명)", req:true, ph:"장경기"});
         h+=A.inputHtml({k:"b_jumin", label:"주민등록번호(법인·외국인등록번호)", type:"jumin", ph:"850315-0000000"});
         h+=A.inputHtml({k:"b_addr", label:"주소(법인소재지)", req:true, ph:"경기도 군포시 …"});
         h+=A.inputHtml({k:"b_natl", label:"국적", half:true, ph:"대한민국"});
@@ -548,7 +548,7 @@ var FORM={
         if(!A.state.hasAgent)
           return h+'<div class="note-box">직거래는 <b>매도인과 매수인이 함께</b> 신고합니다. '
             +'한쪽이 신고를 거부하면 단독으로 신고할 수 있고, 이때는 <b>단독신고사유서</b>를 첨부합니다.</div>';
-        h+=A.inputHtml({k:"a_name", label:"성명(법인명)", req:true, ph:"박중개"});
+        h+=A.inputHtml({k:"a_name", label:"성명(법인명)", req:true, ph:"정광정"});
         h+=A.inputHtml({k:"a_jumin", label:"주민등록번호(법인등록번호)", type:"jumin"});
         h+=A.inputHtml({k:"a_office", label:"상호", half:true, ph:"○○공인중개사사무소"});
         h+=A.inputHtml({k:"a_regno", label:"등록번호", half:true, ph:"41410-2026-00000"});
@@ -770,7 +770,7 @@ var FORM={
     Object.assign(state,{
       step:2,
       s_name:"조산본", s_jumin:"6001011000000",
-      s_addr:"경기도 군포시 산본동 000-0, 101동 1001호",
+      s_addr:"경기도 군포시 산본로 000, 101동 1001호",
       s_natl:"대한민국", s_phone:"0313900000", s_mobile:"01012345678",
       /* ⚠️ 주민등록번호 뒷자리 첫 숫자가 **성별**이다(2=여). 종전에는 「김철수 + 2」로
          이름과 성별이 어긋나 있었다. 부부 공동명의라 아래 별지의 배우자는 1(남)이다. */
@@ -779,7 +779,7 @@ var FORM={
       b_natl:"대한민국", b_mobile:"01098765432",
       hasAgent:true, a_name:"정광정", a_jumin:"7205051000000",
       a_office:"재궁공인중개사사무소", a_regno:"41410-2026-00001",
-      a_addr:"경기도 군포시 산본동 000-0, 1층",
+      a_addr:"경기도 군포시 산본로 000, 1층",
       a_phone:"0313901234", a_mobile:"01055556666",
       d_kind:"토지 및 건축물", d_bldgKind:"아파트",
       // ⑥ 소재지는 지번주소(도로명 아님). 토지면적은 단지 대지 전체 면적이고,

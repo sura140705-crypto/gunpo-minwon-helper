@@ -40,6 +40,8 @@
 | 인쇄 조판(용지·여백·배율) | **`kiosk-app/print-options.js`** | 수정 → `verify-print.py --electron` |
 | 기관별 설정 적용(SITE-CONFIG 블록) | **`engine/base.html`** 의 `<!--SITE-CONFIG v1-->` | 수정 → 7종 재빌드 → `python tools/check-site-block.py --fix` |
 | 디자인 값 — 색·반경·간격·글자 크기 | **`engine/base.html`** 의 `<!--DESIGN-TOKENS v1-->` | 수정 → 7종 재빌드 → `python tools/check-design-tokens.py --fix` |
+| 선 아이콘(엔진 7종) | **`engine/engine.js`** 의 `/*ICON-SET v1*/` 블록 | 수정 → 7종 재빌드 → `python tools/check-icons.py` |
+| 선 아이콘(여권·허브) | 그 파일의 `ICONS` 표 | 직접 수정 → **겹치는 이름은 엔진과 같은 값** → `check-icons.py` |
 | 환경설정 창의 항목 | **`kiosk-app/admin/settings.html`** + `main.js` 의 `ORG_KEYS`·`POLICY_KEYS`·`FORM_KEYS` | 양쪽 이름이 같아야 한다 |
 
 > ⛔ **엔진 7종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
@@ -56,6 +58,7 @@ python tools/verify-print.py --electron # 키오스크와 같은 Electron 조판
 bash tools/sync-kiosk.sh --check        # 루트 → kiosk-app/app 드리프트 — 다르면 exit 1
 python tools/check-site-block.py        # 기관별 설정 블록이 9개 화면에서 같은지 — 다르면 exit 1
 python tools/check-design-tokens.py     # 디자인 토큰 블록이 9개 화면에서 같은지 — 다르면 exit 1
+python tools/check-icons.py             # 선 아이콘이 9개 화면에서 같은 그림인지 — 다르면 exit 1
 python tools/verify-site-config.py      # 환경설정 값이 화면에 걸리는지(6가지 조합) — 다르면 exit 1
 python tools/measure-screen.py          # 화면 구조 실측 — 가로 넘침·종이 축소가 생기면 exit 1
 python tools/verify-review.py           # Review·인쇄 준비 화면 실측(8종×2) — 다르면 exit 1
@@ -92,6 +95,14 @@ node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 Review 의 [수정]이 **눌러서 실제로 그 단계로 가는가**.
 ⚠️ `gotoStep(n)` 은 `n < state.step && stepActive(n)` 일 때만 움직이므로, 번호를 잘못 달면
 **눈에는 멀쩡한 죽은 단추**가 된다(2026.08.30 혼인에서 실제로 나왔다).
+
+**아이콘을 건드렸으면 `check-icons.py` 를 돌려라.** 아이콘 표가 9개 화면에 흩어져 있어서
+**이름은 같은데 그림만 갈라지는 일**이 조용히 생긴다 — 인쇄물도 화면 구조값도 그대로라
+`verify-print.py` 도 `measure-screen.py` 도 아무 말을 하지 않는다. 2026.08.31 이전 여권과
+엔진 7종은 `check`·`checklist`·`document`·`idcard`·`lock`·`pay`·`photo` **일곱 개 전부**를
+다르게 그리고 있었고, `photo` 는 뜻까지 달랐다(엔진 **풍경 사진** · 여권 **규격 증명사진**).
+⛔ **한쪽에만 있는 이름은 문제가 아니다.** 안 쓰는 아이콘을 채우면 죽은 코드만 는다.
+규칙과 아이콘 표는 `docs/PRODUCT_SKIN_v1.md` §4-1 에 있다.
 
 ## 3. 하지 말 것
 
