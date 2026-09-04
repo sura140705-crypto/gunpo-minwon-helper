@@ -1557,9 +1557,15 @@ html.big{
    웹(GitHub Pages) 배포본에는 preload 가 없어 설정도 없다 — 그때는 아래가
    아무것도 하지 않고 서식에 적힌 기본값이 그대로 쓰인다.
 
-   ⛔ **인쇄물은 건드리지 않는다.** 여기서 바꾸는 것은 `.topbar`(인쇄 CSS 가 숨긴다)와
-      화면 전용 색 변수·로고뿐이다. 인쇄에 나가는 값을 이 통로에 얹지 마라 —
-      그 순간 `verify-print.py` 19쪽 0px 안전망이 무너진다.
+   ⛔ **인쇄물은 원칙적으로 건드리지 않는다.** 여기서 바꾸는 것은 `.topbar`(인쇄 CSS 가
+      숨긴다)와 화면 전용 색 변수·로고다. 인쇄에 나가는 값을 함부로 이 통로에 얹지 마라 —
+      기준선(`verify-print.py`)은 **설정이 없는 상태로** 재므로, 설정으로만 달라지는
+      인쇄물은 아무도 보지 못한 채 배포된다.
+   ⚠️ 예외는 **`org.reportAuthority` 하나**다(2026.09.04). 부동산거래계약 신고서의
+      「시장ㆍ군수ㆍ구청장 귀하」는 받는 기관이 서식에 찍혀 있는데 그 이름이 기관마다
+      달라, 서식에 박아 둘 수가 없다. 기본값은 서식이 기관명에서 만들고 기준선은 그
+      기본값으로 잰다 — 설정이 실제로 인쇄에 걸리는지는 `verify-site-config.py` 가 본다.
+   ⛔ 예외를 늘리지 마라. 늘려야 한다면 `verify-site-config.py` 에 그 조합을 **먼저** 넣어라.
    ⚠️ 이 블록은 **8종 + 허브에 똑같이** 들어간다. 고칠 때는 `engine/base-product.html`
       을 고쳐 엔진 7종을 재빌드하고, 손작성인 여권과 `index.html` 에 같은
       내용을 손수 반영한다(AGENTS.md §1). `sync-kiosk.sh --check` 는 루트↔키오스크
@@ -2612,6 +2618,20 @@ var CO=FORM.CO, STEP_HL=FORM.STEP_HL||{};
 
 function buildVals(){ return FORM.buildVals(state); }
 
+/* 기관 표기 — config 의 값이 기본이고, 키오스크 환경설정에 값이 들어 있으면 그것이
+   이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. 껍데기의 SITE-CONFIG 참조).
+   설정이 없는 웹 배포본에서는 `__site` 자체가 없으므로 config 값이 그대로 쓰인다.
+
+   ⚠️ **화면(`init`)과 인쇄(config 의 `buildVals`)가 같은 값을 봐야 한다.** 종전에는
+      `init` 안에서만 합쳐서, config 쪽에서는 환경설정을 볼 방법이 아예 없었다 —
+      화면 상단에는 「안양시」가 뜨는데 인쇄물에는 「군포시」가 찍히는 식으로 갈린다.
+      그래서 합치는 자리를 여기 하나로 뺐다. */
+function siteOrg(){
+  var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
+  if(typeof window!=="undefined" && window.__site) org=window.__site.org(org);
+  return org;
+}
+
 function stepHighlights(X,Y){
   var boxes=STEP_HL[state.step]; if(!boxes) return "";
   var h="";
@@ -3661,12 +3681,7 @@ function init(){
     var nl=document.getElementById("noticeList");
     if(nl) nl.innerHTML=FORM.noticeItems.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
-  /* 기관 표기 — config 의 값이 기본이고, 키오스크 환경설정에 기관명이 들어 있으면
-     그것이 이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. 껍데기의 SITE-CONFIG 참조).
-     설정이 없는 웹 배포본에서는 `__site` 자체가 없으므로 config 값이 그대로 쓰인다. */
-  var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
-  if(typeof window!=="undefined" && window.__site) org=window.__site.org(org);
-  setText("orgName", org.orgName);
+  setText("orgName", siteOrg().orgName);
   setText("today", formatDate(APP_TODAY));
   document.querySelectorAll(".bg").forEach(function(img){ img.src=FORM_IMG; });
   // 서식별 첨부 페이지 CSS 주입(있을 때만)

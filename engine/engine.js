@@ -90,6 +90,20 @@ var CO=FORM.CO, STEP_HL=FORM.STEP_HL||{};
 
 function buildVals(){ return FORM.buildVals(state); }
 
+/* 기관 표기 — config 의 값이 기본이고, 키오스크 환경설정에 값이 들어 있으면 그것이
+   이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. 껍데기의 SITE-CONFIG 참조).
+   설정이 없는 웹 배포본에서는 `__site` 자체가 없으므로 config 값이 그대로 쓰인다.
+
+   ⚠️ **화면(`init`)과 인쇄(config 의 `buildVals`)가 같은 값을 봐야 한다.** 종전에는
+      `init` 안에서만 합쳐서, config 쪽에서는 환경설정을 볼 방법이 아예 없었다 —
+      화면 상단에는 「안양시」가 뜨는데 인쇄물에는 「군포시」가 찍히는 식으로 갈린다.
+      그래서 합치는 자리를 여기 하나로 뺐다. */
+function siteOrg(){
+  var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
+  if(typeof window!=="undefined" && window.__site) org=window.__site.org(org);
+  return org;
+}
+
 function stepHighlights(X,Y){
   var boxes=STEP_HL[state.step]; if(!boxes) return "";
   var h="";
@@ -1139,12 +1153,7 @@ function init(){
     var nl=document.getElementById("noticeList");
     if(nl) nl.innerHTML=FORM.noticeItems.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
-  /* 기관 표기 — config 의 값이 기본이고, 키오스크 환경설정에 기관명이 들어 있으면
-     그것이 이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. 껍데기의 SITE-CONFIG 참조).
-     설정이 없는 웹 배포본에서는 `__site` 자체가 없으므로 config 값이 그대로 쓰인다. */
-  var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
-  if(typeof window!=="undefined" && window.__site) org=window.__site.org(org);
-  setText("orgName", org.orgName);
+  setText("orgName", siteOrg().orgName);
   setText("today", formatDate(APP_TODAY));
   document.querySelectorAll(".bg").forEach(function(img){ img.src=FORM_IMG; });
   // 서식별 첨부 페이지 CSS 주입(있을 때만)

@@ -122,6 +122,42 @@ function buildSummary(){
   return h;
 }
 
+/* ══ 신고관청 표기 ══════════════════════════════════════════════════════
+   이 서식만 **받는 기관이 서식에 찍혀 있다.** 여권은 「외교부장관」 고정이고
+   가족관계 신고서 6종은 받는 곳 칸이 아예 없다 — 이 서식에만 「시장ㆍ군수ㆍ구청장
+   귀하」가 미리 인쇄돼 있고, 셋 중 어느 것인지는 **기관마다 다르다**.
+
+   ⚠️ 값은 **환경설정 창의 「신고관청 표기」가 이긴다.** 아래는 그 칸이 비었을 때의
+      기본값을 기관명에서 만드는 규칙일 뿐이다. 규칙으로 다 담기지 않는 자리가
+      있어서(일반구·행정시 등) 최종 판단은 그 기관 담당자에게 맡긴다.
+   📌 기본 규칙 — 특별시·광역시면 그 아래 **자치구·군**(강남구 → 강남구청장),
+      도면 그 아래 **시·군**(안양시 동안구 → **안양시장** · 일반구는 건너뛴다).
+      꼬리는 시 → 시장 · 군 → 군수 · 구 → 구청장. */
+function authorityFromOrgName(name){
+  var parts=String(name||"").trim().split(/\s+/).filter(Boolean);
+  if(!parts.length) return "";
+  var wide=/(특별시|광역시)$/.test(parts[0]), pick="", i;
+  if(wide){
+    for(i=parts.length-1;i>=1;i--) if(/[구군]$/.test(parts[i])){ pick=parts[i]; break; }
+  }else{
+    for(i=parts.length-1;i>=0;i--) if(/[시군]$/.test(parts[i])){ pick=parts[i]; break; }
+  }
+  /* ⛔ 못 알아보면 **빈 값**을 준다 — 그러면 덮지 않고 서식의 「시장ㆍ군수ㆍ구청장」이
+     그대로 남는다. 「부산광역시」처럼 구가 안 적힌 설정에 `부산광역시장` 을 찍으면
+     **틀린 관청**이 인쇄된다. 손대지 않는 편이 언제나 낫다. */
+  if(!pick) return "";
+  if(/구$/.test(pick)) return pick+"청장";
+  if(/군$/.test(pick)) return pick+"수";
+  if(/시$/.test(pick)) return pick+"장";
+  return pick;
+}
+/* 화면·인쇄가 같이 쓰는 최종 값. `siteOrg()` 는 엔진이 환경설정까지 합쳐서 준다. */
+function reportAuthority(){
+  var org=(typeof siteOrg==="function") ? siteOrg() : (FORM.org||{});
+  var set=String(org.reportAuthority||"").trim();
+  return set || authorityFromOrgName(org.orgName);
+}
+
 var FORM={
   /* ⛔ 이 한 줄이 껍데기를 정한다 — Product UI v1(`engine/base-product.html`).
      ⚠️ 이 서식만 **별지(`extraPages`)** 를 쓴다. 새 껍데기에도 `.paper.extra` 자리가 있어야
@@ -285,6 +321,13 @@ var FORM={
       "v_bal":{x:524,y:672.03,a:"r",size:7,nb:true},
       // ── ⑪ 계약의 조건 및 참고사항 ──
       "memo":{x:204,y:684.2,a:"l",size:7,w:330,wrap:true},
+      /* ── 신고관청 「○○시장」 — 서식에 인쇄된 「시장ㆍ군수ㆍ구청장」을 덮고 대신 찍는다
+         원본 잉크: x61.1~184.6 · y770.8~783.7 · 13pt. 「귀하」(x184.6~204.5)는 그대로 둔다.
+         ⛔ `nb:true`(확대 금지) · 11pt — 덮은 자리가 x61.1~184.0(**122.9pt**)뿐이라
+            엔진의 +1.5pt 확대가 들어가면 긴 표기가 「귀하」를 밀어낸 것처럼 보인다.
+            서식 원본은 13pt 지만 그 크기면 9자에서 넘친다 — 11pt 로 11자까지 든다
+            (가장 긴 축이 「창원시마산합포구청장」 10자다). */
+      "authority":{x:61.1,y:777.25,a:"l",size:11,nb:true},
       // ── 신고인 서명란 (인쇄 후 직접 서명·날인) ──
       "sign_seller":{x:310,y:734.9,a:"l",size:8},
       "sign_buyer":{x:310,y:745.0,a:"l",size:8},
@@ -376,7 +419,20 @@ var FORM={
     v.sign_seller=d.s_name||"";
     v.sign_buyer=d.b_name||"";
     v.sign_agent=d.hasAgent?(d.a_name||""):"";
+    /* 받는 곳 — 시민이 적는 값이 아니라 **기관이 정해 두는 값**이다.
+       그래서 state 가 아니라 기관 설정에서 온다(위 `reportAuthority()` 참조). */
+    v.authority=reportAuthority();
     return v;
+  },
+
+  /* 서식에 인쇄된 「시장ㆍ군수ㆍ구청장」을 흰색으로 덮는다 — 그 자리에 `authority` 를 찍는다.
+     ⛔ 실측 좌표다. 아래로 넓히지 마라 — **y784.4 에 서식 테두리 가로선**(x50.6~541.6)이
+        지나가고, 그것까지 덮으면 인쇄물의 테두리가 그 구간만 끊긴다.
+     ⛔ 오른쪽으로도 넓히지 마라 — x184.6 부터 「귀하」다.
+     ⚠️ 값이 없으면 덮지 않는다. 기관명도 설정도 없는 상태에서 덮어 버리면
+        받는 곳이 **빈칸으로** 인쇄돼, 원래 문구를 그냥 두는 것보다 나쁘다. */
+  covers:function(v){
+    return v.authority ? [[59.0,769.5,184.0,784.0]] : [];
   },
 
   /* 인쇄 후 서명·날인해야 하는 자리 = 우측 「(서명 또는 인)」 칸.

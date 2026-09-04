@@ -1,9 +1,15 @@
 # -*- coding: utf-8 -*-
 """기관별 설정(환경설정 창의 값)이 화면에 실제로 걸리는지 본다.
 
-설정을 바꿔도 **인쇄물은 그대로여야** 하므로 `verify-print.py` 가 그쪽을 지키고,
+설정을 바꿔도 **인쇄물은 거의 다 그대로여야** 하므로 `verify-print.py` 가 그쪽을 지키고,
 이 도구는 **화면 쪽**을 지킨다 — 기관 표기·대표색·취급 서식·여권 접수 기준이
 설정대로 걸리는지, 그리고 **설정이 없을 때 종전 동작 그대로인지**(웹 배포본)를 본다.
+
+⚠️ 예외가 하나 있고 **그것도 여기서 본다** — `org.reportAuthority`(부동산거래계약
+신고서의 「시장ㆍ군수ㆍ구청장 귀하」)는 설정이 **인쇄물을 바꾸는 유일한 값**이다.
+`verify-print.py` 는 설정이 없는 상태로 재므로 기본값밖에 못 본다. 설정을 넣었을 때
+실제로 덮고 다시 찍는지는 아래 「부동산 —」 시나리오들이 지킨다.
+⛔ 인쇄에 걸리는 설정을 새로 만들면 **여기에 시나리오를 먼저 넣어라.**
 
     python tools/verify-site-config.py              # 검사 — 어긋나면 exit 1
     python tools/verify-site-config.py -v           # 참고값까지 전부 출력
@@ -95,6 +101,27 @@ function click(txt){
 }
 function labels(){ return [].map.call(document.querySelectorAll(".card .card-label"),
                                       function(n){ return n.textContent; }); }
+'''
+
+# 부동산 「받는 곳」 — 값·실제로 종이에 찍힌 글자·원문을 덮은 흰 상자를 한꺼번에 본다.
+# ⚠️ `buildVals()` 만 보면 안 된다. 값이 맞아도 좌표를 빼먹으면 종이에는 안 찍히는데
+#    그 상태가 조용히 통과한다 — 그래서 **그려진 DOM** 을 함께 본다.
+AUTH = '''
+var A=(function(){
+  renderAll();
+  /* ⚠️ 오버레이 판(`.ovl`)은 **둘 이상**이다(서식 본판 + 미리보기). 덮개는 판마다
+     하나씩 그려지므로 「1개」로 세면 안 된다 — 판 수와 맞는지를 본다. */
+  var v=buildVals();
+  var 판=document.querySelectorAll(".ovl").length;
+  var 덮개=document.querySelectorAll(".ovl .cover").length;
+  var hit=null;
+  [].forEach.call(document.querySelectorAll(".ovl .ov"), function(n){
+    if(v.authority && n.textContent===v.authority) hit=n.textContent;
+  });
+  return { 값:v.authority, 종이:hit, 판:판, 덮개:덮개,
+           덮개가판마다:판>0 && 덮개===판,
+           자리:덮개?document.querySelector(".ovl .cover").getAttribute("style"):null };
+})();
 '''
 
 SCENARIOS = [
@@ -219,6 +246,49 @@ SCENARIOS = [
        기간을묻지않음: flow().indexOf("period")<0,
        기간이5년: state.data.period==="5년",
        동의서경로: needsConsent(state.data)===true
+     };'''),
+
+    # ── 부동산 신고관청 — 설정이 인쇄물을 바꾸는 유일한 자리 ──────────────────
+    ("부동산 — 신고관청 기본값(설정 없음 · 기관명에서 만듦)",
+     "realestate-helper-v1.html", {},
+     AUTH + '''
+     return {
+       군포시장으로만듦: A.값==="군포시장",
+       종이에찍힘: A.종이==="군포시장",
+       원문을덮음: A.덮개가판마다===true,
+       참고_판과덮개: A.판+" 판 / 덮개 "+A.덮개,
+       참고_덮개자리: A.자리
+     };'''),
+
+    ("부동산 — 신고관청을 환경설정에서 직접 적은 경우",
+     "realestate-helper-v1.html",
+     {"org": {"orgName": "경기도 안양시 동안구", "reportAuthority": "동안구청장"}},
+     AUTH + '''
+     return {
+       설정이이김: A.값==="동안구청장",         // 자동(안양시장)이 아니라 적은 값
+       종이에찍힘: A.종이==="동안구청장",
+       원문을덮음: A.덮개가판마다===true
+     };'''),
+
+    ("부동산 — 기관명만 바꾼 경우(자치구·일반구·군)",
+     "realestate-helper-v1.html", {"org": {"orgName": "서울특별시 강남구"}},
+     AUTH + '''
+     var f=window.authorityFromOrgName;
+     return {
+       광역시는구청장: A.값==="강남구청장",
+       종이에찍힘: A.종이==="강남구청장",
+       일반구는시장: f("경기도 안양시 동안구")==="안양시장",
+       군은군수: f("부산광역시 기장군")==="기장군수",
+       못알아보면빈값: f("부산광역시")==="" && f("경기도")===""
+     };'''),
+
+    ("부동산 — 표기를 못 만들면 서식 원문을 그대로 둔다",
+     "realestate-helper-v1.html", {"org": {"orgName": "부산광역시"}},
+     AUTH + '''
+     return {
+       값이빔: A.값==="",
+       안찍힘: A.종이===null,
+       안덮음: A.덮개===0 && A.판>0                       // 「시장ㆍ군수ㆍ구청장」이 그대로 남는다
      };'''),
 ]
 

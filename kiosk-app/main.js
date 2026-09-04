@@ -116,7 +116,11 @@ function saveConfig(patch) {
    ORG_KEYS  기관 표기. 서식 HTML 의 `ORG_CONFIG` 를 같은 이름으로 덮는다.
    POLICY_KEYS 여권 업무 정책. 기관마다 접수 기준이 달라 창구 전환 여부가 갈린다.
    FORM_KEYS 취급 서식. 여권은 시·군·구청만 취급하는 식으로 기관마다 다르다. */
-const ORG_KEYS = ['orgName', 'officeName', 'windowName', 'phone', 'address', 'notice'];
+/* ⚠️ `reportAuthority` 는 **인쇄물에 나가는 유일한 설정값**이다(부동산거래계약 신고서의
+      「시장ㆍ군수ㆍ구청장 귀하」를 덮고 그 자리에 찍는다). 나머지 ORG_KEYS 는 화면 전용이다.
+      비워 두면 서식이 기관명에서 만들어 쓴다 — 화면에 그 결과를 미리 보여 준다. */
+const ORG_KEYS = ['orgName', 'officeName', 'windowName', 'phone', 'address', 'notice',
+                  'reportAuthority'];
 const POLICY_KEYS = [
   'allowProxy',        // 대리 신청을 키오스크에서 끝까지 받는가 (false → 창구 전환)
   'allowRomanBlank',   // 기존 여권이 있을 때 로마자 칸을 비워 접수하는가

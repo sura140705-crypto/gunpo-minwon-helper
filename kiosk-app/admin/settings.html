@@ -191,6 +191,24 @@
   </div>
 
   <div class="sec">
+    <h2>신고관청 표기 — 부동산거래계약 신고서</h2>
+    <p class="why">⚠️ <b>여기 적은 말은 신청서에 그대로 인쇄됩니다.</b> 이 설정 창에서
+      인쇄물에 나가는 값은 이것 하나뿐입니다.<br>
+      부동산거래계약 신고서에는 「시장ㆍ군수ㆍ구청장 귀하」가 미리 찍혀 있습니다. 그
+      자리를 덮고 이 말을 대신 찍습니다(「귀하」는 그대로 둡니다). 다른 신청서는
+      해당이 없습니다 — 여권은 「외교부장관」으로 고정이고, 가족관계 신고서는 받는 곳
+      칸이 아예 없습니다.</p>
+    <div class="fld"><label for="reportAuthority">신고관청 표기</label>
+      <input type="text" id="reportAuthority" placeholder="예) 군포시장" maxlength="11">
+      <div class="hint">비워 두면 <b>기관명에서 자동으로</b> 만듭니다 —
+        「경기도 군포시」 → <b>군포시장</b> · 「서울특별시 강남구」 → <b>강남구청장</b> ·
+        「경기도 안양시 동안구」 → <b>안양시장</b>(일반구는 건너뜁니다).<br>
+        자동으로 만든 말이 그 기관의 실제 표기와 다르면 여기에 직접 적으십시오.<br>
+        ⚠️ 서식에서 덮을 수 있는 자리가 <b>11자</b>까지입니다(가장 긴 축이
+        「창원시마산합포구청장」 10자). 더 적으면 「귀하」를 밀어냅니다.</div></div>
+  </div>
+
+  <div class="sec">
     <h2>기관 로고</h2>
     <p class="why">화면 위쪽에 나오는 로고입니다. <b>인쇄물에는 나오지 않습니다.</b>
       투명 배경 PNG 를 권합니다(가로로 긴 것이 잘 맞습니다). 512KB 이하만 받습니다.</p>
@@ -526,7 +544,8 @@
     $("printed").value = String(d.printedMs);
 
     // 기관 표기 — 값이 없으면 비워 둔다(비움 = 프로그램 기본값)
-    ["orgName","officeName","windowName","phone","address","notice"].forEach(function(k){
+    ["orgName","officeName","windowName","phone","address","notice",
+     "reportAuthority"].forEach(function(k){
       $(k).value = (d.org && d.org[k]) || "";
     });
     $("themeColor").value = d.themeColor || "#1b5fc0";
@@ -580,7 +599,8 @@
     saveBtn.disabled = true;
     say("저장하는 중…");
     var org={}, forms={}, policy={};
-    ["orgName","officeName","windowName","phone","address","notice"].forEach(function(k){
+    ["orgName","officeName","windowName","phone","address","notice",
+     "reportAuthority"].forEach(function(k){
       org[k] = $(k).value.trim();
     });
     document.querySelectorAll("[data-form]").forEach(function(c){
