@@ -11,4 +11,9 @@ contextBridge.exposeInMainWorld('__settings', {
   // 로고 PNG 고르기 — 파일 대화상자는 **메인 프로세스가 연다**(창은 경로를 모른다).
   // 돌려주는 값은 null(취소) · { ok:true, uri } · { ok:false, error }
   pickLogo: () => ipcRenderer.invoke('settings:pickLogo'),
+  // 운영 통계 — **읽기만** 한다. { lines, dir, preserved }
+  // ⛔ 지우거나 고치는 통로는 만들지 않는다. 운영 기록을 화면에서 손댈 수 있으면 안 된다.
+  stats: () => ipcRenderer.invoke('settings:stats'),
+  // 통계 폴더를 탐색기로 연다(CSV 원본을 집어 가려고). 여는 곳은 메인 프로세스가 정한다.
+  openStats: () => ipcRenderer.invoke('settings:openStats'),
 });

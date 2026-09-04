@@ -12,15 +12,25 @@
 //    하드보안관이 걸린 PC 를 위해 **보존 영역을 먼저** 본다.
 //    프린터가 지정돼 있지 않으면 **인쇄를 하지 않는다.** 기본 프린터로 흘려보내면
 //    그것이 가상 프린터일 때 개인정보가 파일로 남기 때문이다.
-const { app, BrowserWindow, Menu, session, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, Menu, session, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const crypto = require('crypto');
 const { execFile } = require('child_process');
 const printOptions = require('./print-options');
+const { Stats } = require('./stats');
+
+/* 운영 통계 — 서식별 접속·인쇄, 유휴 접근·중도 이탈, 가동시간.
+   ⛔ 개인정보는 담지 않는다(화면 이름·시간대·횟수뿐). `stats.js` 머리말 참조.
+   ⚠️ 설정과 **같은 폴더**를 쓴다 — 보존 드라이브를 쓰면 통계도 함께 살아남고,
+      안 쓰면 하드보안관에 재부팅마다 함께 사라진다. */
+const stats = new Stats(() => configDir());
 
 const SELFCHECK = process.argv.includes('--selfcheck');
+/* `--stats` — 운영 통계를 사람이 읽는 글로 내려놓는다(점검결과와 같은 자리).
+   ⚠️ 점검 모드와 마찬가지로 **창을 띄우지 않는다** — 운영 중에도 볼 수 있어야 한다. */
+const STATSMODE = process.argv.includes('--stats');
 
 /* ── 설정 ────────────────────────────────────────────────────────────── */
 
@@ -292,12 +302,22 @@ function statusText(s) {
    개인정보는 담기지 않는다(시간 값과 배치 여부뿐). */
 ipcMain.on('kiosk:cfg', (event) => { event.returnValue = pageConfig(); });
 
+/* 화면이 알려 주는 통계 사건 — 유휴 시연이 사람 손에 멈춤(`wake`),
+   무동작으로 초기화됨(`idle`). ⛔ **이름 말고는 아무것도 받지 않는다.** */
+ipcMain.on('kiosk:stat', (event, name) => {
+  try {
+    if (name === 'wake') stats.wake();
+    else if (name === 'idle') stats.idleReset();
+  } catch (e) { /* 통계는 운영을 막지 않는다 */ }
+});
+
 /* ── 인쇄 ────────────────────────────────────────────────────────────── */
 
 ipcMain.handle('kiosk:print', async (event) => {
   const target = await resolvePrinter(event.sender);
   if (!target.ok) {
     console.error('[키오스크] 인쇄 거부:', target.reason);
+    try { stats.printed(event.sender.getURL(), false); } catch (e) { /* 무시 */ }
     showPrintError(target.reason);
     return { ok: false };
   }
@@ -312,6 +332,9 @@ ipcMain.handle('kiosk:print', async (event) => {
       resolve(done);
     });
   });
+
+  // ⛔ 세는 것은 **성공 여부와 어느 서식이었나**뿐이다. 인쇄 내용은 건드리지 않는다.
+  try { stats.printed(event.sender.getURL(), ok); } catch (e) { /* 통계는 운영을 막지 않는다 */ }
 
   // 성공이든 실패든, 대기열에 남은 작업은 개인정보다. 일정 시간 뒤 회수한다.
   setTimeout(() => { sweepJobs(target.name, JOB_TIMEOUT_SEC); }, (JOB_TIMEOUT_SEC + 5) * 1000);
@@ -372,6 +395,12 @@ function createWindow() {
     webPreferences: Object.assign(baseWebPreferences(), {
       preload: path.join(__dirname, 'preload.js'),
     }),
+  });
+
+  /* 서식별 접속수 — 허브가 `href` 로 서식 HTML 을 여는 **같은 창 이동**이라
+     여기 한 곳에서 8종을 전부 본다. ⛔ 서식 HTML 은 건드리지 않는다. */
+  win.webContents.on('did-navigate', (e, url) => {
+    try { stats.visit(url); } catch (err) { /* 통계는 운영을 막지 않는다 */ }
   });
 
   Menu.setApplicationMenu(null); // 상단 메뉴 제거
@@ -533,6 +562,31 @@ function openSettings() {
 
   /* 로고 PNG 고르기. 창은 경로를 다루지 않는다 — 대화상자를 여기서 열고 **내용만** 넘긴다.
      실제 복사는 [저장]을 눌렀을 때 한다(고르기만 하고 닫으면 아무것도 바뀌지 않아야 한다). */
+  /* 운영 통계 — 환경설정 창의 「통계」 탭이 읽는다.
+     ⛔ **읽기 전용이다.** 지우거나 고치는 통로를 만들지 마라 — 운영 기록이다.
+     ⛔ 개인정보는 애초에 담기지 않는다(`stats.js` 머리말 참조). */
+  ipcMain.removeHandler('settings:stats');
+  ipcMain.handle('settings:stats', () => {
+    try {
+      stats.flush();                       // 지금까지 센 것을 파일에 반영한 뒤 읽는다
+      return { lines: stats.summary(0), dir: stats.dir(), preserved: configIsPreserved() };
+    } catch (e) {
+      return { lines: ['통계를 읽지 못했습니다: ' + e.message], dir: '', preserved: true };
+    }
+  });
+
+  /* 통계 폴더 열기 — CSV 원본을 집어 가려고. 탐색기가 키오스크 위로 열린다.
+     ⛔ 여는 곳은 **통계 폴더 하나뿐**이다. 임의 경로를 화면에서 받지 않는다. */
+  ipcMain.removeHandler('settings:openStats');
+  ipcMain.handle('settings:openStats', async () => {
+    try {
+      const d = stats.dir();
+      fs.mkdirSync(d, { recursive: true });
+      await shell.openPath(d);
+      return { ok: true };
+    } catch (e) { return { ok: false, error: e.message }; }
+  });
+
   ipcMain.removeHandler('settings:pickLogo');
   ipcMain.handle('settings:pickLogo', async () => {
     const r = await dialog.showOpenDialog(w, {
@@ -698,6 +752,7 @@ function quitNow() {
 /* ── 뒷정리 ──────────────────────────────────────────────────────────── */
 
 async function cleanup() {
+  try { stats.stop(); } catch (e) { /* 통계 때문에 종료가 막히면 안 된다 */ }
   try { await session.defaultSession.clearStorageData(); } catch (e) { /* 무시 */ }
   try { await session.defaultSession.clearCache(); } catch (e) { /* 무시 */ }
   const name = loadConfig().printerDeviceName;
@@ -764,6 +819,11 @@ async function runSelfCheck() {
   L.push('');
   L.push('[프로그램]');
   line('앱 버전', app.getVersion());
+  /* ⚠️ **빌드 시각** — 판 번호만으로는 같은 번호로 두 번 구운 것을 가를 수 없다.
+     번호를 올리는 진짜 이유가 「현장 PC 에 어느 것이 깔렸나」를 아는 것이었으므로,
+     그 구분을 번호가 아니라 이 줄이 지게 한다. 같은 1.4.0 이라도 시각이 다르면 다른 것이다.
+     📌 포장된 `app.asar` 의 시각을 본다 — 개발 중(풀린 상태)에는 `main.js` 시각을 쓴다. */
+  line('빌드 시각', buildStamp());
   line('Electron', process.versions.electron);
   line('Chromium', process.versions.chrome);
   line('Node', process.versions.node);
@@ -785,6 +845,9 @@ async function runSelfCheck() {
        : '[확인] %ProgramData%(C:) — 하드보안관이 있으면 부팅 시 원복됨'));
   line('지정 프린터', mark(!!cfg.printerDeviceName) + (cfg.printerDeviceName || '미지정 → 인쇄 차단'));
   line('관리자 PIN', mark(!!cfg.exitPinHash) + (cfg.exitPinHash ? '설정됨' : '미설정 → PIN 없이 종료 가능'));
+  /* ⚠️ 통계는 없어도 인쇄는 되므로 **사라져도 몇 달 뒤에야 눈치챈다.** 매번 알린다. */
+  line('운영 통계', (configIsPreserved() ? '[양호] 보존 영역 — 유지됨'
+       : '[확인] %ProgramData%(C:) — 재부팅마다 사라짐') + '  (`--stats` 로 요약)');
   // 겹쳐 찍기는 **미리 인쇄된 서식 용지가 트레이에 있어야** 한다. 검수 기록에 남긴다.
   const ov = printOptions.overlayForms(cfg);
   const ovSrc = Array.isArray(cfg.overlayPrintForms) ? '설정' : '기본값';
@@ -862,10 +925,51 @@ async function runSelfCheck() {
   return out;
 }
 
+const EOL = String.fromCharCode(13, 10);   // 메모장에서 줄이 붙어 보이지 않게 CRLF
+
+/* 이 설치본이 언제 구워졌는가. 같은 판 번호로 두 번 구웠을 때 가르는 유일한 값이다. */
+function buildStamp() {
+  const p2 = (n) => String(n).padStart(2, '0');
+  for (const p of [path.join(process.resourcesPath || '', 'app.asar'), __filename]) {
+    try {
+      const d = fs.statSync(p).mtime;
+      return d.getFullYear() + '.' + p2(d.getMonth() + 1) + '.' + p2(d.getDate())
+             + ' ' + p2(d.getHours()) + ':' + p2(d.getMinutes());
+    } catch (e) { /* 다음 후보로 */ }
+  }
+  return '(확인 불가)';
+}
+
+/* ── 운영 통계 내려놓기 (`--stats`) ──────────────────────────────────────
+   ⛔ 이 글에는 개인정보가 없다 — 화면 이름·시간대·횟수뿐이다(`stats.js` 참조).
+   ⚠️ 통계 **원본 CSV 는 설정 폴더**에 있고, 이 요약은 그것을 읽어 다시 쓴 것이다. */
+function runStats() {
+  const L = stats.summary(0);
+  if (!configIsPreserved()) {
+    L.push('⚠️ 통계가 %ProgramData%(C:) 에 있습니다 — 하드보안관이 걸린 PC 라면');
+    L.push('   재부팅마다 **통계가 통째로 사라집니다.** 보존 드라이브(D:~H:)에');
+    L.push('   `군포민원서식도우미` 폴더를 만들어 두십시오(설치안내 2-1 참조).');
+    L.push('');
+  }
+  const text = L.join(EOL) + EOL;
+  const d = new Date();
+  const stamp = d.getFullYear() + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' +
+                String(d.getDate()).padStart(2, '0');   // 하이픈 금지(DLP가 개인정보로 오인)
+  let out = '';
+  try {
+    const dir = configDir();
+    fs.mkdirSync(dir, { recursive: true });
+    out = path.join(dir, '운영통계_' + stamp + '.txt');
+    fs.writeFileSync(out, text, 'utf8');
+  } catch (e) { out = '(파일 저장 실패)'; }
+  process.stdout.write(text + EOL + '저장 위치 : ' + out + EOL);
+  return out;
+}
+
 /* ── 시작 ────────────────────────────────────────────────────────────── */
 
 // 중복 실행 차단 (점검 모드는 예외 — 운영 중에도 상태를 볼 수 있어야 한다)
-if (!SELFCHECK && !app.requestSingleInstanceLock()) {
+if (!SELFCHECK && !STATSMODE && !app.requestSingleInstanceLock()) {
   app.exit(0);
 } else {
   app.on('second-instance', () => {
@@ -884,6 +988,12 @@ if (!SELFCHECK && !app.requestSingleInstanceLock()) {
       session.defaultSession.setDevicePermissionHandler(() => false);
     }
 
+    if (STATSMODE) {
+      runStats();
+      app.exit(0);
+      return;
+    }
+
     if (SELFCHECK) {
       await runSelfCheck();
       app.exit(0);
@@ -891,6 +1001,7 @@ if (!SELFCHECK && !app.requestSingleInstanceLock()) {
     }
 
     createWindow();
+    stats.start();          // 가동시간 — 1분마다 그 시간대에 1분씩 더한다
 
     // 지난 실행에서 남은 인쇄 작업 회수(전원 차단 등으로 남았을 수 있다)
     const name = loadConfig().printerDeviceName;

@@ -1976,6 +1976,11 @@ function bindEvents(){
       var now=+new Date();
       if(demoing()){
         if(t==="pointermove" && now-demoAt < DEMO_GUARD_MS) return;   // 합성 이동 무시
+        /* 유휴 시연이 **사람 손에** 멈췄다 = 누가 다가와 만졌다. 운영 통계의 「접근」이다
+           (2026.09.01). ⛔ 이름 말고는 아무것도 보내지 않는다.
+           ⚠️ `stopDemo()` 안이 아니라 **여기**에 둔다 — 그 함수는 다른 데서도 불린다.
+           📌 웹 배포본에는 `__kioskStat` 이 없다. 그때는 조용히 넘어간다. */
+        try{ if(window.__kioskStat) window.__kioskStat("wake"); }catch(e){}
         stopDemo();
         armDemo();
         return;                       // ⛔ preventDefault·stopPropagation 하지 않는다

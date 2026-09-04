@@ -3525,7 +3525,12 @@ init();
     ov.style.display="flex";
     tickTimer=setInterval(function(){
       remain--; if(numEl) numEl.textContent=remain;
-      if(remain<=0){ clearInterval(tickTimer); tickTimer=null; goHome(true); }
+      /* 무동작으로 지워진 것 = **중도 이탈**. 운영 통계에 한 칸 올린다(2026.09.01).
+         ⛔ 이름 말고는 아무것도 보내지 않는다 — 적으신 내용은 이 통로로 나가지 않는다.
+         📌 웹 배포본에는 `__kioskStat` 이 없다. 그때는 조용히 넘어간다. */
+      if(remain<=0){ clearInterval(tickTimer); tickTimer=null;
+        try{ if(window.__kioskStat) window.__kioskStat("idle"); }catch(e){}
+        goHome(true); }
     },1000);
   }
   function clearAll(){ if(warnTimer){clearTimeout(warnTimer);warnTimer=null;} if(tickTimer){clearInterval(tickTimer);tickTimer=null;} }

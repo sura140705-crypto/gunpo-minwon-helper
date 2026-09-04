@@ -22,6 +22,18 @@ let __cfg = {};
 try { __cfg = ipcRenderer.sendSync('kiosk:cfg') || {}; } catch (e) { __cfg = {}; }
 contextBridge.exposeInMainWorld('__kioskCfg', __cfg);
 
+// 운영 통계 — 화면이 알려 줄 수 있는 두 가지만 받는다.
+//   'wake' 유휴 시연이 사람 손에 멈췄다(누가 다가와 만졌다)
+//   'idle' 무동작으로 첫 화면에 되돌아갔다(작성하다 그만뒀다)
+// ⛔ **이름 말고는 아무것도 보내지 않는다.** 입력값·화면 내용은 이 통로로 나갈 수 없다.
+// ⚠️ `send` 다(단방향·기다리지 않음) — 통계 때문에 화면이 멎는 일이 없어야 한다.
+// 📌 웹 배포본에는 preload 가 없어 `window.__kioskStat` 도 없다. 서식은 그때 조용히 넘어간다.
+contextBridge.exposeInMainWorld('__kioskStat', function (name) {
+  try {
+    if (name === 'wake' || name === 'idle') ipcRenderer.send('kiosk:stat', name);
+  } catch (e) { /* 통계는 운영을 막지 않는다 */ }
+});
+
 // 점검 모드(`--selfcheck`)가 렌더러의 보안 설정이 실제로 적용됐는지 확인하는 데 쓴다.
 // 개인정보는 담기지 않으며, 값을 읽기만 할 뿐 아무것도 바꾸지 않는다.
 contextBridge.exposeInMainWorld('__kioskEnv', {

@@ -86,6 +86,7 @@
   <button type="button" data-tab="pc" class="on">이 PC (인쇄·화면)</button>
   <button type="button" data-tab="org">기관 설정</button>
   <button type="button" data-tab="work">업무 방식</button>
+  <button type="button" data-tab="stat">통계</button>
 </nav>
 
 <main>
@@ -257,6 +258,25 @@
     <div class="warn" id="kbWarn" hidden></div>
   </div>
   </div>
+
+  <!-- ══════════ 통계 ══════════
+       ⛔ **읽기 전용이다.** 지우거나 고치는 단추를 넣지 마라 — 운영 기록이다.
+       ⛔ 여기에 개인정보는 오지 않는다. 담기는 것은 화면 이름·시간대·횟수뿐이다
+          (`kiosk-app/stats.js` 머리말 참조). -->
+  <div data-panel="stat" hidden>
+  <div class="sec">
+    <h2>운영 통계</h2>
+    <p class="why">서식별 이용 현황입니다. <b>시민이 적은 내용은 들어 있지 않습니다</b> —
+      화면 이름과 시간대, 횟수만 셉니다.</p>
+    <div class="warn" id="statWarn" hidden></div>
+    <pre id="statOut" style="margin:0;padding:14px 16px;background:#f6f8fb;border:1px solid #dde3ec;
+      border-radius:10px;font:13px/1.65 'D2Coding','Consolas',monospace;white-space:pre-wrap;
+      max-height:340px;overflow:auto;">읽는 중…</pre>
+    <p class="why" style="margin-top:12px;">
+      원본은 <b>월별 CSV</b> 로 쌓입니다. 엑셀에서 바로 열려 보고서에 붙이기 좋습니다.</p>
+    <button type="button" id="openStats">통계 폴더 열기</button>
+  </div>
+  </div>
 </main>
 
 <footer>
@@ -352,6 +372,29 @@
     document.querySelectorAll("[data-panel]").forEach(function(p){
       p.hidden = p.getAttribute("data-panel") !== b.getAttribute("data-tab");
     });
+    /* 통계는 **열 때 읽는다.** 창을 띄우는 순간마다 읽으면 안 쓰는 사람에게도 파일을 뒤진다. */
+    if(b.getAttribute("data-tab")==="stat") loadStats();
+  });
+
+  /* 운영 통계 — 읽기 전용. ⛔ 지우거나 고치는 길을 만들지 마라. */
+  var statLoaded=false;
+  function loadStats(){
+    if(statLoaded) return; statLoaded=true;
+    var out=$("statOut"), warn=$("statWarn");
+    if(!window.__settings || !__settings.stats){ out.textContent="통계를 읽을 수 없습니다."; return; }
+    __settings.stats().then(function(r){
+      out.textContent=(r.lines||[]).join("\n") || "아직 기록이 없습니다.";
+      /* ⚠️ 통계는 없어도 인쇄는 되므로 **사라져도 몇 달 뒤에야 눈치챈다.** 여기서도 알린다. */
+      if(r && r.preserved===false){
+        warn.hidden=false;
+        warn.textContent="이 PC 는 통계를 C:\\ProgramData 에 둡니다. 하드보안관 같은 복원 "+
+          "프로그램이 걸려 있으면 재부팅마다 통계가 모두 사라집니다. 보존 드라이브(D:~H:)에 "+
+          "`군포민원서식도우미` 폴더를 만들어 두세요.";
+      }
+    }).catch(function(e){ out.textContent="통계를 읽지 못했습니다: "+e.message; });
+  }
+  $("openStats").addEventListener("click", function(){
+    if(window.__settings && __settings.openStats) __settings.openStats();
   });
 
   /* 체크 목록 그리기 */
