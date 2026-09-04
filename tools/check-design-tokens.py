@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """디자인 토큰 블록(DESIGN-TOKENS)이 9개 화면에서 같은지 본다.
 
-`engine/base.html` 의 `<!--DESIGN-TOKENS v1-->` … `<!--/DESIGN-TOKENS-->` 블록이 **원본**이고,
+`engine/base-product.html` 의 `<!--DESIGN-TOKENS v1-->` … `<!--/DESIGN-TOKENS-->` 블록이 **원본**이고,
 엔진 7종은 재빌드로, 손작성(여권)과 허브는 이 도구가 넣어 준다.
 
 `check-site-block.py` 와 같은 방식이다. 그쪽이 **기관별 설정**(색을 주입하는 스크립트)을
@@ -9,7 +9,7 @@
 똑같이」가 조건이라 어긋나면 그 서식만 다르게 생긴 채로 배포된다 — 조용히 어긋난다.
 
     python tools/check-design-tokens.py           # 다르면 exit 1
-    python tools/check-design-tokens.py --fix     # base.html 내용으로 손작성(여권)·허브를 맞춘다
+    python tools/check-design-tokens.py --fix     # base-product.html 내용으로 손작성(여권)·허브를 맞춘다
                                                   # (엔진 7종은 `node tools/build-form.js` 로 재빌드)
 
 블록이 아직 없는 파일에는 **첫 `<style>` 바로 앞에** 새로 심는다. 그 자리여야
@@ -28,7 +28,7 @@ except Exception:
     pass
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SRC = os.path.join(ROOT, 'engine', 'base.html')
+SRC = os.path.join(ROOT, 'engine', 'base-product.html')
 
 # 손으로 맞춰야 하는 것들 — 엔진 7종은 재빌드로 자동 반영된다.
 # ⚠️ 혼인·이혼이 2026.08.29 에 손작성에서 엔진으로 옮겨졌다(목록을 옮기지 않으면
@@ -64,7 +64,7 @@ def main():
     fix = '--fix' in sys.argv
     want, _ = block_of(SRC)
     if not want:
-        print('X engine/base.html 에 DESIGN-TOKENS 블록이 없습니다')
+        print('X engine/base-product.html 에 DESIGN-TOKENS 블록이 없습니다')
         return 1
 
     bad = 0

@@ -6,7 +6,7 @@
 
 ```
 engine/
-  base.html        공통 CSS + HTML 골격 (플레이스홀더 3개)
+  base-product.html  공통 CSS + HTML 골격 (Product UI v1 · 플레이스홀더 3개)
   engine.js        공통 엔진 — 전역 FORM 설정을 읽어 동작
   assets/<이름>.b64 배경 이미지 data URI (prep-bg.py 생성, .gitignore·재생성 가능)
 forms/
@@ -26,7 +26,7 @@ tools/
 
 > **로고**: `python tools/embed-logo.py` 를 돌리면 허브(민트 원본)와 서식 도우미
 > 입력 패널 파란 머리(흰색 반전본)에 base64로 박힌다. `--remove` 로 원상복구.
-> 껍데기(`engine/base.html`·`engine/base-product.html`)도 함께 고치므로 **엔진 서식 7종은 재빌드**해야 반영된다.
+> 껍데기(`engine/base-product.html`)도 함께 고치므로 **엔진 서식 7종은 재빌드**해야 반영된다.
 > 로고는 화면 전용이며 인쇄물(서식)에는 절대 나오지 않는다(8종 인쇄 0px 검증).
 
 > **앱 아이콘(Electron 대안)**: `python tools/make-icon.py` → `kiosk-app/build/icon.ico`
@@ -80,8 +80,7 @@ bash tools/sync-kiosk.sh --check  # 커밋 전 드리프트 검증(다르면 exi
 | `docTitle` / `formName` | 상단 제목 / 모달·배경 alt |
 | `org` | `{orgName, officeName}` |
 | `sampleLabels` / `sampleKinds` | 작성예시 버튼 2개 라벨 / 종류 키 |
-| `noticeItems` | 화면 하단 「이용 안내」 목록을 서식 고유 문구로 교체(생략하면 `base.html` 의 일반 문구). 예) 출생신고서는 "필요 서류(출생증명서 등)" 처럼 서식 이름을 넣어 안내한다 |
-| `rerenderOnSet` | 선택 시 조건부 입력칸 갱신이 필요한 필드 목록 |
+| `noticeItems` | 화면 하단 「이용 안내」 목록을 서식 고유 문구로 교체(생략하면 껍데기의 일반 문구). 예) 출생신고서는 "필요 서류(출생증명서 등)" 처럼 서식 이름을 넣어 안내한다 |
 | `today` | 제목 아래 `( 년 월 일 )` 좌표 `{y,yx,mx,dx}` |
 | `stateKeys` / `stateDefaults` | 상태 필드 목록 / 기본값 |
 | `CO` | `{texts,checks,attend}` 좌표맵 (PDF 포인트, PW=595/PH=841) |
@@ -128,10 +127,10 @@ bash tools/sync-kiosk.sh --check  # 커밋 전 드리프트 검증(다르면 exi
 손작성본은 **여권 하나**뿐이며, 엔진 공용 스니펫(유휴 초기화·인쇄 안내 모달 등)을 고칠 때는
 여권도 같은 내용으로 함께 손봐야 합니다.
 
-✅ **엔진 7종이 모두 `base-product.html`(Product UI v1) 을 씁니다**(2026.08.29 · `shell:"product"`).
-`engine/base.html` 은 **더 쓰는 서식이 없습니다** — 옛 껍데기이고 대조용으로만 남겨 둡니다.
-⚠️ 다만 별지 조판(`.xpaper`)처럼 **옛 껍데기에만 있던 규칙**이 새 껍데기에 빠져 있을 수 있습니다.
-부동산을 옮길 때 실제로 그랬고, 화면은 멀쩡한데 **별지 2쪽만** 밀렸습니다.
+✅ **껍데기는 `base-product.html`(Product UI v1) 하나뿐입니다.** 엔진 7종이 모두 이것을
+씁니다(2026.08.29 이식 완료). 옛 껍데기 `engine/base.html` 은 쓰는 서식이 없어
+**2026.09.04 에 지웠습니다** — 고쳐도 배포물이 바뀌지 않는 함정이었습니다.
+📌 되살릴 일이 있으면 git 이력에서 꺼내십시오. ⛔ 껍데기를 다시 둘로 가르지 마십시오.
 
-엔진(`engine.js`·`base.html`)을 고친 뒤에는 **5종을 모두 재빌드**하고, 커밋본과 인쇄·화면 픽셀을 비교해
-회귀가 없는지 확인하십시오.
+엔진(`engine.js`·`base-product.html`)을 고친 뒤에는 **7종을 모두 재빌드**하고, 커밋본과
+인쇄·화면 픽셀을 비교해 회귀가 없는지 확인하십시오.

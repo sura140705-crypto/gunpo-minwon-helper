@@ -552,7 +552,7 @@ python tools/verify-print.py --electron   # 키오스크와 같은 조판 + 용�
 - 대표색이 극단적인 기관(형광·초저채도)에서 대비가 무너질 때 → **계산 규칙**을 고칩니다.
   ⛔ 그 기관만을 위한 예외 색을 추가하지 않습니다.
 
-> 근거 · `engine/base.html` 의 `<!--SITE-CONFIG v1-->`·`<!--DESIGN-TOKENS v1-->` ·
+> 근거 · `engine/base-product.html` 의 `<!--SITE-CONFIG v1-->`·`<!--DESIGN-TOKENS v1-->` ·
 > `tools/verify-site-config.py`
 
 ---
@@ -621,7 +621,7 @@ python tools/verify-print.py --electron   # 키오스크와 같은 조판 + 용�
 - Electron 인쇄 API 가 취소를 구분해 줄 수 있게 되면 → 취소 시 초기화하지 않도록 고칩니다.
 - 무동작 3분이 현장에서 짧거나 길다는 의견이 오면 → **코드가 아니라 환경설정**에서 바꿉니다.
 
-> 근거 · `engine/base.html`·`passport-helper-v1.html` 의 `IDLE_MS`·`WARN_SEC`·`printedMs` ·
+> 근거 · `engine/base-product.html`·`passport-helper-v1.html` 의 `IDLE_MS`·`WARN_SEC`·`printedMs` ·
 > `README.md` 「개인정보 보호(설계 전제)」
 
 ---
@@ -648,7 +648,6 @@ category  보조 분류            지금은 화면에 드러내지 않는다
 keywords  시민이 쓸 말          검색용 · UI 는 20종부터
 aliases   행정 표기 변형        검색용 · UI 는 20종부터
 desc / ready / scale           카드 펼침판의 설명 · 준비물 · 「몇 가지·몇 분」
-preview.fields                 그림이 없는 서식의 대체 종이용
 href                           그 서식 HTML
 ```
 
@@ -768,7 +767,7 @@ href                           그 서식 HTML
 > · 질문 → 다음 질문 / Current Focus 이동(둘 다 `innerHTML` 재생성이라 transition 이 안 걸린다.
 >   특히 Current Focus 는 **인쇄 경로 옆**이라 손대는 비용이 크다)
 
-> 근거 · `engine/base.html` 의 `<!--DESIGN-TOKENS v1-->` ·
+> 근거 · `engine/base-product.html` 의 `<!--DESIGN-TOKENS v1-->` ·
 > `docs/디자인검토/2026.08.25-의뢰서-모션과-시각.md` 과제 A · `CHANGELOG.md` 2026.08.27
 
 ---

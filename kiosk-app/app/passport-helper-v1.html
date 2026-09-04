@@ -18,13 +18,13 @@
 
    「새로운 서식을 만들 때 새로운 디자인을 발명하지 않는다」를 지키려면 값이 한 곳에
    있어야 한다. 종전에는 색·반경·간격·글자 크기가 **다섯 원본에 흩어져 하드코딩**돼
-   있었다(engine/base.html · passport · marriage · divorce · index). 한 곳을 고치면
+   있었다(옛 껍데기 · passport · marriage · divorce · index). 한 곳을 고치면
    나머지 넷이 조용히 갈라진다 — 초기화 코드가 아홉 곳에 복제된 것과 같은 뿌리다.
 
-   ⚠️ 이 블록은 **5개 원본에 글자까지 똑같이** 들어간다.
-      고칠 때는 `engine/base.html` 을 고치고 →
-        `node tools/build-form.js <이름>` 으로 엔진 5종 재빌드
-        `python tools/check-design-tokens.py --fix` 로 손작성 3종·허브 반영
+   ⚠️ 이 블록은 **9개 화면에 글자까지 똑같이** 들어간다.
+      고칠 때는 `engine/base-product.html` 을 고치고 →
+        `node tools/build-form.js <이름>` 으로 엔진 7종 재빌드
+        `python tools/check-design-tokens.py --fix` 로 여권·허브 반영
       확인은 `python tools/check-design-tokens.py` (다르면 exit 1).
 
    ⛔ **인쇄물에 나가는 값을 이 블록에 얹지 마라.** 여기 있는 것은 전부 화면 전용이다.
@@ -1524,8 +1524,8 @@ html.big{
    ⛔ **인쇄물은 건드리지 않는다.** 여기서 바꾸는 것은 `.topbar`(인쇄 CSS 가 숨긴다)와
       화면 전용 색 변수·로고뿐이다. 인쇄에 나가는 값을 이 통로에 얹지 마라 —
       그 순간 `verify-print.py` 19쪽 0px 안전망이 무너진다.
-   ⚠️ 이 블록은 **8종 + 허브에 똑같이** 들어간다. 고칠 때는 `engine/base.html` 을 고쳐
-      5종을 재빌드하고, 손작성 3종(passport·marriage·divorce)과 `index.html` 에 같은
+   ⚠️ 이 블록은 **8종 + 허브에 똑같이** 들어간다. 고칠 때는 `engine/base-product.html`
+      을 고쳐 엔진 7종을 재빌드하고, 손작성인 여권과 `index.html` 에 같은
       내용을 손수 반영한다(AGENTS.md §1). `sync-kiosk.sh --check` 는 루트↔키오스크
       드리프트만 본다 — **이 블록끼리의 드리프트는 잡아 주지 못한다.**
    ==================================================================== */

@@ -15,7 +15,7 @@ embed-logo.py — 군포시 로고를 허브·서식 도우미에 박아 넣는�
        ㄱ. 상단바 제목 왼쪽 — 허브와 **같은 자리·같은 크기·원본 색**.
            세부 페이지에 들어가도 로고가 그대로 보이게 해 달라는 요청(2026.08.08).
        ㄴ. 입력 패널 파란 머리(.phone-head) 우측 상단에 흰색(반전)으로.
-     engine/base.html 을 고친 뒤 엔진 서식은 다시 빌드해야 반영된다(아래 안내 출력).
+     engine/base-product.html 을 고친 뒤 엔진 서식은 다시 빌드해야 반영된다(아래 안내 출력).
 
 ⚠️ 흰색 버전을 CSS `filter:invert()` 로 만들면 안 된다. 이 로고는 민트 띠 위에
    흰 글자('YOU')가 얹힌 구조라, 전체를 희게 칠하면 'YOU'가 같이 희어져 사라진다.
@@ -39,8 +39,7 @@ BEG, END = "<!--GUNPO-LOGO-->", "<!--/GUNPO-LOGO-->"
 # 손작성(여권)은 껍데기를 쓰지 않으므로 여기서 직접 고쳐야 한다.
 # 엔진 7종은 껍데기만 고치고 재빌드한다 — 여기에 넣으면 재빌드에 덮여 헛일이 된다.
 # (birth 2026.08.08 · marriage·divorce 2026.08.29 에 손작성에서 엔진으로 옮겨졌다.)
-# ⚠️ 껍데기가 **둘**이다 — 옛 `base.html` 과 Product UI v1 의 `base-product.html`.
-#    둘 다 고쳐야 7종에 다 걸린다.
+# 껍데기는 `base-product.html` **하나**다(옛 `base.html` 은 2026.09.04 에 지웠다).
 HAND_WRITTEN = ["passport-helper-v1.html"]
 ENGINE_FORMS = ["birth", "marriage", "divorce", "death", "naming", "cert", "realestate"]
 
@@ -213,7 +212,7 @@ def main():
               % (os.path.relpath(logo, ROOT), os.path.getsize(logo) / 1024,
                  len(uri) / 1024, len(white) / 1024))
 
-    targets = ["index.html", os.path.join("engine", "base.html"),
+    targets = ["index.html",
                os.path.join("engine", "base-product.html")] + HAND_WRITTEN
     for rel in targets:
         p = os.path.join(ROOT, rel)

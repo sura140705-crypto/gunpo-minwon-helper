@@ -888,9 +888,9 @@ function onClick(e){
     state[k]=(state[k]===val)?"":val;   // 같은 항목 다시 누르면 해제(토글)
     /* ⚠️ 선택 하나로 **다음 단계의 존재 여부**가 바뀔 수 있다(조건부 단계).
        그래서 언제나 `renderAll()` 로 진행 표시까지 다시 센다.
-       📌 `FORM.rerenderOnSet` 은 이제 하는 일이 없다 — 종전에도 두 갈래가
-          `renderStep(); renderForm();` 으로 **똑같았다.** 5종 config 에 남아 있어
-          지우지 않고 둔다(지우려면 5종을 함께 봐야 한다). */
+       ⛔ 「이 항목만 다시 그린다」는 갈래를 되살리지 마라. 종전에 있던
+          `FORM.rerenderOnSet` 이 그것이었는데, 두 갈래가 실제로는 똑같아
+          하는 일이 없었다(2026.09.04 에 5종 config 에서 지웠다). */
     renderAll();
   }
   else if(t.hasAttribute("data-toggle")){ var kk=t.getAttribute("data-toggle"); state[kk]=!state[kk]; renderAll(); }
@@ -1134,13 +1134,13 @@ function init(){
   setLabelHtml("btnSampleAdult", esc(labels[0])+tag);
   setLabelHtml("btnSampleMinor", esc(labels[1])+tag);
   document.querySelectorAll(".bg").forEach(function(img){ img.alt=FORM.formName; });
-  // 이용 안내(화면 하단) — 서식 고유 문구가 있으면 교체, 없으면 base.html 기본 문구
+  // 이용 안내(화면 하단) — 서식 고유 문구가 있으면 교체, 없으면 껍데기 기본 문구
   if(FORM.noticeItems){
     var nl=document.getElementById("noticeList");
     if(nl) nl.innerHTML=FORM.noticeItems.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
   /* 기관 표기 — config 의 값이 기본이고, 키오스크 환경설정에 기관명이 들어 있으면
-     그것이 이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. base.html 의 SITE-CONFIG 참조).
+     그것이 이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. 껍데기의 SITE-CONFIG 참조).
      설정이 없는 웹 배포본에서는 `__site` 자체가 없으므로 config 값이 그대로 쓰인다. */
   var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
   if(typeof window!=="undefined" && window.__site) org=window.__site.org(org);

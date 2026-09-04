@@ -1,7 +1,7 @@
 'use strict';
 /* ============================================================
  * build-form.js — 가족관계등록 신고서 도우미 생성기
- *   engine/base.html + engine/engine.js + forms/<이름>.config.js
+ *   engine/base-product.html + engine/engine.js + forms/<이름>.config.js
  *   + engine/assets/<이름>.b64(배경) → <이름>-helper-v1.html (자체완결)
  *
  *   사용:  node tools/build-form.js <이름> [출력파일]
@@ -26,21 +26,20 @@ function read(rel) {
 // </script> 조기 종료 방지
 function safe(js) { return js.replace(/<\/script/gi, '<\\/script'); }
 
-/* 껍데기 고르기 — config 에 `shell:"product"` 가 있으면 Product UI v1 껍데기를 쓴다.
-   ⚠️ 옛 껍데기(`engine/base.html`)는 아직 4종이 쓴다. 한 서식씩 옮기려고 갈라 두었다.
-   ⛔ 두 껍데기를 하나로 합치지 마라 — 합치는 순간 한 서식을 고칠 때 5종이 함께 움직인다. */
+/* 껍데기는 **하나뿐**이다 — Product UI v1(`engine/base-product.html`).
+   📌 옛 껍데기(`engine/base.html`)는 이식 도중 한 서식씩 옮기려고 갈라 두었던 것인데,
+      2026.08.29 에 7종이 모두 넘어와 쓰는 서식이 없어졌고 2026.09.04 에 지웠다.
+   ⛔ 껍데기를 다시 둘로 가르지 마라 — 그 사이에 조용히 갈라진 값이 생긴다. */
 const config0 = read('forms/' + name + '.config.js');
-const useProduct = /shell\s*:\s*["']product["']/.test(config0);
-const base   = read(useProduct ? 'engine/base-product.html' : 'engine/base.html');
+const base   = read('engine/base-product.html');
 const engine = read('engine/engine.js');
 const config = config0;
 const bg     = read('engine/assets/' + name + '.b64').trim();
 /* 한자 후보 표 — `tools/build-hanja-table.py` 가 만든다(약 250KB · 뜻 포함).
    ⚠️ **쓰는 서식에만 싣는다.** 부동산에는 한자 칸이 아예 없어서, 넣으면 250KB 를
-      아무도 안 쓰는 자리에 지고 간다. config 가 한자 찾기를 부르는지로 가른다.
-   ⚠️ 옛 껍데기(`engine/base.html`)에는 이 자리가 없다. */
+      아무도 안 쓰는 자리에 지고 간다. config 가 한자 찾기를 부르는지로 가른다. */
 const usesHanja = /hanjaGridHtml|\bhanja\s*:/.test(config0);
-const hanja  = (useProduct && usesHanja) ? read('engine/hanja-table.js') : '';
+const hanja  = usesHanja ? read('engine/hanja-table.js') : '';
 
 let html = base
   .replace('/*{{HANJA}}*/', safe(hanja))

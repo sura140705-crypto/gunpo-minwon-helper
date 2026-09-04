@@ -35,8 +35,13 @@ TARGETS = [
     "birth-helper-v1.html", "cert-helper-v1.html", "death-helper-v1.html",
     "divorce-helper-v1.html", "marriage-helper-v1.html", "naming-helper-v1.html",
     "passport-helper-v1.html", "realestate-helper-v1.html",
-    "engine/base.html", "engine/engine.js", "engine/README.md",
+    # ⚠️ 껍데기는 `base-product.html` **하나**다(옛 `base.html` 은 2026.09.04 에 지웠다).
+    #    여기를 빠뜨리면 엔진 7종이 재빌드로 **군포 이름을 도로 물고 온다.**
+    "engine/base-product.html", "engine/engine.js", "engine/README.md",
+    # ⚠️ config 는 **7종 전부**다. 혼인·이혼이 빠져 있어 2026.09.04 에 보탰다 —
+    #    둘 다 config 안에 기관명이 들어 있어 빠뜨리면 그 두 서식만 안 바뀐다.
     "forms/birth.config.js", "forms/cert.config.js", "forms/death.config.js",
+    "forms/divorce.config.js", "forms/marriage.config.js",
     "forms/naming.config.js", "forms/realestate.config.js",
     "kiosk-app/main.js", "kiosk-app/preload.js", "kiosk-app/package.json",
     "운영문서/붙임1_시행계획서.md", "운영문서/붙임2_사용매뉴얼.md",

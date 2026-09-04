@@ -51,7 +51,7 @@
 |---|---|---|
 | 손작성(여권) 내용 | `passport-helper-v1.html` | `sync-kiosk.sh` |
 | 엔진 7종 내용 | `forms/<이름>.config.js` | `build-form.js` 재빌드 → `sync-kiosk.sh` |
-| 8종 공통 동작 (유휴 초기화·인쇄 안내 모달·CSS 등) | `engine/engine.js` · 껍데기 **둘**(`base.html`·`base-product.html`) **와** 여권에 같은 내용 손수 반영 | 엔진 7종 재빌드 → `sync-kiosk.sh` |
+| 8종 공통 동작 (유휴 초기화·인쇄 안내 모달·CSS 등) | `engine/engine.js` · 껍데기 `engine/base-product.html` **와** 여권에 같은 내용 손수 반영 | 엔진 7종 재빌드 → `sync-kiosk.sh` |
 | 허브 메뉴 | `index.html` | `sync-kiosk.sh` |
 | 운영·제출 문서 | `운영문서/*.md` (원본) | 필요할 때 `make-manual.py` 로 PDF 재생성 |
 
@@ -66,7 +66,7 @@ gunpo_minwon/
 ├─ AGENTS.md         ☞ 작업 지침(원본·생성물 구분, 필수 검증, 금지사항) — 고치기 전에 읽는다
 │                     Claude Code·Codex·사람 공용. CLAUDE.md 는 이 파일을 불러오는 한 줄짜리다
 ├─ index.html, *-helper-v1.html (8종)   배포 원본 ★루트 고정(상대경로·file:// 실행)
-├─ engine/          공통 엔진 — base.html·base-product.html(껍데기 둘) · engine.js · assets/*.b64(배경, 재생성물)
+├─ engine/          공통 엔진 — base-product.html(껍데기) · engine.js · hanja-table.js · assets/*.b64(배경, 재생성물)
 │   └─ README.md    ☞ 새 서식 만들기 · FORM(config) 인터페이스 · 좌표 잡는 법
 ├─ forms/           엔진 서식 7종의 config (좌표맵·필드·단계·작성예시)
 ├─ tools/           빌드·동기화·문서·로고 도구 (아래 표)
@@ -101,7 +101,6 @@ gunpo_minwon/
 | `python tools/check-site-block.py [--fix]` | 기관별 설정 블록(`<!--SITE-CONFIG v1-->`)이 9개 화면에서 같은지 |
 | `python tools/check-design-tokens.py [--fix]` | 디자인 토큰 블록(`<!--DESIGN-TOKENS v1-->`)이 9개 화면에서 같은지 |
 | `python tools/verify-site-config.py [--preview …]` | **화면 회귀 검증** — 환경설정 값이 화면에 실제로 걸리는지(6가지 조합) |
-| `python tools/make-form-previews.py [--check]` | 허브 Main 의 서식 미리보기 그림(8종 1쪽 축소본) → `index.html` 의 FORM-IMAGES 블록 |
 | `python tools/design-shots.py [--only …]` | 디자인 검토용 화면 갈무리 → `docs/디자인검토/shots/` + `현재-스타일.css` |
 | `python tools/design-bundle.py` | 그 자료를 밖에 넘길 묶음으로 → `_디자인검토/`(폴더 + zip) |
 | `tools/calibration-sheet.html` | **프린터 검수지** — 인쇄해서 기기별 인쇄 불가 영역·배율을 재고 기록(설치 검수용) |

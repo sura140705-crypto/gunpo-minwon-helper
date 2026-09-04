@@ -38,8 +38,8 @@
 | `kiosk-app/app/` 안의 HTML | **루트의 같은 파일** | 루트 수정 → `bash tools/sync-kiosk.sh` |
 | 키오스크 동작·보안·인쇄 통제 | **`kiosk-app/main.js`·`preload.js`** | 직접 수정 → `--selfcheck` 로 확인 |
 | 인쇄 조판(용지·여백·배율) | **`kiosk-app/print-options.js`** | 수정 → `verify-print.py --electron` |
-| 기관별 설정 적용(SITE-CONFIG 블록) | **`engine/base.html`** 의 `<!--SITE-CONFIG v1-->` | 수정 → 7종 재빌드 → `python tools/check-site-block.py --fix` |
-| 디자인 값 — 색·반경·간격·글자 크기 | **`engine/base.html`** 의 `<!--DESIGN-TOKENS v1-->` | 수정 → 7종 재빌드 → `python tools/check-design-tokens.py --fix` |
+| 기관별 설정 적용(SITE-CONFIG 블록) | **`engine/base-product.html`** 의 `<!--SITE-CONFIG v1-->` | 수정 → 7종 재빌드 → `python tools/check-site-block.py --fix` |
+| 디자인 값 — 색·반경·간격·글자 크기 | **`engine/base-product.html`** 의 `<!--DESIGN-TOKENS v1-->` | 수정 → 7종 재빌드 → `python tools/check-design-tokens.py --fix` |
 | 한자 후보·훈음 표 | **`tools/build-hanja-table.py`** (원본 `Unihan.zip`·`hanja.txt` 는 `.gitignore`) | 도구 수정 → `python tools/build-hanja-table.py` → 6종 재빌드 |
 | 한자 찾기 화면 | **`engine/engine.js`** 의 `hanjaGridHtml`·`hjCandsHtml` + `base-product.html` CSS | 수정 → 6종 재빌드 |
 | 선 아이콘(엔진 7종) | **`engine/engine.js`** 의 `/*ICON-SET v1*/` 블록 | 수정 → 7종 재빌드 → `python tools/check-icons.py` |
@@ -47,9 +47,10 @@
 | 환경설정 창의 항목 | **`kiosk-app/admin/settings.html`** + `main.js` 의 `ORG_KEYS`·`POLICY_KEYS`·`FORM_KEYS` | 양쪽 이름이 같아야 한다 |
 
 > ⛔ **엔진 7종의 루트 HTML을 직접 고치지 마라.** 다음 재빌드에 조용히 덮인다.
-> ✅ **엔진 7종이 모두 `base-product.html`(Product UI v1) 을 쓴다**(2026.08.29).
->    `engine/base.html` 은 **더 쓰는 서식이 없다** — 옛 껍데기이고 대조용으로만 남겨 둔다.
->    ⛔ 그것을 고쳐도 배포물은 바뀌지 않는다.
+> ✅ **껍데기는 `engine/base-product.html`(Product UI v1) 하나뿐이다**(2026.08.29 이식 완료).
+>    옛 껍데기 `engine/base.html` 은 쓰는 서식이 없어 **2026.09.04 에 지웠다** —
+>    고쳐도 배포물이 바뀌지 않는 함정이었다. 되살릴 일이 있으면 git 이력에서 꺼낸다.
+>    ⛔ 껍데기를 다시 둘로 가르지 마라.
 > ⛔ **`kiosk-app/app/` 안의 파일을 직접 고치지 마라.** 원본은 루트다.
 
 ## 2. 끝내기 전에 반드시 통과시켜야 하는 것
@@ -140,7 +141,7 @@ Review 의 [수정]이 **눌러서 실제로 그 단계로 가는가**.
 >
 > 허브 · 여권 · 출생 · 혼인 · 이혼 · 사망 · 개명 · 증명서 · 부동산 **전부** Product UI v1 이다.
 > 손작성본은 **여권 하나**뿐이고, 엔진 7종은 모두 `engine/base-product.html` 을 쓴다
-> (`engine/base.html` 은 **쓰는 서식이 없다** — 대조용).
+> (껍데기는 그것 하나다 — 옛 `engine/base.html` 은 2026.09.04 에 지웠다).
 >
 > ⛔ **여기서부터는 개별 서식을 다시 열지 않는다.** 남은 일은 서식별 구현이 아니라
 > **공통 마감 단계**다. 아래 다섯을 **한 번에 8종에 걸쳐** 처리한다 —

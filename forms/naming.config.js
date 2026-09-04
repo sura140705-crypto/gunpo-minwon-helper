@@ -58,8 +58,6 @@ var FORM={
   afterPrint:"인쇄한 뒤, 신고인이 서명 또는 날인을 직접 하여 민원실에 제출하세요. "
     +"<b>법원 결정문 원본</b>을 함께 내셔야 하며, 그 밖의 첨부서류는 담당 직원이 안내합니다.",
 
-  rerenderOnSet:["r_qual"],
-
   stateKeys:[].concat(
     ["bef_surKor","bef_givenKor","bef_surHan","bef_givenHan",
      "aft_surKor","aft_givenKor","aft_surHan","aft_givenHan",

@@ -219,8 +219,6 @@ href            'passport-helper-v1.html'
 desc            카드 펼침판의 설명
 ready           카드 펼침판의 준비물   ⚠️ **여권에만 있음**. 7종은 빈 배열
 scale           {steps,minutes}      ⚠️ **여권에만 있음**. 7종은 null
-preview.fields  실루엣의 항목 이름 5개  ✅ 8종 전부
-preview.sample  실루엣의 예시값 5개    ✅ 8종 전부 · **전부 가상 인물**
 ```
 
 | key | citizen | formal |
@@ -532,7 +530,8 @@ preview.sample  실루엣의 예시값 5개    ✅ 8종 전부 · **전부 가�
 | 흐름 | 혼인 중 **9단계** / 혼인 외 **8단계** — 첫 화면이 바로 첫 질문입니다(intro 를 `when` 으로 숨김) |
 | 인쇄 | 작성 → 미리보기 → 인쇄. ⛔ BAR 직접 인쇄 없음 |
 
-⚠️ **나머지 4종(사망·개명·증명서·부동산)은 아직 옛 껍데기**입니다 — `engine/base.html`.
+~~⚠️ 나머지 4종(사망·개명·증명서·부동산)은 아직 옛 껍데기입니다~~ →
+**2026.08.29 에 7종 모두 Product UI v1 으로 넘어왔습니다.** 옛 껍데기는 2026.09.04 에 지웠습니다.
 
 # 5. 나머지 7종 UI Inventory
 
@@ -587,9 +586,9 @@ preview.sample  실루엣의 예시값 5개    ✅ 8종 전부 · **전부 가�
 
 | 순위 | 무엇 | 어디 | 비용 |
 |---|---|---|---|
-| **1** | `.phone` 카드 껍데기와 `.phone-head` 파란 머리를 걷어내고 **평평한 ASK** 로 | `engine/base.html` | 작음 · 효과 큼 |
-| **2** | 질문 제목 20px/700 → `--fs-question` 34px/800 | `engine/base.html` | 작음 |
-| **3** | `.screen-notice` 를 **RAIL 로** 옮김(= RAIL 신설) | `engine/base.html` 골격 | 중간 |
+| **1** | `.phone` 카드 껍데기와 `.phone-head` 파란 머리를 걷어내고 **평평한 ASK** 로 | 껍데기 | 작음 · 효과 큼 |
+| **2** | 질문 제목 20px/700 → `--fs-question` 34px/800 | 껍데기 | 작음 |
+| **3** | `.screen-notice` 를 **RAIL 로** 옮김(= RAIL 신설) | 껍데기 골격 | 중간 |
 | 4 | Review 줄마다 「수정」 | `engine.js` `sumRow` | 중간 |
 | 5 | 흐름을 상태기계로 | `engine.js` + config 5종 | **큼** 💡 별도 과제 |
 
@@ -613,12 +612,14 @@ preview.sample  실루엣의 예시값 5개    ✅ 8종 전부 · **전부 가�
 | `cert` | 가족관계증명서 발급받기 | 증명서 발급신청 | ✅ `[별지 제11호 서식]…pdf` | `engine/assets/cert.b64` | ✅ 87KB | ✅ |
 | `realestate` | 부동산 거래 신고하기 | 부동산거래계약 신고서 | ✅ `부동산거래계약 신고서.pdf` + `별지.pdf/.hwp` | `engine/assets/realestate.b64` | ✅ 70KB | ✅ |
 
-## 6-1. 허브 미리보기 자료 ✅
+## 6-1. 허브 미리보기 자료 — **없앴습니다**(2026.09.04)
 
-- 위치 : `index.html` 의 `<!--FORM-IMAGES v1-->` — **base64 WEBP 8장, 합계 525KB**
-- 만드는 법 : `python tools/make-form-previews.py` (폭 **760px** · WEBP)
-- 출처 : 각 서식이 **인쇄에 쓰는 빈 배경**을 그대로 축소한 것
-- ✅ **개인정보 없음** — 값을 얹기 전의 **빈 서식**입니다
+허브 CENTER 가 A4 종이 자리에서 「준비물 + 신청서 + 작성 시작」으로 바뀌면서
+(2026.08.28) 그림을 띄우는 코드가 사라졌는데, 자료(`<!--FORM-IMAGES v1-->` ·
+base64 WEBP 8장 **706KB**)와 그것을 만들던 `tools/make-form-previews.py` 는
+남아 있었습니다. 둘 다 지웠습니다 — 허브가 **889KB → 149KB** 가 됩니다.
+
+⛔ 되살리지 마십시오. 서식 그림을 다시 띄우려면 CENTER 의 역할부터 다시 정해야 합니다.
 
 ## 6-2. 제약
 
@@ -996,7 +997,6 @@ bash  tools/sync-kiosk.sh --check         # 루트 → kiosk-app/app 드리프�
 python tools/check-site-block.py          # 기관 설정 블록이 9개 화면에서 같은지
 python tools/check-design-tokens.py       # 디자인 토큰이 9개 화면에서 같은지
 python tools/verify-site-config.py        # 설정이 화면에 실제로 걸리는지(6가지)
-python tools/make-form-previews.py --check
 node --check <고친 파일>.js
 ```
 

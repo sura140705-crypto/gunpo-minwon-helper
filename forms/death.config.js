@@ -64,8 +64,6 @@ var FORM={
     +"<b>사망진단서(또는 시체검안서) 원본</b>을 함께 내셔야 하며, "
     +"그 밖의 첨부서류는 담당 직원이 안내합니다.",
 
-  rerenderOnSet:["d_place"],
-
   stateKeys:[].concat(
     ["d_surKor","d_givenKor","d_surHan","d_givenHan","d_sex","d_jumin",
      "d_regBase","d_addr","d_headName","d_headRel",

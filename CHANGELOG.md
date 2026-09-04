@@ -16,6 +16,74 @@
 
 ---
 
+## 2026.09.04
+
+### [정리] 죽은 코드 셋을 치웠다 — 허브 **889KB → 149KB** · 껍데기 **둘 → 하나**  · 사용자 요청
+
+「열려 있는 TODO」에 비차단으로 적어 두었던 죽은 코드 셋이다. 공통 마감 단계(①~⑤)가
+끝났고 이 리포는 **관공서 키오스크 하나에 집중**하기로 해서(2026.09.03 분사) 지웠다.
+⛔ 셋 다 **화면에도 인쇄물에도 나오지 않던 것**이다 — 21쪽 0px 는 처음부터 끝까지 그대로다.
+
+**① 허브의 종이 시연 코드 — `index.html` 이 6분의 1로 줄었다**
+
+2026.08.28 에 CENTER 가 A4 종이 자리에서 「준비물 + 신청서 + 작성 시작」으로 바뀌면서
+`renderPaper`·`silHtml`·`silWrite`·`showPaper` 가 호출되지 않는 **닫힌 섬**이 됐는데,
+그것이 먹던 자료 `FORM_IMAGES`(base64 WEBP 8장, **706KB**)가 그대로 실려 있었다.
+⚠️ 키오스크가 **매번 읽어 들이던 706KB 가 아무 그림도 되지 않았다.**
+
+→ `<!--FORM-IMAGES v1-->` 블록 · 죽은 함수 다섯 · 카탈로그의 `preview.fields`/`sample`
+8쌍을 지웠다. 그 블록을 만들던 **`tools/make-form-previews.py` 도 함께 지웠다** —
+남겨 두면 다음에 누가 돌려서 706KB 를 도로 넣는다.
+📌 `preview.fields` 는 그림이 없을 때의 대체 종이용이라 **혼자만 살아 있었는데**,
+그 종이를 그리는 함수가 죽어 있어 같이 죽은 코드였다.
+
+**② `FORM.rerenderOnSet` — 5종 config 에서 제거**
+
+엔진이 언제나 `renderAll()` 을 하므로 하는 일이 없었다. `engine.js` 의 설명을
+「되살리지 마라」로 바꾸고 `engine/README.md` 의 인터페이스 표에서도 뺐다.
+
+**③ 옛 껍데기 `engine/base.html` — 지웠다**
+
+2026.08.29 에 7종이 모두 `base-product.html` 로 넘어온 뒤로 **쓰는 서식이 없었다.**
+그냥 죽은 파일이 아니라 **덫**이었다 — AGENTS.md 가 SITE-CONFIG·디자인 토큰의 「원본」으로
+가리키고 있어서, 시키는 대로 고치면 **배포물은 하나도 안 바뀌는데 검사만 통과**한다.
+
+→ 원본 자리를 `engine/base-product.html` 로 옮겼다(`check-site-block.py` ·
+`check-design-tokens.py` 의 `SRC`). 두 도구가 **옮기기 전과 똑같이 9화면 동일**을 보고했다 —
+두 껍데기의 블록이 글자까지 같았다는 뜻이고, 그동안 **죽은 파일을 손으로 맞춰 오고
+있었다**는 뜻이기도 하다. `build-form.js` 의 `shell:"product"` 갈래도 없앴다(껍데기가 하나뿐).
+
+### 🐞 [수정] `rebrand.py` 가 **죽은 껍데기를 고치고 살아 있는 껍데기를 안 고쳤다**
+
+③ 을 정리하다 드러났다. 타 지자체 확산용 일괄 교체 목록(`TARGETS`)이 `engine/base.html`
+을 가리키고 `engine/base-product.html` 이 **빠져 있었다.** 게다가 config 는 5종만 있고
+**혼인·이혼이 없었다**(둘 다 손작성에서 엔진으로 옮겨질 때 목록에 안 실렸다).
+
+⚠️ **다른 시군이 그대로 썼으면 「군포」가 남은 채로 배포됐다.** 그것도 조용히 —
+바꿔야 할 파일을 안 열었을 뿐이라 도구는 성공했다고 말한다. 남은 자리는 **24곳**이었다
+(껍데기 2 · 이혼 8 · 혼인 14 — 등록기준지 「산본로」·「당동」 따위).
+
+→ 셋을 목록에 넣고 `--dry-run` 으로 24곳이 실제로 잡히는 것을 확인했다.
+
+- 어디를: `index.html`(종이 시연 · FORM-IMAGES) · `tools/make-form-previews.py`(삭제) ·
+  `engine/base.html`(삭제) · `forms/*.config.js` 5종 · `engine/engine.js` ·
+  `engine/base-product.html`·`passport-helper-v1.html`(9화면 공통 블록의 설명 문구) ·
+  `tools/build-form.js`·`check-site-block.py`·`check-design-tokens.py`·`rebrand.py`·
+  `embed-logo.py`·`design-shots.py` · `kiosk-app/admin/settings.html` ·
+  `AGENTS.md`·`README.md`·`engine/README.md`·`docs/GOTCHAS.md`·`PRODUCT_SKIN_v1.md`·
+  `UIUX_HANDOFF.md`·`UX_DECISIONS.md`·`EXPANSION_PLAYBOOK.md` · 7종 재빌드 · `kiosk-app/app/`.
+
+- 확인: `verify-print` **21쪽 0px** · `measure-screen` 15 · `verify-review` 16 ·
+  `verify-site-config` 6 · 블록·아이콘 9화면 동일 · `sync-kiosk --check` ·
+  `node --check` · 파이썬 도구 5개 파싱 · 허브의 script 블록 3개를 파싱해 **끊긴 참조 0** ·
+  `rebrand.py --dry-run` 으로 새로 잡히는 24곳 확인.
+
+- 📌 남은 열려 있는 TODO — `state.unsure`(적히기만 하고 창구로 안 감) · `#askFoot` 이
+  비어 있음 · U6/U7 단계 분할 · U10 소요시간 · P1~P3 · W1~W10(담당자 확인).
+  ⚠️ 이 정리는 **1.4.0 설치본에 들어 있지 않다** — 통계 기능과 함께 다시 구워야 한다.
+
+---
+
 ## 2026.09.01 (4)
 
 ### [반영] 운영 통계 — 서식별 접속·인쇄, 유휴 접근·중도 이탈, 가동시간  · 현장 요청

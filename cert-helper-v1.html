@@ -18,13 +18,13 @@
 
    「새로운 서식을 만들 때 새로운 디자인을 발명하지 않는다」를 지키려면 값이 한 곳에
    있어야 한다. 종전에는 색·반경·간격·글자 크기가 **다섯 원본에 흩어져 하드코딩**돼
-   있었다(engine/base.html · passport · marriage · divorce · index). 한 곳을 고치면
+   있었다(옛 껍데기 · passport · marriage · divorce · index). 한 곳을 고치면
    나머지 넷이 조용히 갈라진다 — 초기화 코드가 아홉 곳에 복제된 것과 같은 뿌리다.
 
-   ⚠️ 이 블록은 **5개 원본에 글자까지 똑같이** 들어간다.
-      고칠 때는 `engine/base.html` 을 고치고 →
-        `node tools/build-form.js <이름>` 으로 엔진 5종 재빌드
-        `python tools/check-design-tokens.py --fix` 로 손작성 3종·허브 반영
+   ⚠️ 이 블록은 **9개 화면에 글자까지 똑같이** 들어간다.
+      고칠 때는 `engine/base-product.html` 을 고치고 →
+        `node tools/build-form.js <이름>` 으로 엔진 7종 재빌드
+        `python tools/check-design-tokens.py --fix` 로 여권·허브 반영
       확인은 `python tools/check-design-tokens.py` (다르면 exit 1).
 
    ⛔ **인쇄물에 나가는 값을 이 블록에 얹지 마라.** 여기 있는 것은 전부 화면 전용이다.
@@ -1560,8 +1560,8 @@ html.big{
    ⛔ **인쇄물은 건드리지 않는다.** 여기서 바꾸는 것은 `.topbar`(인쇄 CSS 가 숨긴다)와
       화면 전용 색 변수·로고뿐이다. 인쇄에 나가는 값을 이 통로에 얹지 마라 —
       그 순간 `verify-print.py` 19쪽 0px 안전망이 무너진다.
-   ⚠️ 이 블록은 **8종 + 허브에 똑같이** 들어간다. 고칠 때는 `engine/base.html` 을 고쳐
-      5종을 재빌드하고, 손작성 3종(passport·marriage·divorce)과 `index.html` 에 같은
+   ⚠️ 이 블록은 **8종 + 허브에 똑같이** 들어간다. 고칠 때는 `engine/base-product.html`
+      을 고쳐 엔진 7종을 재빌드하고, 손작성인 여권과 `index.html` 에 같은
       내용을 손수 반영한다(AGENTS.md §1). `sync-kiosk.sh --check` 는 루트↔키오스크
       드리프트만 본다 — **이 블록끼리의 드리프트는 잡아 주지 못한다.**
    ==================================================================== */
@@ -1656,7 +1656,7 @@ html.big{
 /* ══ 인쇄층 — ⛔ 엔진이 그리는 오버레이의 **좌표·정렬 규칙**이다 ═══════════
    ⚠️ 여권은 이 셋을 쓰지 않아 CSS 에 없다. 없으면 **화면은 멀쩡하고 인쇄만 어긋난다** —
       실제로 「세대주 및 관계」의 이름이 우측정렬을 잃고 밀렸다(2026.08.29 실측).
-   ⛔ 값을 바꾸지 마라. `engine/base.html` 과 **글자까지 같아야** 두 껍데기의 인쇄물이 같다. */
+   ⛔ 값을 바꾸지 마라. 여권(손작성)과 **글자까지 같아야** 두 벌의 인쇄물이 같다. */
 .ov.o{color:#c0392b;font-weight:900;-webkit-text-stroke:0.5px #c0392b;}  /* 선택항목 영표 ○ */
 .ov.o.blk{color:#111;-webkit-text-stroke-color:#111;}   /* 검정 표기(√표 서식) */
 .ov.r{transform:translate(-100%,-50%);}       /* 우측정렬(기준점=우측 끝) */
@@ -1713,7 +1713,7 @@ html.big .pv-th figcaption{font-size:13.5px;}
 .pv-measure .xpaper::before{display:none;}
 @media print{ .pv-measure{display:none !important;} }
 
-/* ══ 별지(첨부 페이지)의 조판 — ⛔ `engine/base.html` 과 **글자까지 같아야 한다** ═══════
+/* ══ 별지(첨부 페이지)의 조판 — ⛔ 여권(손작성)과 **글자까지 같아야 한다** ═══════
    ⚠️ 2026.08.29 — 부동산을 이 껍데기로 옮길 때 이 규칙이 **통째로 빠져 있었다.**
       화면은 멀쩡한데 **별지 2쪽만** 여백을 잃고 밀렸다(`verify-print` 가 194,677px 로 잡았다).
       옛 껍데기에만 있던 규칙이라, 별지를 쓰는 서식이 부동산 하나뿐이어서 드러나지 않았다.
@@ -2012,8 +2012,6 @@ var FORM={
   afterPrint:"인쇄한 뒤, 신청인이 서명·날인을 직접 하여 민원실에 제출하세요. "
     +"신분증을 함께 준비하고, 대리 신청은 위임장과 대리인 신분증이 필요합니다.",
   refInfo:"수수료는 증명서 1통당 1,000원(제적초본 500원, 열람·증명 1건당 200원)입니다.",
-
-  rerenderOnSet:[],
 
   /* ⛔ **이 서식은 「가족관계등록 신고서」가 아니다.** 2026.08.29 담당자 확정본의
         공통 필수/선택 원칙(모든 사항 필수 · 등록기준지·본·한자만 선택 · 신고인란 필수)은
@@ -3212,9 +3210,9 @@ function onClick(e){
     state[k]=(state[k]===val)?"":val;   // 같은 항목 다시 누르면 해제(토글)
     /* ⚠️ 선택 하나로 **다음 단계의 존재 여부**가 바뀔 수 있다(조건부 단계).
        그래서 언제나 `renderAll()` 로 진행 표시까지 다시 센다.
-       📌 `FORM.rerenderOnSet` 은 이제 하는 일이 없다 — 종전에도 두 갈래가
-          `renderStep(); renderForm();` 으로 **똑같았다.** 5종 config 에 남아 있어
-          지우지 않고 둔다(지우려면 5종을 함께 봐야 한다). */
+       ⛔ 「이 항목만 다시 그린다」는 갈래를 되살리지 마라. 종전에 있던
+          `FORM.rerenderOnSet` 이 그것이었는데, 두 갈래가 실제로는 똑같아
+          하는 일이 없었다(2026.09.04 에 5종 config 에서 지웠다). */
     renderAll();
   }
   else if(t.hasAttribute("data-toggle")){ var kk=t.getAttribute("data-toggle"); state[kk]=!state[kk]; renderAll(); }
@@ -3458,13 +3456,13 @@ function init(){
   setLabelHtml("btnSampleAdult", esc(labels[0])+tag);
   setLabelHtml("btnSampleMinor", esc(labels[1])+tag);
   document.querySelectorAll(".bg").forEach(function(img){ img.alt=FORM.formName; });
-  // 이용 안내(화면 하단) — 서식 고유 문구가 있으면 교체, 없으면 base.html 기본 문구
+  // 이용 안내(화면 하단) — 서식 고유 문구가 있으면 교체, 없으면 껍데기 기본 문구
   if(FORM.noticeItems){
     var nl=document.getElementById("noticeList");
     if(nl) nl.innerHTML=FORM.noticeItems.map(function(t){ return "<li>"+esc(t)+"</li>"; }).join("");
   }
   /* 기관 표기 — config 의 값이 기본이고, 키오스크 환경설정에 기관명이 들어 있으면
-     그것이 이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. base.html 의 SITE-CONFIG 참조).
+     그것이 이긴다(다른 기관이 같은 배포본을 쓰게 하려는 것. 껍데기의 SITE-CONFIG 참조).
      설정이 없는 웹 배포본에서는 `__site` 자체가 없으므로 config 값이 그대로 쓰인다. */
   var org=FORM.org||{orgName:"경기도 군포시", officeName:"군포시청 민원실"};
   if(typeof window!=="undefined" && window.__site) org=window.__site.org(org);

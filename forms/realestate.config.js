@@ -164,9 +164,6 @@ var FORM={
     +"계약금 지급을 확인할 수 있는 서류(영수증·통장 사본 등). 단독신고는 <b>단독신고사유서</b>도 필요합니다.",
   refInfo:"소유권이전등기는 별도로, 「부동산등기 특별조치법」에 따른 날부터 <b>60일 이내</b>에 신청해야 합니다.",
 
-  /* 선택 즉시 조건부 입력칸이 나타나야 하는 항목 */
-  rerenderOnSet:["d_kind","d_supply","d_rightKind","f_visaType"],
-
   stateKeys:[].concat(
     // ① 매도인 / ② 매수인
     ["s_name","s_jumin","s_natl","s_addr","s_shareDen","s_shareNum","s_phone","s_mobile"],

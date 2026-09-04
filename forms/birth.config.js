@@ -108,7 +108,6 @@ var FORM={
     "필요 서류는 직원 확인을 따릅니다.",
     "여기서 접수되지는 않습니다."
   ],
-  rerenderOnSet:["child_birthPlace","reporter_qual"],
   today:{ y:87.8, yx:99.8, mx:145.1, dx:190.3 },
 
   /* 인쇄 준비 화면(미리보기)의 「인쇄한 뒤에 하실 일」.
