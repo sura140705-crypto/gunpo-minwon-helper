@@ -42,12 +42,14 @@ const usesHanja = /hanjaGridHtml|\bhanja\s*:/.test(config0);
 const hanja  = usesHanja ? read('engine/hanja-table.js') : '';
 
 let html = base
-  .replace('/*{{HANJA}}*/', safe(hanja))
-  .replace('/*{{CONFIG}}*/', safe(config))
-  .replace('/*{{ENGINE}}*/', safe(engine))
+  .replace('/*__HANJA__*/', safe(hanja))
+  .replace('/*__CONFIG__*/', safe(config))
+  .replace('/*__ENGINE__*/', safe(engine))
   .replace('__BGDATA__', bg);
 
-if (html.indexOf('/*{{HANJA}}*/') >= 0 || html.indexOf('/*{{CONFIG}}*/') >= 0 || html.indexOf('/*{{ENGINE}}*/') >= 0 || html.indexOf('__BGDATA__') >= 0) {
+/* ⛔ 자리표시자를 `{{X}}` 꼴로 되돌리지 마라 — 정적 스캐너가 서버 템플릿 변수로 읽는다.
+      (`engine/base-product.html` 의 같은 자리에 이유를 적어 두었다.) */
+if (html.indexOf('/*__HANJA__*/') >= 0 || html.indexOf('/*__CONFIG__*/') >= 0 || html.indexOf('/*__ENGINE__*/') >= 0 || html.indexOf('__BGDATA__') >= 0) {
   console.error('경고: 치환되지 않은 플레이스홀더가 남아 있습니다.'); process.exit(1);
 }
 

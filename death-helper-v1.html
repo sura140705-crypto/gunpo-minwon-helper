@@ -1934,6 +1934,12 @@ document.querySelectorAll(".bg").forEach(function(i){ i.src=FORM_IMG; });
 </script>
 <script>
 "use strict";
+/* 빌드 자리표시자 — `tools/build-form.js` 가 여기에 실제 JS 를 끼워 넣는다.
+   ⛔ `{{X}}` 꼴로 되돌리지 마라. 그것은 서버 템플릿 엔진의 표기라, 정적 스캐너가
+      「script 태그 안의 템플릿 변수」(XSS 후보)로 읽는다. 이 앱에는 서버도 요청도
+      사용자 입력도 없지만 생김새만으로 걸린다. 위의 배경 이미지 자리표시자와 표기를 맞춘다.
+   ⚠️ 이 주석에 자리표시자 이름을 그대로 적지 마라 — 치환은 첫 번째 것만 바꾸므로
+      빌드 가드가 「치환되지 않은 자리표시자가 남았다」로 멈춘다. */
 /*HANJA-TABLE v1*/
 /* 한글 음절 → 한자 후보. `tools/build-hanja-table.py` 가 만든다.
    ⛔ 손으로 고치지 마라 — 다음 생성에 덮인다.
