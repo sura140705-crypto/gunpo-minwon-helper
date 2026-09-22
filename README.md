@@ -36,6 +36,7 @@
 | [`docs/UX_DECISIONS.md`](docs/UX_DECISIONS.md) | 무엇을 고민했고 **왜 그렇게 정했는가** |
 | [`docs/EXPANSION_PLAYBOOK.md`](docs/EXPANSION_PLAYBOOK.md) | 새 서식·다른 기관으로 어떻게 넓히는가 |
 | [`docs/ROADMAP.md`](docs/ROADMAP.md) | **앞으로 어디로 가는가** — 플랫폼·콘텐츠 분리와 장기 방향 |
+| [`docs/QA_BACKLOG.md`](docs/QA_BACKLOG.md) | **아직 안 끝난 일** — 무엇이·왜 열려 있고 **누가 정할 일인가** |
 | [`docs/history/`](docs/history/) | 화면이 어떻게 여기까지 왔는가 |
 | [`AGENTS.md`](AGENTS.md) | 이 리포에서 작업할 때의 지침 — **고치기 전에 읽는다** |
 
@@ -90,11 +91,12 @@ gunpo_minwon/
 ├─ 운영문서/         시청 제출·현장용 문서. **.md 가 원본**, PDF는 재생성물
 ├─ kiosk-app/       배포(Electron 설치본) — main.js(키오스크 통제)·preload.js·app/(사본 9개)
 │   └─ admin/      관리자 설정 스크립트 · 인쇄실패·점검 안내 화면
-├─ tests/baseline/  인쇄물 기준선 이미지 19쪽 (verify-print.py 가 비교하는 대상)
+├─ tests/baseline/  인쇄물 기준선 이미지 21쪽 (verify-print.py 가 비교하는 대상)
 ├─ PROJECT_OVERVIEW.md  ☞ 무엇을 왜 만드는가 (개요·현황·용어)
 ├─ docs/            GOTCHAS.md(함정 목록) · 타지자체-확산.md · archive/(과거 인계 문서)
 │   ├─ UX_DECISIONS.md       ☞ 왜 그렇게 정했는가 (의사결정 기록)
 │   ├─ EXPANSION_PLAYBOOK.md ☞ 새 서식·다른 기관으로 넓히는 절차
+│   ├─ QA_BACKLOG.md        ☞ 아직 안 끝난 일 (업무 확인·화면·코드 잔재)
 │   ├─ history/              ☞ 화면 변화의 시각적 기록
 │   └─ 디자인검토/           DESIGN_PHILOSOPHY.md(기준) · 구조동결 · 갈무리 · 밖에 넘기는 묶음
 ├─ CHANGELOG.md     시범운영 피드백 반영 이력
@@ -196,10 +198,13 @@ python tools/rebrand.py --city 안양시 --dry-run    # 무엇이 바뀌는지 �
 
 지나온 자리 — 보안성 검토(보고서·조치결과서) 완료, `운영문서/` 붙임1~4 플레이스홀더 기입 완료.
 
-남은 일
+남은 일 — 원본 목록은 **[`docs/QA_BACKLOG.md`](docs/QA_BACKLOG.md)** 에 있다
+(무엇이·왜 열려 있고 **누가 정할 일인지**까지).
 
-- **공통 마감 단계 ①~⑤** — 실사용 QA · Review/미리보기 단순화 · 색 · 아이콘 · 모션
-  (개별 서식을 다시 열지 않고 8종에 한 번에 적용한다 — `AGENTS.md` §5-1)
+- **업무·담당자 확인 5건** — 이혼 준비물 두 가지 · 혼인 준비물 갈래 · 신고일 인쇄 여부 ·
+  증명서/부동산 준비물 확정 여부
+- **창구로 가는 길** — 엔진 7종의 Human Handoff 자리(`#askFoot`)가 비어 있고,
+  창구 전환 사유 코드가 여권에만 있다. **무엇을 어느 화면에 둘지는 업무 판단**이다
 - **사람이 기기 앞에서 확인할 것 셋** — 부동산 「받는 곳」 실물 인쇄 · 환경설정 통계 탭 ·
   3분 유휴 중도 이탈
 - (온라인 배포용 후보) 도로명주소 검색 연동 — 키오스크는 오프라인 유지
