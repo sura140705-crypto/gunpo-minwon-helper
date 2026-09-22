@@ -1702,6 +1702,9 @@ body.pv-open .modal-back{display:flex;}
   font-size:14px;line-height:1.55;word-break:keep-all;overflow-wrap:anywhere;}
 .pv-sec h4{margin:0 0 5px;font-size:13px;font-weight:800;color:#ffd88a;letter-spacing:.02em;}
 .pv-sec.ref{background:rgba(255,255,255,.07);}
+/* 「창구에서 확인하실 항목」 목록. ⛔ 새 색을 들이지 않는다 — 색 위계는 별도 backlog 다. */
+.pv-un{margin:6px 0 0;padding:0 0 0 18px;}
+.pv-un li{margin:2px 0;}
 .pv-sec:empty,.pv-notes > div:empty{display:none;}
 html.big .pv-count{font-size:22px;}
 html.big .pv-sec{font-size:16px;}
@@ -1918,7 +1921,7 @@ html.big .skip-link{font-size:14.5px;}
       <div class="print-tip">인쇄 창에서 <b>여백 «없음»</b> · <b>배율 «100% (실제 크기)»</b>로 맞춰 주세요.</div>
     </div>
     <div class="pv-thumbs" id="pvThumbs"></div>
-    <div class="pv-notes"><div id="pvAfter"></div><div id="pvRef"></div></div>
+    <div class="pv-notes"><div id="pvUnsure"></div><div id="pvAfter"></div><div id="pvRef"></div></div>
     <div class="modal-scroll"><div class="mstack">
       <div class="paper"><div class="stage"><img class="bg" alt="서식"><div class="ovl" id="ovlModal"></div></div></div>
       <div class="paper extra"></div>

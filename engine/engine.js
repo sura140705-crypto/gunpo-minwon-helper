@@ -813,6 +813,10 @@ function goNext(){
   }
   var bad=stepInvalid(state.step);
   if(bad.length){ el.stepWarn.textContent=bad.join(" · "); return; }
+  /* ⚠️ 되돌아와 제대로 채우고 [다음]을 눌렀으면 **더는 「모르겠음」이 아니다.**
+        지우지 않으면 인쇄 준비 화면이 이미 푼 항목을 계속 창구로 보내라고 말한다
+        (조건 변경 뒤 잔상과 같은 부류). */
+  delete state.unsure[state.step];
   var n=nextActive(state.step); if(!n) return;
   state.step=n; renderAll(); scrollTop();
 }
@@ -824,8 +828,9 @@ function gotoStep(n){ if(n>=1 && n<state.step && stepActive(n)){ state.step=n; r
    ⚠️ 그래서 지금 이 단추는 **선택 항목만** 건너뛴다. 필수가 비어 있으면 [다음]과 똑같이 막는다.
    📌 「정말로 판단이 어려운 자리」는 건너뛰기가 아니라 **직원을 부르는 길**이어야 한다 —
       Product UI v1 의 Human Handoff 로 옮기는 것이 Phase 3 과제다.
-   📌 `state.unsure` 는 아직 **적히기만 하고 아무도 읽지 않는다.** 창구로 전달되지 않으므로
-      이 기능은 완성된 것이 아니다(Phase 3에서 함께 정리한다). */
+   ✅ `state.unsure` 는 **인쇄 준비 화면**이 읽는다(`unsureSteps()` · 2026.09.21).
+      단추가 「나중에 창구에서」라고 약속하므로, 그 약속을 지킬 자리가 인쇄 직전이다.
+      ⛔ 여기서 기록을 지우지 마라 — 지우면 단추가 아무것도 하지 않는 것과 같아진다. */
 function skipStep(){
   var miss=requiredMissing(state.step);
   if(miss.length){
@@ -974,6 +979,19 @@ function pagesOf(node){
   if(!w || !h) return 1;
   return Math.max(1, Math.ceil((h/w)/A4_RATIO - 0.02));
 }
+/* 「모르겠어요」로 넘어간 단계의 **이름**. `title` 이 없으면 기둥 라벨(`short`)을 쓴다.
+   ⚠️ `state.unsure` 의 열쇠는 `FORM.STEPS` 의 **절대 번호**다(조건부 단계 주석 참조). */
+function unsureSteps(){
+  var out=[];
+  Object.keys(state.unsure).forEach(function(k){
+    var n=+k; if(!stepActive(n)) return;
+    var d=FORM.STEPS[n-1]; if(!d) return;
+    out.push({n:n, name:(d.title||d.short||("단계 "+n))});
+  });
+  out.sort(function(a,b){ return a.n-b.n; });
+  return out.map(function(o){ return o.name; });
+}
+
 function previewPages(){
   return printPageNodes().map(function(p){
     return { label:p.label, node:p.node, pages:pagesOf(p.node) };
@@ -1014,6 +1032,22 @@ function renderPreview(){
         box.appendChild(inner);
       }
     });
+  }
+
+  /* 「이 단계는 잘 모르겠어요 · 나중에 창구에서」로 넘어간 단계를 인쇄 직전에 모아 낸다.
+     ⚠️ **활성 단계만** 센다 — 건너뛴 뒤 조건이 바뀌어 그 단계가 사라졌으면
+        창구에 물어볼 것도 없어진다(`stepActive`).
+     ⛔ 여기에 업무 안내를 새로 쓰지 마라. 이 구역이 말하는 것은 **무엇을 물어볼지**이고,
+        그 답은 단계 제목뿐이다. 업무 문구는 `FORM.afterPrint` 가 진다. */
+  var un=document.getElementById("pvUnsure");
+  if(un){
+    var us=unsureSteps();
+    un.innerHTML = us.length
+      ? '<div class="pv-sec"><h4>창구에서 확인하실 항목 '+us.length+'개</h4><div>'
+        +'「잘 모르겠어요」로 넘어간 단계입니다. 인쇄한 신청서를 창구에 내실 때 말씀해 주세요.'
+        +'<ul class="pv-un">'+us.map(function(s){ return '<li>'+esc(s)+'</li>'; }).join("")
+        +'</ul></div></div>'
+      : "";
   }
 
   var after=document.getElementById("pvAfter");

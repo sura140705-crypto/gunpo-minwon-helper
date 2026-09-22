@@ -14,7 +14,7 @@
 
 그래서 **화면이 통째로 죽어도 19쪽 0px 가 그대로 통과한다.** 그 틈을 여기서 메운다.
 
-재는 것은 두 가지다.
+재는 것은 세 가지다.
 
 1. **인쇄 준비 화면** — 「총 N장」이 참말인가. `verify-print.py` 의 기준선 쪽수(EXPECT)와
    맞춰 본다. 썸네일이 그 수만큼 있고 **안이 실제로 채워졌는지**(빈 상자가 아닌지),
@@ -26,6 +26,13 @@
    ⚠️ `gotoStep(n)` 은 `n < state.step && stepActive(n)` 일 때만 움직인다. 조건부 단계나
       잘못된 번호에 [수정]을 달면 **눌러도 아무 일이 없는 죽은 단추**가 된다.
       화면에는 멀쩡히 보이므로 눈으로는 잡히지 않는다(2026.08.30 에 혼인에서 실제로 나왔다).
+
+3. **「이 단계는 잘 모르겠어요 · 나중에 창구에서」** — 그 약속이 지켜지는가(엔진 7종).
+   건너뛰면 표시가 남는가 · 되돌아가 [다음]으로 통과하면 **지워지는가**(잔상) ·
+   인쇄 준비 화면의 「창구에서 확인하실 항목」에 실제로 **나오는가**.
+   ⚠️ `state.unsure` 는 2026.09.21 이전까지 **쓰기만 하고 읽는 곳이 없었다.** 화면에도
+      인쇄물에도 흔적이 없어 어느 도구도 눈치채지 못했다 — 그래서 여기서 본다.
+   📌 여권에는 이 단추가 없다(`skipStep` 부재). 그 경우 「확인항목 —」로 적고 넘어간다.
 
 ⚠️ 인쇄물과는 무관하다. 좌표 회귀는 `verify-print.py` 가 본다.
 ⚠️ 작성예시는 전부 가상 인물이다(리포 규칙).
@@ -120,6 +127,29 @@ setTimeout(function(){
     }
     state.step = last; renderAll();
 
+    /* ── ①' 「이 단계는 잘 모르겠어요」가 인쇄 준비 화면까지 오는가 (엔진 7종만)
+       단추가 「나중에 창구에서」라고 약속한다. 그 약속을 지키는 곳이 인쇄 직전 화면이다.
+       ⚠️ 여권에는 이 단추가 없다(`skipStep` 부재) — 그 경우 이 검사를 건너뛴다. */
+    var unsure = null;
+    if(isEngine && typeof skipStep==="function" && typeof goNext==="function"){
+      state.unsure = {};
+      var cand = 0;
+      for(var s=1; s<=last; s++){
+        var d0 = FORM.STEPS[s-1];
+        if(stepActive(s) && d0.kind!=="intro" && d0.kind!=="summary" && s!==last){ cand=s; break; }
+      }
+      if(cand){
+        state.step = cand; renderAll(); skipStep();
+        var marked = !!state.unsure[cand];
+        /* 되돌아가 [다음]으로 정상 통과하면 기록이 지워져야 한다(잔상 방지) */
+        state.step = cand; renderAll(); goNext();
+        var cleared = !state.unsure[cand];
+        state.step = cand; renderAll(); skipStep();      /* 화면에서 볼 수 있게 다시 표시 */
+        unsure = { step:cand, marked:marked, cleared:cleared };
+      }
+    }
+    state.step = last; renderAll();
+
     /* ── ② 인쇄 준비 화면 ─────────────────────────────────────────── */
     openPreview();
     setTimeout(function(){
@@ -135,6 +165,8 @@ setTimeout(function(){
         after:  q("#pvAfter").length,
         ref:    q("#pvRef").length,
         edits:  edits,
+        unsure: unsure,
+        unList: document.querySelectorAll("#pvUnsure .pv-un li").length,
         err:    window.__jsErr||""
       }) + "VR";
     }, 600);
@@ -222,12 +254,25 @@ def main():
                 why.append("죽은 [수정] %d개 (%s)"
                            % (len(dead), ", ".join(e.get("k", "?") for e in dead)))
 
+            # 「잘 모르겠어요」 — 표시되는가 · [다음]으로 지워지는가 · 화면에 오는가
+            u = d.get("unsure")
+            if u:
+                if not u.get("marked"):
+                    why.append("건너뛰기가 %d단계를 표시하지 못함" % u["step"])
+                if not u.get("cleared"):
+                    why.append("되돌아가 [다음]을 눌러도 표시가 남음(잔상)")
+                if d.get("unList", 0) != 1:
+                    why.append("인쇄 준비 화면의 확인 항목 %d개 ≠ 1개" % d.get("unList", 0))
+
             ok = not why
             if not ok:
                 bad += 1
-            print("  %s %-22s 총 %s장 · 썸네일 %d · [수정] %d개%s"
+            # ⚠️ 「잘 모르겠어요」 검사가 **돌았는지**를 눈에 보이게 적는다 — 조용히
+            #    건너뛰어도 ✓ 가 나오면 이 검사는 있으나 마나다(여권은 단추가 없어 `—`).
+            umark = ("확인항목 %d" % d.get("unList", 0)) if u else "확인항목 —"
+            print("  %s %-22s 총 %s장 · 썸네일 %d · [수정] %d개 · %s%s"
                   % ("✓" if ok else "X", name, d["total"], d["thumbs"], len(d["edits"]),
-                     "" if ok else "   ← " + " · ".join(why)))
+                     umark, "" if ok else "   ← " + " · ".join(why)))
             if a.verbose and d["edits"]:
                 for e in d["edits"]:
                     print("      %s %s → %s단계(간 곳 %s)"
