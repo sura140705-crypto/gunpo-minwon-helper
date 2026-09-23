@@ -43,9 +43,15 @@ FIGURES = {
     "passport":   {"file": "passport-helper-v1.html", "size": (1440, 1000),
                    "js": 'fillSample("adult"); state.step=3; renderAll();'},
     # 유휴 경고 오버레이 — 대기시간을 경고시간과 같게 줄여 즉시 표시시킨다(사본만 수정)
+    # ⚠️ 대기시간을 **환경설정 통로**(`window.__kioskCfg.idleMs`)로 준다.
+    #    종전에는 소스의 `IDLE_MS = 3*60*1000` 을 문자열로 때렸는데, 그 상수가
+    #    환경설정을 읽도록 바뀌면서(`KCFG.idleMs` 폴백) 치환 대상이 사라져 멈췄다
+    #    (2026.09.23). 앱이 **지원하는 입구**로 주면 코드가 또 옮겨져도 깨지지 않는다.
+    # 📌 `WARN_SEC`(30초)와 **같은 값**을 줘야 경고가 즉시 뜬다 —
+    #    경고는 `IDLE_MS - WARN_SEC*1000` 뒤에 뜨므로 30초를 주면 그 값이 0 이 된다.
     "idle":       {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
                    "js": 'fillSample("adult"); state.step=3; renderAll();',
-                   "patch": {"IDLE_MS = 3*60*1000": "IDLE_MS = 30*1000"}},
+                   "patch": {"<head>": '<head><script>window.__kioskCfg={idleMs:30000};</script>'}},
     # 인쇄 직전 안내 창 — 실제로 [인쇄] 를 눌러 띄우고, 인쇄는 막아 둔다
     "notice":     {"file": "passport-helper-v1.html", "size": (1440, 900), "budget": 900,
                    "js": 'fillSample("adult"); state.step=3; renderAll();'
@@ -55,7 +61,9 @@ FIGURES = {
     "printed":    {"file": "passport-helper-v1.html", "size": (1440, 1000), "budget": 1200,
                    "js": 'fillSample("adult"); state.step=3; renderAll();'
                          ' window.dispatchEvent(new Event("afterprint"));',
-                   "patch": {"PRINTED_MS = 5000": "PRINTED_MS = 9999999"}},
+                   # ⚠️ `idle` 과 같은 이유로 환경설정 통로를 쓴다(2026.09.23).
+                   #    초기화까지의 시간을 아주 길게 줘서 안내 화면이 사라지기 전에 찍는다.
+                   "patch": {"<head>": '<head><script>window.__kioskCfg={printedMs:9999999};</script>'}},
     "marriage":   {"file": "marriage-helper-v1.html", "size": (1440, 1000),
                    "js": 'fillSample("adult"); state.step=4; renderAll();'},
     "realestate": {"file": "realestate-helper-v1.html", "size": (1440, 1000),
