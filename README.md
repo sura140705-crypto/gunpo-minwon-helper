@@ -119,6 +119,7 @@ gunpo_minwon/
 | `python tools/measure-screen.py [--baseline]` | **화면 구조 실측** — 가로 넘침·종이 축소가 새로 생기면 실패(나빠진 것만 본다) |
 | `python tools/verify-review.py` | **Review·인쇄 준비 화면 실측**(8종×2) — 「총 N장」이 맞는지, [수정]이 실제로 그 단계로 가는지 |
 | `python tools/measure-steps.py [--size …] [--extra …]` | **단계별 세로 넘침 실측**(엔진 7종) — 시민이 굴려야 하는 px. ⛔ 합격·불합격을 가르지 않는 **근거용** |
+| `python tools/verify-print-offset.py` | **인쇄 위치 보정 검증** — 설정한 mm 만큼 인쇄물이 실제로 옮겨지는지(모든 쪽 함께·쪽수 불변) |
 | `electron tools/print-electron.js <입력.html> <출력.pdf>` | `verify-print.py --electron` 이 부르는 렌더러 — 키오스크와 같은 Electron 조판 |
 | `python tools/build-hanja-table.py` | 한글 음절 → 한자 후보·훈음 표 생성 → `engine/hanja-table.js` (원본 Unihan·libhangul) |
 | `python tools/design-shots.py [--only …]` | 디자인 검토용 화면 갈무리 → `docs/디자인검토/shots/` + `현재-스타일.css` |

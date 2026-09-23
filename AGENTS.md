@@ -38,6 +38,7 @@
 | `kiosk-app/app/` 안의 HTML | **루트의 같은 파일** | 루트 수정 → `bash tools/sync-kiosk.sh` |
 | 키오스크 동작·보안·인쇄 통제 | **`kiosk-app/main.js`·`preload.js`** | 직접 수정 → `--selfcheck` 로 확인 |
 | 인쇄 조판(용지·여백·배율) | **`kiosk-app/print-options.js`** | 수정 → `verify-print.py --electron` |
+| 인쇄 위치 미세 보정(기기별 밀림) | **`kiosk-app/print-options.js`** 의 `offsetCss` | 수정 → `verify-print-offset.py` |
 | 기관별 설정 적용(SITE-CONFIG 블록) | **`engine/base-product.html`** 의 `<!--SITE-CONFIG v1-->` | 수정 → 7종 재빌드 → `python tools/check-site-block.py --fix` |
 | 디자인 값 — 색·반경·간격·글자 크기 | **`engine/base-product.html`** 의 `<!--DESIGN-TOKENS v1-->` | 수정 → 7종 재빌드 → `python tools/check-design-tokens.py --fix` |
 | 한자 후보·훈음 표 | **`tools/build-hanja-table.py`** (원본 `Unihan.zip`·`hanja.txt` 는 `.gitignore`) | 도구 수정 → `python tools/build-hanja-table.py` → 6종 재빌드 |
@@ -65,6 +66,7 @@ python tools/check-icons.py             # 선 아이콘이 9개 화면에서 같
 python tools/verify-site-config.py      # 환경설정 값이 화면에 걸리는지(6가지 조합) — 다르면 exit 1
 python tools/measure-screen.py          # 화면 구조 실측 — 가로 넘침·종이 축소가 생기면 exit 1
 python tools/verify-review.py           # Review·인쇄 준비 화면 실측(8종×2) — 다르면 exit 1
+python tools/verify-print-offset.py     # 인쇄 위치 보정이 인쇄물을 그만큼 옮기는지 — 다르면 exit 1
 node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 ```
 
@@ -89,6 +91,14 @@ node --check <고친 파일>.js              # 문법(엔진·config·kiosk-app)
 기준선보다 작아짐 · 측정 실패). 값이 달라지는 것은 정상이고, 의도한 변화면
 **왜 달라졌는지 적고** `--baseline` 으로 기준선(`tests/screen-baseline.json`)을 갱신한다.
 눈으로 볼 것은 `python tools/design-shots.py` 갈무리가 맡는다 — 둘은 같은 상태 스크립트를 쓴다.
+
+**인쇄 위치 보정을 건드렸으면 `verify-print-offset.py` 를 돌려라.** 이 값은 **설정으로만
+인쇄물을 바꾸는 유일한 값**이라 다른 도구가 전부 못 본다 — `verify-print.py` 는 **설정이 없는
+상태로만** 재고(기본값 0 이라 아무 일도 안 일어난다), `verify-site-config.py` 는 화면만 본다.
+보정이 조용히 아무것도 안 해도 둘 다 통과한다.
+⚠️ **`.paper` 자신도, `overflow:hidden` 도, `clip-path` 도 아니다**(2026.09.23 에 셋 다 재 봤다).
+지금 방식(`.paper{overflow:clip}` + `.paper > *{transform}`)을 바꾸려거든 그 도구를 먼저 돌려라 —
+빈 장이 하나 더 생기거나 2쪽만 어긋나는 실패가 **눈으로는 안 보인다.**
 
 **「이 단계가 너무 길다」를 다룰 때는 `python tools/measure-steps.py` 로 재라.**
 `measure-screen.py` 는 **허브와 여권 15화면만** 보고 **엔진 7종의 단계는 한 번도 열지 않는다** —
