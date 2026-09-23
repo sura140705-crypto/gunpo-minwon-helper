@@ -450,6 +450,14 @@ function createWindow() {
       win.webContents.insertCSS(printOptions.MONO_DROPOUT_CSS)
         .catch((e) => console.error('[키오스크] 드롭아웃 CSS 적용 실패:', e && e.message));
     }
+    /* 인쇄 위치 보정 — 위의 셋과 **따로** 건다(배타가 아니다).
+       겹쳐 찍기는 보정이 특히 중요하다. 미리 인쇄된 용지에 값만 얹으므로 칸이 종이에
+       고정돼 있고, 위아래 여유가 ±1.5mm 뿐이다(위 OVERLAY 주석). */
+    const offCss = printOptions.offsetCss(printCfg);
+    if (offCss) {
+      win.webContents.insertCSS(offCss)
+        .catch((e) => console.error('[키오스크] 인쇄 위치 보정 CSS 적용 실패:', e && e.message));
+    }
   });
 
   // 시민이 화면을 벗어나면(Alt+Tab 등) 입력 내용을 남겨 두지 않는다.
@@ -547,6 +555,11 @@ function openSettings() {
 
       mode: printOptions.passportMode(cfg),
       printerDeviceName: cfg.printerDeviceName || '',
+      // 인쇄 위치 보정 — 창이 ±단추로 0.5mm 씩 움직인다. 0 이면 보정 없음.
+      printOffsetX: printOptions.normOffset(cfg.printOffsetX),
+      printOffsetY: printOptions.normOffset(cfg.printOffsetY),
+      offsetStep: printOptions.OFFSET_STEP,
+      offsetMax: printOptions.OFFSET_MAX,
       idleMs: pc.idleMs,
       printedMs: pc.printedMs,
       formLeft: pc.formLeft,
@@ -659,6 +672,11 @@ function openSettings() {
         formLeft: v.formLeft === true,
         idleMs: num(v.idleMs, [60000, 180000, 300000, 600000], DEFAULT_IDLE_MS),
         printedMs: num(v.printedMs, [0, 1000, 3000, 5000, 10000], DEFAULT_PRINTED_MS),
+        /* 인쇄 위치 보정 — 창이 보낸 값을 그대로 믿지 않는다. 0.5mm 눈금에 맞추고
+           ±5mm 안으로 가둔다(`print-options.js` 의 `normOffset`). 값 하나가 잘못
+           들어가면 **종이가 틀린다** — 다른 설정과 무게가 다르다. */
+        printOffsetX: printOptions.normOffset(v.printOffsetX),
+        printOffsetY: printOptions.normOffset(v.printOffsetY),
         org,
         themeColor: normHex(v.themeColor),
         forms,
@@ -866,6 +884,15 @@ async function runSelfCheck() {
        (drop.length ? drop.join(', ') + ' → 백지 인쇄 · 접수처 스캔 판독 확인 필수'
                     : '없음 → 서식을 그대로 인쇄') +
        (dropAll.length > drop.length ? '  (겹쳐 찍기와 겹친 서식은 제외됨)' : ''));
+  /* ⚠️ 보정은 **눈에 보이지 않는다.** 0.5mm 는 화면에도 안 나오고 인쇄물만 봐서는
+     보정 때문인지 프린터 때문인지 알 수 없다. 프린터를 바꾸거나 다른 사람이 인계받았을 때
+     「이 기기만 왜 다르지」로 헤매지 않도록 **검수 기록에 반드시 적는다.** */
+  const off = printOptions.printOffset(cfg);
+  line('인쇄 위치 보정', (off.x || off.y ? '[확인] ' : '[양호] ') +
+       (off.x || off.y
+         ? '좌우 ' + off.x.toFixed(1) + 'mm · 위아래 ' + off.y.toFixed(1) +
+           'mm 옮겨 인쇄 → 프린터를 바꾸면 다시 재서 맞출 것'
+         : '없음 (0.0 / 0.0) → 서식 좌표 그대로 인쇄'));
   L.push('');
 
   L.push('[프린터]');

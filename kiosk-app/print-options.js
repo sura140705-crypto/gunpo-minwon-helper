@@ -89,6 +89,75 @@ const MONO_DROPOUT_CSS = [
   '}',
 ].join('\n');
 
+/* ── 인쇄 위치 미세 보정 (2026.09.23) ────────────────────────────────────
+   무엇이 문제였나:
+     정식 서비스 PC·프린터에서 뽑아 보니 인쇄물이 원본 서식보다 **위여백이 약 0.5mm 더**
+     나왔다. 배율은 100% 로 확인됐다(`tools/calibration-sheet.html` 가운데 상자 190×277mm).
+     즉 눌리거나 늘어난 것이 아니라 **통째로 밀린 평행 이동**이다.
+
+   왜 좌표로 고치지 않는가:
+     좌표맵은 법정 별지서식 기준이고 **전국이 그대로 재사용**한다(`docs/타지자체-확산.md`).
+     밀림은 그 기관 프린터의 성질이지 서식의 성질이 아니다. 좌표를 건드리면 이 기기 하나는
+     맞고 나머지 전부가 틀어진다. 그래서 **기기 설정**으로 뺀다.
+
+   ⛔ **배율이 어긋난 경우에는 이것으로 고치지 마라.** 배율 문제는 위를 맞추면 아래가 더
+      틀어진다 — 평행 이동으로 덮으면 종이가 더 나빠진다. 그때는 프린터 쪽을 잡아라
+      (`tools/calibration-sheet.html` 이 같은 경고를 적어 두고 있다).
+
+   무엇을 옮기는가 — **`.paper` 의 자식**(`.paper > *`)이다. 세 번 고쳐 여기에 왔다.
+   ⚠️ `.stage` 만으로는 안 된다. 한 장이 `.paper` 하나이고, 2쪽짜리 서식의 별지는
+      `.paper.extra` 로 **형제**다(`.stage` 안이 아니다). `.stage` 를 옮기면 1쪽만
+      움직이고 2쪽이 제자리에 남는다 — 여권 미성년(신청서+법정대리인 동의서)·부동산 별지.
+   ⛔ 그렇다고 `.paper` **자신**을 옮기면 안 된다. 아래로 옮길 때 넘친 부분이 **빈 장을
+      하나 더 만든다**(실측: 증명서 1쪽 → 2쪽. `verify-print-offset.py` 가 잡았다).
+      페이지 상자는 그대로 두고 **그 안의 내용만** 옮겨야 쪽 나눔이 흔들리지 않는다.
+   ⚠️ `transform` 을 쓰고 `margin`·`top` 을 쓰지 않는다. `transform` 은 **배치를 바꾸지
+      않아** 쪽 나눔이 그대로다. 여백으로 밀면 마지막 줄이 다음 장으로 넘어갈 수 있다. */
+const OFFSET_STEP = 0.5;   // mm — 현장에서 자로 재어 넣는 단위
+const OFFSET_MAX = 5;      // mm — 서식 8종 21쪽의 인쇄 내용은 가장자리에서 9.8mm 이상
+                           //      안쪽이므로(calibration-sheet 주석) 5mm 를 옮겨도 안 잘린다
+
+/* 0.5mm 눈금에 맞추고 범위 안으로 가둔다. 숫자가 아니거나 없으면 0(보정 안 함). */
+function normOffset(v) {
+  const n = Number(v);
+  if (!isFinite(n) || n === 0) return 0;
+  const snapped = Math.round(n / OFFSET_STEP) * OFFSET_STEP;
+  const clamped = Math.max(-OFFSET_MAX, Math.min(OFFSET_MAX, snapped));
+  return Math.round(clamped * 10) / 10;      // 0.5 단위라 소수점 한 자리로 충분하다
+}
+
+function printOffset(cfg) {
+  return {
+    x: normOffset(cfg && cfg.printOffsetX),
+    y: normOffset(cfg && cfg.printOffsetY),
+  };
+}
+
+/* 보정 CSS. ⚠️ 기본값(0,0)이면 **빈 문자열**을 돌려준다 — 아무 CSS 도 넣지 않아야
+   보정을 안 쓰는 기관의 인쇄물이 기준선과 한 글자도 다르지 않다. */
+function offsetCss(cfg) {
+  const o = printOffset(cfg);
+  if (!o.x && !o.y) return '';
+  return [
+    '@media print{',
+    /* ⚠️ **넘침을 자르는 것이 먼저다.** 옮긴 내용이 페이지 상자 밖으로 삐져나가면 그만큼
+       문서가 길어졌다고 보고 Chromium 이 **빈 장을 하나 더 만든다**(실측: 증명서를
+       아래로 0.5mm 옮겼더니 1쪽 → 2쪽). 종이 한 장이 `.paper` 하나이므로 여기서 자른다.
+       ⛔ 잘려 나가는 내용은 없다 — 서식 8종 21쪽의 인쇄 내용은 가장자리에서 9.8mm 이상
+          안쪽이고, 여기서 옮기는 양은 최대 5mm 다.
+
+       ⛔ **`overflow:hidden` 도 `clip-path` 도 아니다.** 셋을 다 재 보고 여기에 왔다.
+          · `hidden`    — 빈 장은 막지만 **BFC 를 만들어** 여백 계산이 바뀐다.
+                          여권 2쪽이 보정과 무관하게 약 0.85mm 아래로 내려갔다.
+          · `clip-path` — 배치는 안 건드리지만 **빈 장을 못 막는다**(증명서 1→2쪽 그대로).
+          · `clip`      — 스크롤 컨테이너도 BFC 도 만들지 않고 자르기만 한다. 둘 다 잡힌다.
+          바꾸기 전에 `python tools/verify-print-offset.py` 를 돌려 세 가지를 다시 재라. */
+    '  .paper{ overflow: clip !important; }',
+    '  .paper > *{ transform: translate(' + o.x + 'mm, ' + o.y + 'mm); }',
+    '}',
+  ].join('\n');
+}
+
 /* 서식 파일 이름에서 서식 키를 뽑는다 — `passport-helper-v1.html` → `passport` */
 function formKey(url) {
   const m = /([a-z]+)-helper-v\d+\.html/i.exec(String(url || ''));
@@ -162,6 +231,11 @@ module.exports = {
   PRINT_MODES: PRINT_MODES,
   passportMode: passportMode,
   applyPassportMode: applyPassportMode,
+  OFFSET_STEP: OFFSET_STEP,
+  OFFSET_MAX: OFFSET_MAX,
+  normOffset: normOffset,
+  printOffset: printOffset,
+  offsetCss: offsetCss,
 
   /* 설정에 목록이 있으면 그것을, 없으면 기본값(여권)을 쓴다. */
   isOverlayForm: function (cfg, url) {

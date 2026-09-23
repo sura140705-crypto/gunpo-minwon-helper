@@ -58,6 +58,10 @@
     border-radius:9px;background:#fff;cursor:pointer;}
   .presets{display:flex;gap:6px;flex-wrap:wrap;}
   .presets button{width:30px;height:30px;padding:0;border-radius:8px;border:1px solid #0002;}
+  /* 인쇄 위치 보정 — [−] 값 [＋]. 값은 폭을 고정해 단추가 흔들리지 않게 한다. */
+  .nudge{display:flex;align-items:center;gap:8px;}
+  .nudge button{width:42px;padding:8px 0;text-align:center;}
+  .nudge b{flex:1;text-align:center;font-size:15px;font-variant-numeric:tabular-nums;}
   .preview{margin-top:12px;border:1px solid var(--line);border-radius:10px;overflow:hidden;}
   .preview .pv-bar{height:38px;display:flex;align-items:center;padding:0 12px;
     color:#fff;font-size:13px;font-weight:800;}
@@ -124,6 +128,38 @@
       기본 프린터로 흘려보내면 그것이 가상 프린터일 때 개인정보가 파일로 남기 때문입니다.</p>
     <select id="printer"><option value="">(불러오는 중…)</option></select>
     <div class="warn bad" id="prnWarn" hidden></div>
+  </div>
+
+  <div class="sec">
+    <h2>인쇄 위치 미세 보정</h2>
+    <p class="why">프린터마다 종이를 무는 위치가 조금씩 달라, 인쇄물 전체가 원본 서식보다
+      살짝 밀려 나올 수 있습니다. 그만큼을 <b>0.5mm 단위로 되밀어</b> 줍니다.<br>
+      <b>재는 법</b> — <code>tools/calibration-sheet.html</code> 을 이 프린터로 인쇄하고
+      (여백 없음 · 배율 100%), 가운데 상자의 네 변 여백을 자로 잽니다.
+      위가 아래보다 <b>0.5mm 넓으면</b> 「위로 0.5」를 넣습니다.<br>
+      ⚠️ <b>한 장만 보고 정하지 마세요.</b> 급지 편차가 있어 5~10장을 뽑아 평균을 봐야 합니다.</p>
+    <div class="row">
+      <div>
+        <label>위아래 (− 위로 / + 아래로)</label>
+        <div class="nudge">
+          <button type="button" class="small" data-nudge="Y" data-by="-0.5">−</button>
+          <b id="offYv">0.0 mm</b>
+          <button type="button" class="small" data-nudge="Y" data-by="0.5">＋</button>
+        </div>
+      </div>
+      <div>
+        <label>좌우 (− 왼쪽으로 / + 오른쪽으로)</label>
+        <div class="nudge">
+          <button type="button" class="small" data-nudge="X" data-by="-0.5">−</button>
+          <b id="offXv">0.0 mm</b>
+          <button type="button" class="small" data-nudge="X" data-by="0.5">＋</button>
+        </div>
+      </div>
+    </div>
+    <p class="why" style="margin:10px 0 0">
+      <button type="button" class="small" id="offZero">보정 없음(0)으로 되돌리기</button></p>
+    <div class="warn" id="offWarn" hidden></div>
+    <div class="warn bad" hidden id="offScale"></div>
   </div>
 
   <div class="sec">
@@ -368,6 +404,46 @@
     w.hidden = !d.adjusted;
   }
 
+  /* ── 인쇄 위치 미세 보정 ────────────────────────────────────────────────
+     ⚠️ 이 창에서 **인쇄물을 움직이는 값은 이것뿐**입니다(「신고관청 표기」 외).
+        그래서 창이 보낸 값을 main.js 가 그대로 믿지 않고 0.5mm 눈금·±한계로 다시
+        가둡니다(`print-options.js` 의 `normOffset`). 여기 표시는 그 결과와 같아야 합니다. */
+  var OFF = { X: 0, Y: 0 }, OFF_STEP = 0.5, OFF_MAX = 5;
+  function offSnap(n){
+    n = Math.round(Number(n) / OFF_STEP) * OFF_STEP;
+    n = Math.max(-OFF_MAX, Math.min(OFF_MAX, n));
+    return Math.round(n * 10) / 10;
+  }
+  function offRender(){
+    $("offXv").textContent = OFF.X.toFixed(1) + " mm";
+    $("offYv").textContent = OFF.Y.toFixed(1) + " mm";
+    var w = $("offWarn"), on = (OFF.X || OFF.Y);
+    /* 보정이 걸려 있으면 **눈에 보이게** 둔다 — 0.5mm 는 화면으로는 안 보이므로,
+       나중에 다른 사람이 「왜 이 기기만 다르지」 하고 헤맬 수 있다. */
+    w.innerHTML = on
+      ? "이 기기의 인쇄물은 <b>가로 " + OFF.X.toFixed(1) + "mm · 세로 " + OFF.Y.toFixed(1) +
+        "mm</b> 옮겨 찍힙니다. 프린터를 바꾸면 <b>다시 재서 맞추세요</b> — 보정값은 " +
+        "프린터마다 다릅니다."
+      : "";
+    w.hidden = !on;
+    var s = $("offScale");
+    s.innerHTML = (Math.abs(OFF.X) >= 3 || Math.abs(OFF.Y) >= 3)
+      ? "⚠️ 보정값이 <b>3mm 이상</b>입니다. 이만큼 밀리는 것은 보통 <b>배율이 100%가 아닌</b> " +
+        "경우입니다. 검수지 가운데 상자가 <b>190×277mm</b> 인지 먼저 확인하세요 — 배율 문제는 " +
+        "여기서 밀면 <b>위는 맞고 아래가 더 틀어집니다.</b>"
+      : "";
+    s.hidden = !s.innerHTML;
+  }
+  document.addEventListener("click", function(e){
+    var b = e.target.closest("[data-nudge]");
+    if (b){
+      var ax = b.getAttribute("data-nudge");
+      OFF[ax] = offSnap(OFF[ax] + Number(b.getAttribute("data-by")));
+      offRender(); return;
+    }
+    if (e.target.id === "offZero"){ OFF.X = 0; OFF.Y = 0; offRender(); }
+  });
+
   function radio(name){
     var el = document.querySelector('input[name="' + name + '"]:checked');
     return el ? el.value : null;
@@ -542,6 +618,11 @@
     setRadio("layout", d.formLeft ? "form-left" : "panel-left");
     $("idle").value = String(d.idleMs);
     $("printed").value = String(d.printedMs);
+    if (typeof d.offsetStep === "number" && d.offsetStep > 0) OFF_STEP = d.offsetStep;
+    if (typeof d.offsetMax === "number" && d.offsetMax > 0) OFF_MAX = d.offsetMax;
+    OFF.X = offSnap(d.printOffsetX || 0);
+    OFF.Y = offSnap(d.printOffsetY || 0);
+    offRender();
 
     // 기관 표기 — 값이 없으면 비워 둔다(비움 = 프로그램 기본값)
     ["orgName","officeName","windowName","phone","address","notice",
@@ -615,6 +696,8 @@
       printerDeviceName: $("printer").value,
       idleMs: Number($("idle").value),
       printedMs: Number($("printed").value),
+      printOffsetX: OFF.X,
+      printOffsetY: OFF.Y,
       org: org,
       themeColor: $("themeColor").value,
       forms: forms,
