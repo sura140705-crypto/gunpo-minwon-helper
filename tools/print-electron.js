@@ -22,6 +22,18 @@ const files = argv.filter((a) => !a.startsWith('--'));
 const cssPage = argv.includes('--css-page');
 const [inHtml, outPdf] = files;
 
+/* `--cfg <json>` — 키오스크 설정(`kiosk.json`)과 **같은 모양**의 값을 넘긴다.
+   지금은 인쇄 위치 보정(`printOffsetX`·`printOffsetY`)에 쓴다. main.js 가 인쇄 직전에
+   부르는 것과 **같은 함수**(`printOptions.offsetCss`)를 태워야, 「설정이 인쇄물을 실제로
+   움직이는가」를 검사한 것이 된다. 여기서 CSS 를 따로 지어 쓰면 검사가 제 꼬리를 문다. */
+function argVal(name) {
+  const i = argv.indexOf(name);
+  return i >= 0 ? argv[i + 1] : '';
+}
+let cfg = {};
+try { cfg = JSON.parse(argVal('--cfg') || '{}') || {}; }
+catch (e) { console.error('--cfg 가 JSON 이 아닙니다: ' + e.message); app.exit(2); }
+
 if (!inHtml || !outPdf) {
   console.error('사용법: electron tools/print-electron.js <입력.html> <출력.pdf> [--css-page]');
   app.exit(2);
@@ -56,6 +68,10 @@ app.whenReady().then(async () => {
     // (크롬 쪽은 --virtual-time-budget=4000 으로 같은 일을 한다)
     await win.webContents.executeJavaScript('document.fonts ? document.fonts.ready.then(()=>1) : 1');
     await new Promise((r) => setTimeout(r, 1200));
+
+    // 인쇄 위치 보정 — 키오스크(main.js)가 `did-finish-load` 에서 하는 것과 같은 주입이다.
+    const offCss = printOptions.offsetCss(cfg);
+    if (offCss) await win.webContents.insertCSS(offCss);
 
     const opts = cssPage ? printOptions.forPdfCssPage() : printOptions.forPdf();
     const buf = await win.webContents.printToPDF(opts);
